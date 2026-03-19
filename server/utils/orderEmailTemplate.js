@@ -51,15 +51,15 @@ const OrderConfirmationEmail = (username, orders) => {
     </style>
 </head>
 <body>
-    <div class="email-container">
-        <div class="header">Xác nhận đơn hàng</div>
-        <div class="content">
+    <div className="email-container">
+        <div className="header">Xác nhận đơn hàng</div>
+        <div className="content">
             <p>Gửi <strong>${username}</strong>,</p>
             <p>Cảm ơn bạn đã đặt hàng! Dưới đây là chi tiết đơn hàng của bạn:</p>
 
             
  
-            <table class="order-details">
+            <table className="order-details">
               <tr>
                         <th>Sản Phẩm</th>
                         <th>Số Lượng</th>
@@ -106,7 +106,7 @@ const OrderConfirmationEmail = (username, orders) => {
             
             <p>Nếu có bất kỳ thắc mắc nào, đừng ngần ngại liên hệ với chúng tôi.</p>
         </div >
-    <div class="footer">
+    <div className="footer">
         &copy; ${new Date().getFullYear()} Your Store. All rights reserved.
     </div>
     </div >

@@ -128,11 +128,11 @@ export const BannerList2 = () => {
 
                                             <TableCell width={100}>
                                                 <div className="flex items-center gap-4 w-[130px] lg:w-[200px]">
-                                                    <div class="img w-full rounded-md overflow-hidden group cursor-pointer" onClick={() => setOpen(true)}>
+                                                    <div className="img w-full rounded-md overflow-hidden group cursor-pointer" onClick={() => setOpen(true)}>
 
                                                         <img
                                                             src={item?.images[0]}
-                                                            class="w-full group-hover:scale-105 transition-all"
+                                                            className="w-full group-hover:scale-105 transition-all"
                                                         />
                                                     </div>
 

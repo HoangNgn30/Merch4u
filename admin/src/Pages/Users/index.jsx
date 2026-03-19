@@ -275,11 +275,11 @@ export const Users = () => {
                                                 </TableCell>
                                                 <TableCell style={{ minWidth: columns.minWidth }}>
                                                     <div className="flex items-center gap-4 w-[300px]">
-                                                        <div class="img w-[45px] h-[45px] rounded-md overflow-hidden group">
+                                                        <div className="img w-[45px] h-[45px] rounded-md overflow-hidden group">
 
                                                                 <img
                                                                     src={user?.avatar !== "" && user?.avatar !== undefined ? user?.avatar : '/user.jpg'}
-                                                                    class="w-full group-hover:scale-105 transition-all"
+                                                                    className="w-full group-hover:scale-105 transition-all"
                                                                 />
                                                           
                                                         </div>

@@ -122,11 +122,11 @@ export const BannerV1List = () => {
 
                                             <TableCell width={100}>
                                                 <div className="flex items-center gap-4 w-[130px] lg:w-[200px]">
-                                                    <div class="img w-full rounded-md overflow-hidden group">
+                                                    <div className="img w-full rounded-md overflow-hidden group">
 
                                                         <img
                                                             src={item?.images[0]}
-                                                            class="w-full group-hover:scale-105 transition-all"
+                                                            className="w-full group-hover:scale-105 transition-all"
                                                         />
                                                     </div>
 
