@@ -1458,7 +1458,7 @@ export async function getProductSizeById(request, response) {
 
 
 export async function filters(request, response) {
-    const { catId, subCatId, thirdsubCatId, minPrice, maxPrice, rating, page, limit } = request.body;
+    const { catId, subCatId, thirdsubCatId, minPrice, maxPrice, rating, page = 1, limit = 25 } = request.body;
 
     const filters = {}
 
@@ -1484,7 +1484,7 @@ export async function filters(request, response) {
 
     try {
 
-        const products = await ProductModel.find(filters).populate("category").skip((page - 1) * limit).limit(parseInt(limit));
+        const products = await ProductModel.find(filters).populate("category").skip((parseInt(page) - 1) * parseInt(limit)).limit(parseInt(limit));
 
         const total = await ProductModel.countDocuments(filters);
 
@@ -1527,7 +1527,7 @@ const sortItems = (products, sortBy, order) => {
 
 export async function sortBy(request, response) {
     const { products, sortBy, order } = request.body;
-    const sortedItems = sortItems([...products?.products], sortBy, order);
+    const sortedItems = sortItems([...products], sortBy, order);
     return response.status(200).json({
         error: false,
         success: true,

@@ -326,7 +326,7 @@ const Profile = () => {
 
                         <div className="col">
                             <PhoneInput
-                                defaultCountry="in"
+                                defaultCountry="vn"
                                 value={phone}
                                 disabled={isLoading === true ? true : false}
                                 onChange={(phone) => {

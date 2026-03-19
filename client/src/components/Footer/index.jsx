@@ -250,7 +250,7 @@ const Footer = () => {
           </ul>
 
           <p className="text-[13px] text-center mb-0">
-            © 2024 - Ecommerce Template
+            © 2026 - Day la shop cua tao
           </p>
 
 

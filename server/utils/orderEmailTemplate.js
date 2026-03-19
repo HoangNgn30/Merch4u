@@ -2,7 +2,7 @@ const OrderConfirmationEmail = (username, orders) => {
     return `<!DOCTYPE html>
 <html>
 <head>
-    <title>Order Confirmation</title>
+    <title>Xác nhận đơn hàng</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -52,18 +52,18 @@ const OrderConfirmationEmail = (username, orders) => {
 </head>
 <body>
     <div class="email-container">
-        <div class="header">Order Confirmation</div>
+        <div class="header">Xác nhận đơn hàng</div>
         <div class="content">
-            <p>Dear <strong>${username}</strong>,</p>
-            <p>Thank you for your order! Below are your order details:</p>
+            <p>Gửi <strong>${username}</strong>,</p>
+            <p>Cảm ơn bạn đã đặt hàng! Dưới đây là chi tiết đơn hàng của bạn:</p>
 
             
  
             <table class="order-details">
               <tr>
-                        <th>Product</th>
-                        <th>Quantity</th>
-                        <th>Price</th>
+                        <th>Sản Phẩm</th>
+                        <th>Số Lượng</th>
+                        <th>Giá Tiền</th>
              </tr>
     
             
@@ -72,9 +72,9 @@ const OrderConfirmationEmail = (username, orders) => {
              <tr>
         <td>${product?.productTitle}</td>
                 <td>${product?.quantity}</td>
-                        <td>${product?.subTotal?.toLocaleString("en-US", {
+                        <td>${product?.subTotal?.toLocaleString("vi-VN", {
             style: "currency",
-            currency: "INR",
+            currency: "VND",
         })}</td>
         </tr>
                     `
@@ -83,7 +83,7 @@ const OrderConfirmationEmail = (username, orders) => {
     
                     <tr>
                      <td colspan={1}></td>
-                        <td colspan={2}>Total</td>
+                        <td colspan={2}>Tổng</td>
                         <td colspan={1}>
                             ${(orders?.products?.length !== 0
             ? orders?.products
@@ -93,18 +93,18 @@ const OrderConfirmationEmail = (username, orders) => {
                 )
                 .reduce((total, value) => total + value, 0)
             : 0
-        )?.toLocaleString("en-US", {
+        )?.toLocaleString("vi-VN", {
             style: "currency",
-            currency: "INR",
+            currency: "VND",
         })}
                         </td>
                     </tr>    
           
           </table>
             <p><strong>Order ID:</strong> #${orders?._id}</p>
-            <p><strong>Estimated Delivery:</strong> 3-5 business days</p>
+            <p><strong>Thời gian giao hàng dự kiến:</strong> 3-5 ngày làm việc</p>
             
-            <p>If you have any questions, feel free to contact us.</p>
+            <p>Nếu có bất kỳ thắc mắc nào, đừng ngần ngại liên hệ với chúng tôi.</p>
         </div >
     <div class="footer">
         &copy; ${new Date().getFullYear()} Your Store. All rights reserved.

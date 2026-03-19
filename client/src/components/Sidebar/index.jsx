@@ -31,7 +31,7 @@ export const Sidebar = (props) => {
 
 
 
-  const [price, setPrice] = useState([0, 60000]);
+  const [price, setPrice] = useState([0, 500000000]);
 
   const context = useContext(MyContext);
 
@@ -191,15 +191,15 @@ export const Sidebar = (props) => {
             value={price}
             onInput={setPrice}
             min={100}
-            max={60000}
-            setp={5}
+            max={500000000}
+            step={5}
           />
           <div className="flex pt-4 pb-2 priceRange">
             <span className="text-[13px]">
-              From: <strong className="text-dark">Rs: {price[0]}</strong>
+              From: <strong className="text-dark">{price[0].toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</strong>
             </span>
             <span className="ml-auto text-[13px]">
-              To: <strong className="text-dark">Rs: {price[1]}</strong>
+              To: <strong className="text-dark">{price[1].toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</strong>
             </span>
           </div>
         </div>

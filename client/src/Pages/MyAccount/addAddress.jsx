@@ -288,7 +288,7 @@ const AddAddress = () => {
 
             <div className="col w-[100%] mb-4">
                 <PhoneInput
-                    defaultCountry="in"
+                    defaultCountry="vn"
                     value={phone}
                     onChange={(phone) => {
                         setPhone(phone);

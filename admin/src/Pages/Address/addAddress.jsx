@@ -171,7 +171,7 @@ const AddAddress = () => {
                         <div className='col w-[100%]'>
                             <h3 className='text-[14px] font-[500] mb-1 text-black'> Mobile No</h3>
                             <PhoneInput
-                                defaultCountry="in"
+                                defaultCountry="vn"
                                 value={phone}
                                 disabled={isLoading === true ? true : false}
                                 onChange={(phone) => {
