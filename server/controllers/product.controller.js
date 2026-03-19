@@ -930,6 +930,7 @@ export async function updateProduct(request, response) {
                 brand: request.body.brand,
                 price: request.body.price,
                 oldPrice: request.body.oldPrice,
+                discount: request.body.discount,
                 catId: request.body.catId,
                 catName: request.body.catName,
                 subCat: request.body.subCat,

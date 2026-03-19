@@ -172,9 +172,9 @@ const Header = () => {
                           className="!text-[#000] myAccountWrap flex items-center gap-3 cursor-pointer"
                           onClick={handleClick}
                         >
-                          <Button className="!w-[40px] !h-[40px] !min-w-[40px] !rounded-full !bg-gray-200">
+                          <div className="flex items-center justify-center w-[40px] h-[40px] min-w-[40px] rounded-full bg-gray-200">
                             <FaRegUser className="text-[17px] text-[rgba(0,0,0,0.7)]" />
-                          </Button>
+                          </div>
 
                           {
                             context?.windowWidth > 992 &&
@@ -283,14 +283,20 @@ const Header = () => {
                   context?.windowWidth > 992 &&
                   <li>
                     <Tooltip title="Wishlist">
-                      <Link to="/my-list">
-                        <IconButton aria-label="cart">
-                          <StyledBadge badgeContent={context?.myListData?.length !== 0 ? context?.myListData?.length : 0} color="secondary">
+                        {/* Hợp thể Link và IconButton bằng prop component */}
+                        <IconButton 
+                          component={Link} 
+                          to="/my-list" 
+                          aria-label="cart" 
+                        >
+                          <StyledBadge 
+                            badgeContent={context?.myListData?.length !== 0 ? context?.myListData?.length : 0} 
+                            color="secondary"
+                          >
                             <FaRegHeart />
                           </StyledBadge>
                         </IconButton>
-                      </Link>
-                    </Tooltip>
+                      </Tooltip>
                   </li>
 
                 }

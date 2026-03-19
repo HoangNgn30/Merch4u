@@ -216,12 +216,39 @@ const EditProduct = () => {
 
     const onChangeInput = (e) => {
         const { name, value } = e.target;
-        setFormFields(() => {
-            return {
-                ...formFields,
-                [name]: value
+        let updatedFields = { ...formFields, [name]: value };
+
+        if (name === 'price' || name === 'oldPrice' || name === 'discount') {
+            const val = value === "" ? "" : Number(value);
+            updatedFields[name] = val; 
+
+            const price = name === 'price' ? val : Number(formFields.price);
+            const oldPrice = name === 'oldPrice' ? val : Number(formFields.oldPrice);
+            const discount = name === 'discount' ? val : Number(formFields.discount);
+
+            if (name === 'oldPrice' && val !== "") {
+                if (formFields.discount !== "") {
+                    updatedFields.price = Math.round(val - (val * discount / 100));
+                } else if (formFields.price !== "") {
+                    updatedFields.discount = Math.round(((val - price) / val) * 100);
+                }
             }
-        })
+            else if (name === 'discount' && val !== "") {
+                if (formFields.oldPrice !== "") {
+                    updatedFields.price = Math.round(oldPrice - (oldPrice * val / 100));
+                } else if (formFields.price !== "") {
+                    updatedFields.oldPrice = val !== 100 ? Math.round(price / (1 - val / 100)) : 0;
+                }
+            }
+            else if (name === 'price' && val !== "") {
+                if (formFields.oldPrice !== "" && oldPrice !== 0) {
+                    updatedFields.discount = Math.round(((oldPrice - val) / oldPrice) * 100);
+                } else if (formFields.discount !== "") {
+                    updatedFields.oldPrice = discount !== 100 ? Math.round(val / (1 - discount / 100)) : 0;
+                }
+            }
+        }
+        setFormFields(updatedFields);
     }
 
     const onChangeRating = (e) => {
@@ -369,7 +396,17 @@ const EditProduct = () => {
 
         setIsLoading(true);
 
-        editData(`/api/product/updateProduct/${context?.isOpenFullScreenPanel?.id}`, formFields).then((res) => {
+        const finalPayload = {
+            ...formFields,
+            price: Number(formFields.price),
+            oldPrice: Number(formFields.oldPrice),
+            discount: Number(formFields.discount),
+            countInStock: Number(formFields.countInStock)
+        };
+
+        console.log("DỮ LIỆU GỬI LÊN API:", finalPayload);
+
+        editData(`/api/product/updateProduct/${context?.isOpenFullScreenPanel?.id}`, finalPayload).then((res) => {
 
             console.log(res)
             if (res?.data?.error === false) {

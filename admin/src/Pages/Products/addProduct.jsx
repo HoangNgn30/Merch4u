@@ -169,12 +169,39 @@ const AddProduct = () => {
 
     const onChangeInput = (e) => {
         const { name, value } = e.target;
-        setFormFields(() => {
-            return {
-                ...formFields,
-                [name]: value
+        let updatedFields = { ...formFields, [name]: value };
+
+        if (name === 'price' || name === 'oldPrice' || name === 'discount') {
+            const val = parseFloat(value); 
+            const price = name === 'price' ? val : parseFloat(formFields.price);
+            const oldPrice = name === 'oldPrice' ? val : parseFloat(formFields.oldPrice);
+            const discount = name === 'discount' ? val : parseFloat(formFields.discount);
+
+            if (name === 'oldPrice' && !isNaN(val)) {
+                if (!isNaN(discount)) {
+                    updatedFields.price = Math.round(val - (val * discount / 100));
+                } else if (!isNaN(price)) {
+                    updatedFields.discount = Math.round(((val - price) / val) * 100);
+                }
             }
-        })
+            
+            else if (name === 'discount' && !isNaN(val)) {
+                if (!isNaN(oldPrice)) {
+                    updatedFields.price = Math.round(oldPrice - (oldPrice * val / 100));
+                } else if (!isNaN(price)) {
+                    updatedFields.oldPrice = val !== 100 ? Math.round(price / (1 - val / 100)) : 0;
+                }
+            }
+            
+            else if (name === 'price' && !isNaN(val)) {
+                if (!isNaN(oldPrice) && oldPrice !== 0) {
+                    updatedFields.discount = Math.round(((oldPrice - val) / oldPrice) * 100);
+                } else if (!isNaN(discount)) {
+                    updatedFields.oldPrice = discount !== 100 ? Math.round(val / (1 - discount / 100)) : 0;
+                }
+            }
+        }
+        setFormFields(updatedFields);
     }
 
     const onChangeRating = (e) => {
