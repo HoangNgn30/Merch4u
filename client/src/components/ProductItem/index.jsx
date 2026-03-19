@@ -37,7 +37,7 @@ const ProductItem = (props) => {
     const productItem = {
       _id: product?._id,
       name: product?.name,
-      image: product?.images[0],
+      image: product?.images?.[0],
       rating: product?.rating,
       price: product?.price,
       oldPrice: product?.oldPrice,
@@ -206,17 +206,17 @@ const ProductItem = (props) => {
   return (
     <div className="productItem shadow-lg rounded-md overflow-hidden border-1 border-[rgba(0,0,0,0.1)]">
       <div className="group imgWrapper w-[100%]  overflow-hidden  rounded-md rounded-bl-none rounded-br-none relative">
-        <Link to={props?.item?.images[1]}>
+        <Link to={`/product/${props?.item?._id}`}>
           <div className="img h-[200px] overflow-hidden">
             <img
-              src={props?.item?.images[0]}
+              src={props?.item?.images?.[0]}
               className="w-full"
             />
 
             {
               props?.item?.images?.length > 1 &&
               <img
-                src={props?.item?.images[1]}
+                src={props?.item?.images?.[1]}
                 className="w-full transition-all duration-700 absolute top-0 left-0 opacity-0 group-hover:opacity-100 group-hover:scale-105"
               />
             }
@@ -283,15 +283,15 @@ const ProductItem = (props) => {
 
         <div className="actions absolute top-[-20px] right-[5px] z-50 flex items-center gap-2 flex-col w-[50px] transition-all duration-300 group-hover:top-[15px] opacity-0 group-hover:opacity-100">
 
-          <Button className="!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-white  text-black hover:!bg-primary hover:text-white group" onClick={() => context.handleOpenProductDetailsModal(true, props?.item)}>
+          <Button component="div" className="!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-white  text-black hover:!bg-primary hover:text-white group" onClick={() => context.handleOpenProductDetailsModal(true, props?.item)}>
             <MdZoomOutMap className="text-[18px] !text-black group-hover:text-white hover:!text-white" />
           </Button>
 
-          <Button className="!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-white  text-black hover:!bg-primary hover:text-white group">
+          <Button component="div" className="!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-white  text-black hover:!bg-primary hover:text-white group">
             <IoGitCompareOutline className="text-[18px] !text-black group-hover:text-white hover:!text-white" />
           </Button>
 
-          <Button className={`!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-white  text-black hover:!bg-primary hover:text-white group`}
+          <Button component="div" className={`!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-white  text-black hover:!bg-primary hover:text-white group`}
             onClick={() => handleAddToMyList(props?.item)}
           >
             {
@@ -312,7 +312,7 @@ const ProductItem = (props) => {
         </h6>
         <h3 className="text-[12px] lg:text-[13px] title mt-1 font-[500] mb-1 text-[#000]">
           <Link to={`/product/${props?.item?._id}`} className="link transition-all">
-            {props?.item?.name?.substr(0, 25) + '...'}
+            {props?.item?.name ? props.item.name.substr(0, 25) + '...' : ''}
           </Link>
         </h3>
 

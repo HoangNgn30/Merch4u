@@ -10,7 +10,7 @@ import { MyContext } from "../../App";
 import { MdOutlineShoppingCart } from "react-icons/md";
 import { FaMinus } from "react-icons/fa6";
 import { FaPlus } from "react-icons/fa6";
-import { deleteData, editData, postData } from "../../utils/api";
+import { deleteData, editData, postData, API_URL } from "../../utils/api";
 import CircularProgress from '@mui/material/CircularProgress';
 import { MdClose } from "react-icons/md";
 import { IoMdHeart } from "react-icons/io";
@@ -213,7 +213,7 @@ const ProductItem = (props) => {
            {
               props?.item?.images?.length > 1 &&
               <img
-                src={`${API_URL}/download/${props?.item?.images[1]}`}
+                src={`${API_URL}/download/${props?.item?.images?.[1]}`}
                 className="w-full transition-all duration-700 absolute top-0 left-0 opacity-0 group-hover:opacity-100 group-hover:scale-105"
               />
             }

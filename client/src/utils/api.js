@@ -1,5 +1,6 @@
 import axios from "axios";
 const apiUrl = import.meta.env.VITE_API_URL;
+export const API_URL = apiUrl;
 
 export const postData = async (url, formData) => {
     try {
@@ -9,7 +10,7 @@ export const postData = async (url, formData) => {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, // Include your API key in the Authorization header
                 'Content-Type': 'application/json', // Adjust the content type as needed
-              },
+            },
 
             body: JSON.stringify(formData)
         });
