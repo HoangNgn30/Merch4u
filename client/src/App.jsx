@@ -25,6 +25,7 @@ import Address from "./Pages/MyAccount/address";
 import { OrderSuccess } from "./Pages/Orders/success";
 import { OrderFailed } from "./Pages/Orders/failed";
 import SearchPage from "./Pages/Search";
+import Header2 from "./components/Header2";
 
 
 const MyContext = createContext();
@@ -255,7 +256,7 @@ function App() {
     <>
       <BrowserRouter>
         <MyContext.Provider value={values}>
-          <Header />
+          <Header2/>
           <Routes>
             <Route path={"/"} exact={true} element={<Home />} />
             <Route

@@ -4,6 +4,7 @@ import HomeCatSlider from "../../components/HomeCatSlider";
 import { LiaShippingFastSolid } from "react-icons/lia";
 import AdsBannerSlider from "../../components/AdsBannerSlider";
 import AdsBannerSliderV2 from "../../components/AdsBannerSliderV2";
+import Header2 from "../../components/Header2";
 
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
@@ -143,19 +144,18 @@ const Home = () => {
   return (
     <>
 
+
       {
         homeSlidesData?.length === 0 && <BannerLoading />
       }
 
-      {
+      {/* {
         homeSlidesData?.length !== 0 && <HomeSlider data={homeSlidesData} />
-      }
+      } */}
 
       {/* {
         context?.catData?.length !== 0 && <HomeCatSlider data={context?.catData} />
       } */}
-
-
 
 
 

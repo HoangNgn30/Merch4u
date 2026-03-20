@@ -1,0 +1,26 @@
+/* Category Panel */
+.categoryPanel button { text-transform: capitalize !important; }
+
+/* Desktop Nav submenu */
+.nav li .submenu { visibility: hidden; z-index: 1000; }
+.nav li .submenu button { font-weight: 400 !important; }
+.nav li:hover .submenu { opacity: 1 !important; visibility: inherit; top: 100%; }
+.nav li .submenu li:hover button { color: #ff5252 !important; }
+.nav li .submenu li .submenu { top: 0px !important; left: 120% !important; opacity: 0 !important; }
+.nav li .submenu li:hover .submenu { left: 100% !important; opacity: 1 !important; }
+.nav li .submenu li .submenu button { color: rgba(0,0,0,0.80) !important; }
+.nav li .submenu li .submenu button:hover { color: #ff5252 !important; }
+
+/* Mobile bottom nav */
+.mobileNav {
+    height: 58px;
+    box-shadow: 0 -1px 8px rgba(0,0,0,0.08);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Prevent body content from hiding behind mobile nav */
+@media (max-width: 991px) {
+    body {
+        padding-bottom: 58px;
+    }
+}
