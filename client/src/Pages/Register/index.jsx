@@ -28,9 +28,16 @@ const Register = () => {
   const context = useContext(MyContext);
   const history = useNavigate();
 
-    useEffect(()=>{
-      window.scrollTo(0,0)
-    },[])
+  useEffect(() => {
+    window.scrollTo(0, 0)
+    const token = localStorage.getItem('accessToken');
+
+    if (token !== undefined && token !== null && token !== "") {
+      history("/")
+    }
+
+  }, []);
+
   
 
   const onChangeInput = (e) => {

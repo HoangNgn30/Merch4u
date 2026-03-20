@@ -24,6 +24,7 @@ import { useEffect } from "react";
 import { HiOutlineMenu } from "react-icons/hi";
 
 
+
 const StyledBadge = styled(Badge)(({ theme }) => ({
   "& .MuiBadge-badge": {
     right: -3,
@@ -51,46 +52,66 @@ const Header = () => {
   };
 
 
-  const location = useLocation();
+const syncChative = () => {
+    if (window.chative && context?.userData) {
+      window.chative.identify({
+        user_id: context.userData._id,
+        email: context.userData.email,
+        name: context.userData.name
+      });
+    }
+  };
 
   useEffect(() => {
-
     fetchDataFromApi("/api/logo").then((res) => {
-      localStorage.setItem('logo', res?.logo[0]?.logo)
-    })
-
-
-    setTimeout(() => {
-      const token = localStorage.getItem('accessToken');
-
-      if (token !== undefined && token !== null && token !== "") {
-        const url = window.location.href
-        history(location.pathname)
-      } else {
-        history("/login")
+      if (res?.logo) {
+        localStorage.setItem('logo', res.logo[0]?.logo);
       }
-    }, [1000])
+    });
 
-  }, [context?.isLogin]);
+    if (context?.isLogin && context?.userData) {
+      const timer = setTimeout(syncChative, 2000);
+      return () => clearTimeout(timer);
+    } else if (context?.isLogin === false && window.chative) {
+      window.chative.shutdown();
+      window.chative.boot();
+    }
+  }, [context?.isLogin, context?.userData?._id]);
 
-  const logout = () => {
-    setAnchorEl(null);
 
-    fetchDataFromApi(`/api/user/logout?token=${localStorage.getItem('accessToken')}`, { withCredentials: true }).then((res) => {
-      if (res?.error === false) {
-        context.setIsLogin(false);
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        context.setUserData(null);
-        context?.setCartData([]);
-        context?.setMyListData([]);
-        history("/");
+const logout = () => {
+  setAnchorEl(null);
+
+  fetchDataFromApi(`/api/user/logout?token=${localStorage.getItem('accessToken')}`, { withCredentials: true }).then((res) => {
+    if (res?.error === false) {
+
+      if (window.chative) {
+        if (typeof window.chative.clearData === 'function') {
+          window.chative.clearData();
+        }
+        window.chative.identify({
+          user_id: `guest_${new Date().getTime()}`, 
+          email: "",
+          name: ""
+        });
+
+        setTimeout(() => {
+          window.chative.shutdown();
+          window.chative.boot();
+        }, 500);
+
       }
 
-
-    })
-
-  }
+      context.setIsLogin(false);
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      context.setUserData(null);
+      context?.setCartData([]);
+      context?.setMyListData([]);
+      history("/");
+    }
+  });
+}
 
   return (
     <>

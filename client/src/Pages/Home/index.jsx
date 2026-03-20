@@ -151,9 +151,9 @@ const Home = () => {
         homeSlidesData?.length !== 0 && <HomeSlider data={homeSlidesData} />
       }
 
-      {
+      {/* {
         context?.catData?.length !== 0 && <HomeCatSlider data={context?.catData} />
-      }
+      } */}
 
 
 

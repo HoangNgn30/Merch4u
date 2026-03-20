@@ -7,10 +7,10 @@ export default {
   theme: {
     extend: {
       colors:{
-        primary:'#3872fa'
+        primary: 'var(--primary)'
       },
       backgroundColor:{
-        primary:'#3872fa'
+        primary: 'var(--primary)'
       }
     },
   },
