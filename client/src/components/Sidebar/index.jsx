@@ -93,7 +93,9 @@ export const Sidebar = (props) => {
       return newFilters;
     });
 
-    context?.setSearchData([]);
+    if (location.pathname !== '/search') {
+      context?.setSearchData([]);
+    }
 
     // filtesData() will be triggered by the useEffect that watches [filters]
   }, [location]);
@@ -103,9 +105,9 @@ export const Sidebar = (props) => {
   const filtesData = () => {
     props.setIsLoading(true);
 
-    //console.log(context?.searchData)
+    const isSearchDataPresent = context?.searchData && !Array.isArray(context?.searchData);
 
-    if (context?.searchData?.products?.length > 0) {
+    if (isSearchDataPresent) {
       props.setProductsData(context?.searchData);
       props.setIsLoading(false);
       props.setTotalPages(context?.searchData?.totalPages)

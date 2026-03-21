@@ -27,7 +27,6 @@ const Navigation = (props) => {
     setIsOpenCatPanel(true);
   };
 
-  // When mobileOnly=true, just render CategoryPanel + MobileNav (used inside header for mobile)
   if (props.mobileOnly) {
     return (
       <>
@@ -44,7 +43,6 @@ const Navigation = (props) => {
     );
   }
 
-  // Desktop nav bar
   return (
     <>
       <nav className="navigation w-full">

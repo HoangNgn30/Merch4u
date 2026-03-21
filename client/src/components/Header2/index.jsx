@@ -129,7 +129,7 @@ const Header2 = () => {
                     <Link to={"/"}>
                         <img
                             src={localStorage.getItem('logo')}
-                            className="h-[40px] lg:h-[50px] w-auto object-contain"
+                            className="h-[40px] rounded-md lg:h-[50px] w-auto object-contain"
                             alt="Logo"
                         />
                     </Link>
@@ -170,7 +170,7 @@ const Header2 = () => {
                                 onClick={handleClick}
                             >
                                 <div className="flex items-center justify-center w-[36px] h-[36px] min-w-[36px] rounded-full bg-gray-100">
-                                    <FaRegUser className="text-[15px] text-[rgba(0,0,0,0.7)]" />
+                                    <FaRegUser className="text-[20px] text-[rgba(0,0,0,0.7)]" />
                                 </div>
                                 <div className="info flex flex-col text-left">
                                     <span className="text-[13px] text-[rgba(0,0,0,0.7)] font-[500] capitalize leading-tight">
