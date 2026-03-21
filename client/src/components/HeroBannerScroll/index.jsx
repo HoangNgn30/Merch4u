@@ -4,7 +4,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 
-import skyImg from './img/bigbang.jpg';
+import skyImg from './img/bigbang.png';
 import windowImg from './img/window.webp';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -53,7 +53,7 @@ const HeroBannerScroll = () => {
                 <div className='col2hero uppercase'><h1>Own <br /> the moment</h1></div>
             </div>
             <div className='hero-copy uppercase'>
-                <h1>Premium collectibles designed for the most dedicated hearts in the front row</h1>
+                <h1>your wallet - your choice</h1>
             </div>
         </section>
     );

@@ -2,8 +2,16 @@ import OrderModel from "../models/order.model.js";
 import ProductModel from '../models/product.modal.js';
 import UserModel from '../models/user.model.js';
 import paypal from "@paypal/checkout-server-sdk";
+import PayOS from '@payos/node';
 import OrderConfirmationEmail from "../utils/orderEmailTemplate.js";
 import sendEmailFun from "../config/sendEmail.js";
+
+
+const payos = new PayOS(
+    process.env.PAYOS_CLIENT_ID,
+    process.env.PAYOS_API_KEY,
+    process.env.PAYOS_CHECKSUM_KEY
+);
 
 export const createOrderController = async (request, response) => {
     try {
@@ -702,4 +710,99 @@ export async function deleteOrder(request, response) {
         error: false,
         message: "Order Deleted!",
     });
+}
+
+
+
+
+export const createOrderPayosController = async (request, response) => {
+    try {
+        const orderCode = Number(String(Date.now()).slice(-6)); 
+
+        let order = new OrderModel({
+            userId: request.body.userId,
+            products: request.body.products,
+            paymentId: String(orderCode), 
+            payment_status: "Pending",   
+            delivery_address: request.body.delivery_address,
+            totalAmt: request.body.totalAmt || request.body.totalAmount,
+            date: request.body.date
+        });
+
+        order = await order.save();
+
+        //Gọi sang PayOS để tạo link thanh toán
+        const orderBody = {
+            orderCode: orderCode,
+            amount: request.body.totalAmt || request.body.totalAmount, 
+            description: 'Thanh toan don hang',
+
+            returnUrl: `${process.env.CLIENT_URL}/order/success`, 
+            cancelUrl: `${process.env.CLIENT_URL}/order/failed`
+        };
+
+        const paymentLink = await payos.createPaymentLink(orderBody);
+
+        return response.status(200).json({
+            error: false,
+            success: true,
+            message: "Created PayOS Link",
+            checkoutUrl: paymentLink.checkoutUrl, // Link để client redirect
+            order: order
+        });
+
+    } catch (error) {
+        return response.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        })
+    }
+}
+
+export const receivePayosWebhookController = async (request, response) => {
+    try {
+        const webhookData = request.body;
+        
+        const data = payos.verifyPaymentWebhookData(webhookData);
+
+        if (data.code === '00') {
+            const order = await OrderModel.findOne({ paymentId: String(data.orderCode) });
+
+            if (order && order.payment_status !== "Paid") {
+                
+                order.payment_status = "Paid";
+                await order.save();
+
+                for (let i = 0; i < order.products.length; i++) {
+                    const product = await ProductModel.findOne({ _id: order.products[i].productId });
+                    
+                    await ProductModel.findByIdAndUpdate(
+                        order.products[i].productId,
+                        {
+                            countInStock: parseInt(product?.countInStock - order.products[i].quantity),
+                            sale: parseInt(product?.sale + order.products[i].quantity)
+                        },
+                        { new: true }
+                    );
+                }
+
+                const user = await UserModel.findOne({ _id: order.userId });
+                if(user) {
+                    await sendEmailFun({
+                        sendTo: [user.email],
+                        subject: "Order Confirmation",
+                        text: "",
+                        html: OrderConfirmationEmail(user.name, order)
+                    });
+                }
+            }
+            return response.json({ success: true });
+        } else {
+            return response.json({ success: false });
+        }
+    } catch (error) {
+        console.error("Lỗi Webhook:", error);
+        return response.status(400).json({ success: false });
+    }
 }

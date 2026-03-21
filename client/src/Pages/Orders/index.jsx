@@ -5,6 +5,7 @@ import { FaAngleDown } from "react-icons/fa6";
 import Badge from "../../components/Badge";
 import { FaAngleUp } from "react-icons/fa6";
 import { fetchDataFromApi } from "../../utils/api";
+import { MyContext } from '../../App';
 import Pagination from "@mui/material/Pagination";
 
 const Orders = () => {
@@ -82,6 +83,9 @@ const Orders = () => {
                         User Id
                       </th>
                       <th scope="col" className="px-6 py-3 whitespace-nowrap">
+                        Payment Status
+                      </th>
+                      <th scope="col" className="px-6 py-3 whitespace-nowrap">
                         Order Status
                       </th>
                       <th scope="col" className="px-6 py-3 whitespace-nowrap">
@@ -148,6 +152,18 @@ const Orders = () => {
                                 <span className="text-primary">
                                   {order?.userId?._id}
                                 </span>
+                              </td>
+
+                              <td className="px-6 py-4 font-[500] whitespace-nowrap">
+                                {order?.payment_status === 'Paid' ? (
+                                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[13px]">
+                                    Paid 
+                                  </span>
+                                ) : (
+                                  <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-[13px]">
+                                    Pending 
+                                  </span>
+                                )}
                               </td>
 
                               <td className="px-6 py-4 font-[500]">

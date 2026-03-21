@@ -19,6 +19,7 @@ const Checkout = () => {
   const [selectedAddress, setSelectedAddress] = useState("");
   const [totalAmount, setTotalAmount] = useState();
   const [isLoading, setIsloading] = useState(false);
+  const [isLoadingPayOS, setIsLoadingPayOS] = useState(false);
   const context = useContext(MyContext);
 
   const history = useNavigate();
@@ -128,8 +129,8 @@ const Checkout = () => {
     // Capture order on the server
 
     const headers = {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, // Include your API key in the Authorization header
-      'Content-Type': 'application/json', // Adjust the content type as needed
+      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, 
+      'Content-Type': 'application/json', 
     }
 
     const response = await axios.post(
@@ -212,10 +213,58 @@ const Checkout = () => {
       context.alertBox("error", "Please add address");
       setIsloading(false);
     }
-
-
-
   }
+
+
+  const payWithPayOS = async () => {
+      const user = context?.userData;
+
+      if (userData?.address_details?.length === 0 || !selectedAddress) {
+        context.alertBox("error", "Please select a delivery address");
+        return;
+      }
+
+      setIsLoadingPayOS(true);
+
+      try {
+        const orderData = {
+          userId: user?._id,
+          products: context?.cartData,
+          delivery_address: selectedAddress,
+          totalAmt: totalAmount, 
+          date: new Date().toLocaleString("en-US", {
+            month: "short",
+            day: "2-digit",
+            year: "numeric",
+          })
+        };
+
+        const headers = {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Content-Type': 'application/json',
+        }
+
+
+        const response = await axios.post(
+          VITE_API_URL + "/api/order/create-order-payos",
+          orderData,
+          { headers }
+        );
+
+
+        if (response.data.success && response.data.checkoutUrl) {
+          window.location.href = response.data.checkoutUrl;
+        } else {
+          context.alertBox("error", response.data.message || "Failed to create PayOS order");
+          setIsLoadingPayOS(false);
+        }
+      } catch (error) {
+        console.error("PayOS Error:", error);
+        context.alertBox("error", "Cannot connect to server for payment");
+        setIsLoadingPayOS(false);
+      }
+    }
+
 
   return (
     <section className="py-3 lg:py-10 px-3">
@@ -339,6 +388,22 @@ const Checkout = () => {
 
 
                 <div id="paypal-button-container" className={`${userData?.address_details?.length === 0 ? 'pointer-events-none' : ''}`}></div>
+                
+                <Button 
+                  type="button" 
+                  className="btn-lg w-full flex gap-2 items-center !bg-blue-600 !text-white hover:!bg-blue-700" 
+                  onClick={payWithPayOS}
+                  disabled={isLoadingPayOS || userData?.address_details?.length === 0}
+                >
+                  {
+                    isLoadingPayOS === true ? <CircularProgress size={24} color="inherit" /> :
+                      <>
+                        <BsFillBagCheckFill className="text-[20px]" />
+                        Pay with QR Code (VietQR)
+                      </>
+                  }
+                </Button>
+
 
                 <Button type="button" className="btn-dark btn-lg w-full flex gap-2 items-center" onClick={cashOnDelivery}>
                   {
