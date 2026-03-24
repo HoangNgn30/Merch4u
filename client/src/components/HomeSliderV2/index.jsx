@@ -40,7 +40,7 @@ const HomeBannerV2 = (props) => {
             return (
               <SwiperSlide key={index}>
 
-                <div className="item w-full rounded-md overflow-hidden relative">
+                <div className="item w-full rounded-[35px] overflow-hidden relative">
                   <img src={item?.bannerimages[0]} className="w-full" />
 
                   <div className="info absolute top-0 -right-[100%] opacity-0 w-[50%] h-[100%] z-50 p-8 flex items-center flex-col justify-center transition-all duration-700">

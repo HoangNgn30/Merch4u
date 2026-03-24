@@ -27,8 +27,7 @@ import ProductDetails from "./Pages/Products/productDetails";
 import AddRAMS from "./Pages/Products/addRAMS.JSX";
 import AddWeight from "./Pages/Products/addWeight";
 import AddSize from "./Pages/Products/addSize";
-import BannerV1List from "./Pages/Banners/bannerV1List";
-import { BannerList2 } from "./Pages/Banners/bannerList2";
+import RightBannerList from "./Pages/Banners/rightBannerList";
 import { BlogList } from "./Pages/Blog";
 import ManageLogo from "./Pages/ManageLogo";
 import LoadingBar from "react-top-loading-bar";
@@ -424,7 +423,7 @@ function App() {
       ),
     },
     {
-      path: "/bannerV1/list",
+      path: "/rightBanner/list",
       exact: true,
       element: (
         <>
@@ -441,32 +440,7 @@ function App() {
                 className={`contentRight overflow-hidden py-4 px-5 ${isSidebarOpen === true && windowWidth < 992 && 'opacity-0'}  transition-all`}
                 style={{ width: isSidebarOpen === false ? "100%" : '80%' }}
               >
-                <BannerV1List />
-              </div>
-            </div>
-          </section>
-        </>
-      ),
-    },
-    {
-      path: "/bannerlist2/List",
-      exact: true,
-      element: (
-        <>
-          <section className="main">
-            <Header />
-            <div className="contentMain flex">
-              <div
-                className={`overflow-hidden sidebarWrapper ${isSidebarOpen === true ? windowWidth < 992 ? `w-[${sidebarWidth / 1.5}%]` : `w-[20%]` : "w-[0px] opacity-0 invisible"
-                  } transition-all`}
-              >
-                <Sidebar />
-              </div>
-              <div
-                className={`contentRight overflow-hidden py-4 px-5 ${isSidebarOpen === true && windowWidth < 992 && 'opacity-0'}  transition-all`}
-                style={{ width: isSidebarOpen === false ? "100%" : '80%' }}
-              >
-                <BannerList2 />
+                <RightBannerList />
               </div>
             </div>
           </section>

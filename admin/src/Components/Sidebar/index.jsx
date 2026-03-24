@@ -327,7 +327,7 @@ const Sidebar = () => {
             <Collapse isOpened={submenuIndex === 5 ? true : false}>
               <ul className="w-full">
                 <li className="w-full">
-                  <Link to="/bannerV1/List"
+                  <Link to="/rightBanner/List"
                     onClick={() => {
                       context?.windowWidth < 992 && context?.setisSidebarOpen(false)
                       setSubmenuIndex(null)
@@ -335,7 +335,7 @@ const Sidebar = () => {
                   >
                     <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3">
                       <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>{" "}
-                      Home Banner List
+                      rightBannerList
                     </Button>
                   </Link>
                 </li>
@@ -343,42 +343,15 @@ const Sidebar = () => {
                   <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3" onClick={() => {
                     context.setIsOpenFullScreenPanel({
                       open: true,
-                      model: "Add Home Banner List 1"
+                      model: "addRightBanner"
                     })
                     context?.windowWidth < 992 && context?.setisSidebarOpen(false)
                     setSubmenuIndex(null)
                   }}>
                     <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                    Add Home Banner
+                    addRightBanner
                   </Button>
                 </li>
-
-                <li className="w-full">
-                  <Link to="/bannerlist2/List" onClick={() => {
-                    context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-                    setSubmenuIndex(null)
-                  }}>
-                    <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3">
-                      <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>{" "}
-                      Home Banner List 2
-                    </Button>
-                  </Link>
-                </li>
-                <li className="w-full">
-                  <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3" onClick={() => {
-                    context.setIsOpenFullScreenPanel({
-                      open: true,
-                      model: "Add Home Banner List2"
-                    })
-                    context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-                    setSubmenuIndex(null)
-                  }}>
-                    <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                    Add Banner
-                  </Button>
-                </li>
-
-
               </ul>
             </Collapse>
           </li>

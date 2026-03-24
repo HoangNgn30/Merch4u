@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import AccountSidebar from "../../components/AccountSidebar";
 import { Button } from "@mui/material";
 import { FaAngleDown } from "react-icons/fa6";
 import Badge from "../../components/Badge";
 import { FaAngleUp } from "react-icons/fa6";
-import { fetchDataFromApi } from "../../utils/api";
+import { fetchDataFromApi, deleteData } from "../../utils/api";
 import { MyContext } from '../../App';
 import Pagination from "@mui/material/Pagination";
 
@@ -13,6 +13,24 @@ const Orders = () => {
   const [orders, setOrders] = useState([]);
 
   const [page, setPage] = useState(1);
+  const context = useContext(MyContext);
+
+  const handleDeleteOrder = (id) => {
+    if (window.confirm("Are you sure you want to cancel this order?")) {
+      deleteData(`/api/order/deleteOrder/${id}`).then((res) => {
+        if (res?.error === false) {
+          context.alertBox("success", res?.message);
+          fetchDataFromApi(`/api/order/order-list/orders?page=${page}&limit=5`).then((res2) => {
+            if (res2?.error === false) {
+              setOrders(res2)
+            }
+          })
+        } else {
+          context.alertBox("error", res?.message);
+        }
+      });
+    }
+  };
 
   const isShowOrderdProduct = (index) => {
     if (isOpenOrderdProduct === index) {
@@ -90,6 +108,9 @@ const Orders = () => {
                       </th>
                       <th scope="col" className="px-6 py-3 whitespace-nowrap">
                         Date
+                      </th>
+                      <th scope="col" className="px-6 py-3 whitespace-nowrap">
+                        Action
                       </th>
                     </tr>
                   </thead>
@@ -171,6 +192,16 @@ const Orders = () => {
                               </td>
                               <td className="px-6 py-4 font-[500] whitespace-nowrap">
                                 {order?.createdAt?.split("T")[0]}
+                              </td>
+                              <td className="px-6 py-4 font-[500] whitespace-nowrap">
+                                {order?.payment_status !== 'Paid' && (
+                                  <Button 
+                                    className="!bg-red-500 !text-white !text-[12px] !capitalize !min-w-[70px]"
+                                    onClick={() => handleDeleteOrder(order?._id)}
+                                  >
+                                    Delete
+                                  </Button>
+                                )}
                               </td>
                             </tr>
 

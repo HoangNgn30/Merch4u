@@ -15,6 +15,8 @@
     "@gsap/react": "^2.1.2",
     "@mui/material": "^6.1.8",
     "@mui/styled-engine-sc": "^6.1.8",
+    "@splinetool/react-spline": "^4.1.0",
+    "@splinetool/runtime": "^1.12.70",
     "@stripe/stripe-js": "^5.6.0",
     "axios": "^1.7.9",
     "firebase": "^11.10.0",

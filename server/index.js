@@ -13,8 +13,7 @@ import cartRouter from './route/cart.route.js';
 import myListRouter from './route/mylist.route.js';
 import addressRouter from './route/address.route.js';
 import homeSlidesRouter from './route/homeSlides.route.js';
-import bannerV1Router from './route/bannerV1.route.js';
-import bannerList2Router from './route/bannerList2.route.js';
+import rightBannerRouter from './route/rightBanner.route.js';
 import blogRouter from './route/blog.route.js';
 import orderRouter from './route/order.route.js';
 import logoRouter from './route/logo.route.js';
@@ -47,8 +46,7 @@ app.use("/api/cart",cartRouter)
 app.use("/api/myList",myListRouter)
 app.use("/api/address",addressRouter)
 app.use("/api/homeSlides",homeSlidesRouter)
-app.use("/api/bannerV1",bannerV1Router)
-app.use("/api/bannerList2",bannerList2Router)
+app.use("/api/rightBanner",rightBannerRouter)
 app.use("/api/blog",blogRouter)
 app.use("/api/order",orderRouter)
 app.use("/api/logo",logoRouter)

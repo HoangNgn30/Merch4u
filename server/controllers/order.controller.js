@@ -2,16 +2,16 @@ import OrderModel from "../models/order.model.js";
 import ProductModel from '../models/product.modal.js';
 import UserModel from '../models/user.model.js';
 import paypal from "@paypal/checkout-server-sdk";
-import PayOS from '@payos/node';
+import { PayOS } from '@payos/node';
 import OrderConfirmationEmail from "../utils/orderEmailTemplate.js";
 import sendEmailFun from "../config/sendEmail.js";
 
 
-const payos = new PayOS(
-    process.env.PAYOS_CLIENT_ID,
-    process.env.PAYOS_API_KEY,
-    process.env.PAYOS_CHECKSUM_KEY
-);
+const payos = new PayOS({
+    clientId: process.env.PAYOS_CLIENT_ID,
+    apiKey: process.env.PAYOS_API_KEY,
+    checksumKey: process.env.PAYOS_CHECKSUM_KEY
+});
 
 export const createOrderController = async (request, response) => {
     try {
@@ -717,7 +717,8 @@ export async function deleteOrder(request, response) {
 
 export const createOrderPayosController = async (request, response) => {
     try {
-        const orderCode = Number(String(Date.now()).slice(-6)); 
+        //const orderCode = Number(String(Date.now()).slice(-6));
+        const orderCode = Number(String(Date.now())); 
 
         let order = new OrderModel({
             userId: request.body.userId,
@@ -741,7 +742,7 @@ export const createOrderPayosController = async (request, response) => {
             cancelUrl: `${process.env.CLIENT_URL}/order/failed`
         };
 
-        const paymentLink = await payos.createPaymentLink(orderBody);
+        const paymentLink = await payos.paymentRequests.create(orderBody);
 
         return response.status(200).json({
             error: false,
@@ -764,7 +765,7 @@ export const receivePayosWebhookController = async (request, response) => {
     try {
         const webhookData = request.body;
         
-        const data = payos.verifyPaymentWebhookData(webhookData);
+        const data = await payos.webhooks.verify(webhookData);
 
         if (data.code === '00') {
             const order = await OrderModel.findOne({ paymentId: String(data.orderCode) });

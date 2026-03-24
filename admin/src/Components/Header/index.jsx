@@ -31,10 +31,8 @@ import Typography from '@mui/material/Typography';
 import { IoMdClose } from "react-icons/io";
 import Slide from '@mui/material/Slide';
 import EditProduct from "../../Pages/Products/editProduct";
-import { AddBannerV1 } from "../../Pages/Banners/addBannerV1";
-import { EditBannerV1 } from "../../Pages/Banners/editBannerV1";
-import { BannerList2_AddBanner } from "../../Pages/Banners/bannerList2_AddBanner";
-import { BannerList2_Edit_Banner } from "../../Pages/Banners/bannerList2_Edit_Banner";
+import { AddRightBanner } from "../../Pages/Banners/rightBanner";
+import { EditRightBanner } from "../../Pages/Banners/editRightBanner";
 import AddBlog from "../../Pages/Blog/addBlog";
 import EditBlog from "../../Pages/Blog/editBlog";
 import EditHomeSlide from "../../Pages/HomeSliderBanners/editHomeSlide";
@@ -332,20 +330,12 @@ const Header = () => {
 
 
         {
-          context?.isOpenFullScreenPanel?.model === "Add Home Banner List 1" && <AddBannerV1 />
+          context?.isOpenFullScreenPanel?.model === "addRightBanner" && <AddRightBanner />
         }
 
 
         {
-          context?.isOpenFullScreenPanel?.model === "Edit BannerV1" && <EditBannerV1 />
-        }
-
-        {
-          context?.isOpenFullScreenPanel?.model === "Add Home Banner List2" && <BannerList2_AddBanner />
-        }
-
-        {
-          context?.isOpenFullScreenPanel?.model === "Edit bannerList2" && <BannerList2_Edit_Banner />
+          context?.isOpenFullScreenPanel?.model === "editRightBanner" && <EditRightBanner />
         }
 
 

@@ -1,9 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import HomeSlider from "../../components/HomeSlider";
-import HomeCatSlider from "../../components/HomeCatSlider";
 import { LiaShippingFastSolid } from "react-icons/lia";
-import AdsBannerSlider from "../../components/AdsBannerSlider";
-import AdsBannerSliderV2 from "../../components/AdsBannerSliderV2";
 import './style.css';
 
 import Tabs from "@mui/material/Tabs";
@@ -18,7 +15,6 @@ import 'swiper/css/free-mode';
 import { Navigation, FreeMode } from "swiper/modules";
 import BlogItem from "../../components/BlogItem";
 import HomeBannerV2 from "../../components/HomeSliderV2";
-import BannerBoxV2 from "../../components/bannerBoxV2";
 import { fetchDataFromApi } from "../../utils/api";
 import { MyContext } from "../../App";
 import ProductLoading from "../../components/ProductLoading";
@@ -27,6 +23,7 @@ import { Button } from "@mui/material";
 import { MdArrowRightAlt } from "react-icons/md";
 import { Link } from "react-router-dom";
 import HeroBannerScroll from "../../components/HeroBannerScroll";
+import RightBanner from "../../components/RightBanner";
 
 const Home = () => {
   const [value, setValue] = useState(0);
@@ -35,8 +32,7 @@ const Home = () => {
   const [productsData, setAllProductsData] = useState([]);
   const [productsBanners, setProductsBanners] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [bannerV1Data, setBannerV1Data] = useState([]);
-  const [bannerList2Data, setBannerList2Data] = useState([]);
+  const [rightBannerData, setRightBannerData] = useState([]);
   const [blogData, setBlogData] = useState([]);
   const [randomCatProducts, setRandomCatProducts] = useState([]);
 
@@ -64,12 +60,8 @@ const Home = () => {
       setFeaturedProducts(res?.products)
     })
 
-    fetchDataFromApi("/api/bannerV1").then((res) => {
-      setBannerV1Data(res?.data);
-    });
-
-    fetchDataFromApi("/api/bannerList2").then((res) => {
-      setBannerList2Data(res?.data);
+    fetchDataFromApi("/api/rightBanner").then((res) => {
+      setRightBannerData(res?.data);
     });
 
     fetchDataFromApi("/api/blog").then((res) => {
@@ -149,15 +141,6 @@ const Home = () => {
       {
         homeSlidesData?.length === 0 && <BannerLoading />
       }
-      {/* {
-        homeSlidesData?.length !== 0 && <HomeSlider data={homeSlidesData} />
-      } */}
-
-      {/* {
-        context?.catData?.length !== 0 && <HomeCatSlider data={context?.catData} />
-      } */}
-
-
       <div className="heroBanner relative">
         <HeroBannerScroll/>
       </div>
@@ -211,22 +194,14 @@ const Home = () => {
 
 
         <section className="py-6 pt-0 bg-white">
-          <div className="container flex flex-col lg:flex-row gap-5">
-            <div className="part1 w-full lg:w-[70%]">
-
-              {
-                productsBanners?.length > 0 && <HomeBannerV2 data={productsBanners} />
-              }
-
-
+          <div className="container flex flex-col lg:flex-row gap-5 items-stretch "> 
+            <div className="part1 w-full lg:w-[70%] ">
+              {productsBanners?.length > 0 && <HomeBannerV2 data={productsBanners}/>}
             </div>
 
-            <div className="part2 scrollableBox w-full lg:w-[30%] flex items-center gap-5 justify-between flex-row lg:flex-col">
-              <BannerBoxV2 info={bannerV1Data[bannerV1Data?.length - 1]?.alignInfo} image={bannerV1Data[bannerV1Data?.length - 1]?.images[0]} item={bannerV1Data[bannerV1Data?.length - 1]} />
-
-              <BannerBoxV2 info={bannerV1Data[bannerV1Data?.length - 2]?.alignInfo} image={bannerV1Data[bannerV1Data?.length - 2]?.images[0]} item={bannerV1Data[bannerV1Data?.length - 2]} />
+            <div className="part2 w-full lg:w-[30%] flex">
+              <RightBanner className="w-full h-full" data={rightBannerData} />
             </div>
-
           </div>
         </section>
 
@@ -252,12 +227,6 @@ const Home = () => {
 
               <p className="font-bold text-[20px] lg:text-[25px]">- Only $200*</p>
             </div>
-
-            {
-              bannerV1Data?.length !== 0 && <AdsBannerSliderV2 items={4} data={bannerV1Data} />
-            }
-
-
           </div>
         </section>
 
@@ -281,6 +250,10 @@ const Home = () => {
 
 
           </div>
+
+            {
+              homeSlidesData?.length !== 0 && <HomeSlider data={homeSlidesData} />
+            }
         </section>
         <section className="py-2 lg:py-0 pt-0 bg-white">
           <div className="container">
@@ -295,9 +268,6 @@ const Home = () => {
               featuredProducts?.length !== 0 && <ProductsSlider items={6} data={featuredProducts} />
             }
 
-            {
-              bannerList2Data?.length !== 0 && <AdsBannerSlider items={4} data={bannerList2Data} />
-            }
 
 
 
@@ -322,8 +292,6 @@ const Home = () => {
                       }
 
                     </div>
-
-
 
 
                     {
@@ -395,6 +363,7 @@ const Home = () => {
           </section>
         }
       </div>
+
     </>
   );
 };

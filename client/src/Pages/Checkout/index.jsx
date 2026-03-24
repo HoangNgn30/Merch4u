@@ -391,7 +391,7 @@ const Checkout = () => {
                 
                 <Button 
                   type="button" 
-                  className="btn-lg w-full flex gap-2 items-center !bg-blue-600 !text-white hover:!bg-blue-700" 
+                  className="btn-payos btn-lg w-full flex gap-2 items-center" 
                   onClick={payWithPayOS}
                   disabled={isLoadingPayOS || userData?.address_details?.length === 0}
                 >
