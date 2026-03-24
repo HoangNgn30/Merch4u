@@ -113,7 +113,8 @@ const Header2 = () => {
 
 
     return (
-        <header className=" sticky z-[1000] top-0 left-0 w-full bg-white/20 backdrop-blur-md border-b border-white/10">
+        <>
+        <header className="fixed lg:sticky z-[1000] top-0 left-0 w-full bg-white lg:bg-white/20 lg:backdrop-blur-md border-b border-white/10">
             <div className="flex items-center justify-between px-4 lg:px-8 py-3 gap-2">
 
                 <div className="flex items-center lg:hidden">
@@ -284,11 +285,15 @@ const Header2 = () => {
                 </div>
             )}
 
-            {/* Mobile: Category panel (renders via Navigation which includes CategoryPanel) */}
-            <div className="lg:hidden">
-                <Navigation isOpenCatPanel={isOpenCatPanel} setIsOpenCatPanel={setIsOpenCatPanel} mobileOnly={true} />
-            </div>
         </header>
+
+        <div className="lg:hidden h-[60px]"></div>
+
+        {/* Mobile: Category panel & Mobile Nav (Outside header to avoid sticky/z-index issues) */}
+        <div className="lg:hidden">
+            <Navigation isOpenCatPanel={isOpenCatPanel} setIsOpenCatPanel={setIsOpenCatPanel} mobileOnly={true} />
+        </div>
+    </>
     );
 }
 

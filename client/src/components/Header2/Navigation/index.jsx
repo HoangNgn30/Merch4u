@@ -38,7 +38,7 @@ const Navigation = (props) => {
             data={catData}
           />
         )}
-        <MobileNav />
+        <MobileNav setIsOpenCatPanel={props.setIsOpenCatPanel} />
       </>
     );
   }

@@ -1,6 +1,6 @@
 .hero {
     position: relative;
-    margin-top: -80px; /* xóa mt và pt để tách  header và banner*/
+    margin-top: -80px; 
     padding-top: 80px;
     width: 100%;
     height: 100vh;
@@ -60,7 +60,7 @@
     will-change: transform, opacity; 
     padding-top: 40px;
     text-shadow: 0 0 20px rgba(255, 255, 255, 0.698), 
-                 0 0 40px rgba(0, 0, 0, 0.2);
+                0 0 40px rgba(0, 0, 0, 0.2);
 }
 
 
@@ -70,7 +70,7 @@
     max-width: 450px;
     will-change: transform, opacity;
     text-shadow: 0 0 20px rgba(255, 255, 255, 0.698), 
-                 0 0 40px rgba(0, 0, 0, 0.2);
+                0 0 40px rgba(0, 0, 0, 0.2);
 }
 
 

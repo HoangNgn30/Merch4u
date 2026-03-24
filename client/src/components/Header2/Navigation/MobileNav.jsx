@@ -7,10 +7,11 @@ import { BsBagCheck } from "react-icons/bs";
 import { FiUser } from "react-icons/fi";
 import { NavLink } from "react-router";
 import { MdOutlineFilterAlt } from "react-icons/md";
+import { RiMenu2Fill } from "react-icons/ri";
 import { MyContext } from '../../../App';
 import { useLocation } from "react-router-dom";
 
-const MobileNav = () => {
+const MobileNav = (props) => {
 
     const context = useContext(MyContext)
 
@@ -33,7 +34,7 @@ const MobileNav = () => {
 
 
     return (
-        <div className='mobileNav bg-white p-1 px-3 w-full flex items-center justify-between fixed bottom-0 left-0 gap-0 z-[51]'>
+        <div className='mobileNav bg-white p-1 px-3 w-full flex items-center justify-between fixed bottom-0 left-0 gap-0 z-[1000]'>
             <NavLink to="/" end className={({ isActive }) => isActive ? "isActive" : ""} onClick={()=>context?.setOpenSearchPanel(false)}>
                 <Button className="flex-col !w-[40px] !min-w-[40px] !capitalize !text-gray-700">
                     <IoHomeOutline size={18} />
@@ -42,18 +43,6 @@ const MobileNav = () => {
             </NavLink>
 
 
-            {
-                context?.isFilterBtnShow === true &&
-                <Button className="flex-col !w-[40px] !h-[40px] !min-w-[40px] !capitalize !text-gray-700 !bg-primary !rounded-full" onClick={openFilters}>
-                    <MdOutlineFilterAlt size={18} className='text-white' />
-                </Button>
-            }
-
-            <Button className="flex-col !w-[40px] !min-w-[40px] !capitalize !text-gray-700"
-            onClick={()=>context?.setOpenSearchPanel(true)}>
-                <IoSearch size={18} />
-                <span className='text-[12px]'>Search</span>
-            </Button>
 
 
 
