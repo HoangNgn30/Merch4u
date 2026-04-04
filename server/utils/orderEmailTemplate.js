@@ -101,13 +101,13 @@ const OrderConfirmationEmail = (username, orders) => {
                     </tr>    
           
           </table>
-            <p><strong>Order ID:</strong> #${orders?._id}</p>
+            <p><strong>Mã đơn hàng:</strong> #${orders?._id}</p>
             <p><strong>Thời gian giao hàng dự kiến:</strong> 3-5 ngày làm việc</p>
             
             <p>Nếu có bất kỳ thắc mắc nào, đừng ngần ngại liên hệ với chúng tôi.</p>
         </div >
     <div className="footer">
-        &copy; ${new Date().getFullYear()} Your Store. All rights reserved.
+        &copy; ${new Date().getFullYear()} Mearch4u. Bản quyền đã được bảo lưu.
     </div>
     </div >
 </body >

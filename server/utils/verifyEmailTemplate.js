@@ -54,16 +54,16 @@ const VerificationEmail = (username, otp ) => {
   <body>
       <div className="container">
           <div className="header">
-              <h1>Hii ${username} Please Verify Your Email Address</h1>
+              <h1>Xin chào ${username} Vui lòng xác minh địa chỉ Email của bạn</h1>
           </div>
           <div className="content">
   
-              <p>Thank you for registering with Ecommerce App. Please use the OTP below to verify your email address:</p>
+              <p>Cảm ơn bạn đã đăng ký Mearch4u. Vui lòng sử dụng mã OTP bên dưới để xác minh địa chỉ email của bạn:</p>
               <div className="otp">${otp}</div>
-              <p>If you didn’t create an account, you can safely ignore this email.</p>
+              <p>Nếu bạn chưa tạo tài khoản, bạn có thể bỏ qua email này.</p>
           </div>
           <div className="footer">
-              <p>&copy; 2024 Ecommerce App. All rights reserved.</p>
+              <p>&copy; 2026 Mearch4u. All rights reserved.</p>
           </div>
       </div>
   </body>

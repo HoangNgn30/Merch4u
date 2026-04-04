@@ -4,8 +4,8 @@ import gsap from "gsap";
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 
-import skyImg from './img/bigbang.png';
-import windowImg from './img/window.webp';
+import skyImg from './img/bigbang.webp';
+import windowImg from './img/window.png';
 
 gsap.registerPlugin(ScrollTrigger);
 

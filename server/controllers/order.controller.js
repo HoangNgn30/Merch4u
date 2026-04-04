@@ -67,7 +67,7 @@ export const createOrderController = async (request, response) => {
         return response.status(200).json({
             error: false,
             success: true,
-            message: "Order Placed",
+            message: "Đơn hàng đã được đặt",
             order: order
         });
 
@@ -93,7 +93,7 @@ export async function getOrderDetailsController(request, response) {
         const total = await OrderModel.countDocuments(orderlist);
 
         return response.json({
-            message: "order list",
+            message: "Danh sách đơn hàng",
             data: orderlist,
             error: false,
             success: true,
@@ -123,7 +123,7 @@ export async function getUserOrderDetailsController(request, response) {
         const total = await orderTotal?.length;
 
         return response.json({
-            message: "order list",
+            message: "Danh sách đơn hàng",
             data: orderlist,
             error: false,
             success: true,
@@ -203,7 +203,7 @@ export const createOrderPaypalController = async (request, response) => {
             response.json({ id: order.result.id });
         } catch (error) {
             console.error(error);
-            response.status(500).send("Error creating PayPal order");
+            response.status(500).send("Lỗi khi tạo đơn hàng PayPal");
         }
 
     } catch (error) {
@@ -302,7 +302,7 @@ export const updateOrderStatusController = async (request, response) => {
         )
 
         return response.json({
-            message: "Update order status",
+            message: "Cập nhật trạng thái đơn hàng",
             success: true,
             error: false,
             data: updateOrder
@@ -688,7 +688,7 @@ export async function deleteOrder(request, response) {
 
     if (!order) {
         return response.status(404).json({
-            message: "Order Not found",
+            message: "Không tìm thấy đơn hàng",
             error: true,
             success: false
         })
@@ -699,7 +699,7 @@ export async function deleteOrder(request, response) {
 
     if (!deletedOrder) {
         response.status(404).json({
-            message: "Order not deleted!",
+            message: "Không thể xóa đơn hàng!",
             success: false,
             error: true
         });
@@ -708,7 +708,7 @@ export async function deleteOrder(request, response) {
     return response.status(200).json({
         success: true,
         error: false,
-        message: "Order Deleted!",
+        message: "Xóa đơn hàng!",
     });
 }
 

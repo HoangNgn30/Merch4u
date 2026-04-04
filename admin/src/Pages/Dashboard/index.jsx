@@ -185,20 +185,19 @@ const Dashboard = () => {
       <div className="w-full py-4 lg:py-1 px-5 border bg-[#f1faff] border-[rgba(0,0,0,0.1)] flex items-center gap-8 mb-5 justify-between rounded-md">
         <div className="info">
           <h1 className="text-[26px] lg:text-[35px] font-bold leading-8 lg:leading-10 mb-3">
-            Welcome,
+            Xin chào,
             <br />
             <span className="text-primary">{context?.userData?.name}</span>
           </h1>
           <p>
-            Here’s What happening on your store today. See the statistics at
-            once.
+            Đây là những gì đang diễn ra trên cửa hàng của bạn hôm nay. Xem số liệu thống kê ngay lập tức.
           </p>
           <br />
           <Button className="btn-blue btn !capitalize" onClick={() => context.setIsOpenFullScreenPanel({
             open: true,
             model: "Add Product"
           })}>
-            <FaPlus /> Add Product
+            <FaPlus /> Thêm sản phẩm
           </Button>
         </div>
 
@@ -213,7 +212,7 @@ const Dashboard = () => {
 
       <div className="card my-4 shadow-md sm:rounded-lg bg-white">
         <div className="grid grid-cols-1 lg:grid-cols-2 px-5 py-5 flex-col sm:flex-row">
-          <h2 className="text-[18px] font-[600] text-left mb-2 lg:mb-0">Recent Orders</h2>
+          <h2 className="text-[18px] font-[600] text-left mb-2 lg:mb-0">Đơn hàng gần đây</h2>
           <div className="ml-auto w-full">
             <SearchBox
               searchQuery={orderSearchQuery}
@@ -232,37 +231,37 @@ const Dashboard = () => {
                   &nbsp;
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                  Order Id
+                  Mã đơn hàng
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                  Paymant Id
+                  Mã thanh toán
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                  Name
+                  Tên
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                  Phone Number
+                  SĐT
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                  Address
+                  Địa chỉ
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                  Pincode
+                  Mã bưu điện
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                  Total Amount
+                  Tổng số tiền
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap">
                   Email
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                  User Id
+                  ID người dùng
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                  Order Status
+                  Trạng thái đơn hàng
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                  Date
+                  Ngày
                 </th>
               </tr>
             </thead>
@@ -346,31 +345,31 @@ const Dashboard = () => {
                                       scope="col"
                                       className="px-6 py-3 whitespace-nowrap"
                                     >
-                                      Product Id
+                                      mã sản phẩm
                                     </th>
                                     <th
                                       scope="col"
                                       className="px-6 py-3 whitespace-nowrap"
                                     >
-                                      Product Title
+                                      Tên sản phẩm
                                     </th>
                                     <th
                                       scope="col"
                                       className="px-6 py-3 whitespace-nowrap"
                                     >
-                                      Image
+                                      Ảnh
                                     </th>
                                     <th
                                       scope="col"
                                       className="px-6 py-3 whitespace-nowrap"
                                     >
-                                      Quantity
+                                      Số lượng
                                     </th>
                                     <th
                                       scope="col"
                                       className="px-6 py-3 whitespace-nowrap"
                                     >
-                                      Price
+                                      Giá
                                     </th>
                                     <th
                                       scope="col"
@@ -456,20 +455,20 @@ const Dashboard = () => {
 
        <div className="card my-4 shadow-md sm:rounded-lg bg-white">
             <div className="flex items-center justify-between px-5 py-5 pb-0">
-              <h2 className="text-[18px] font-[600]">Total Users & Total Sales</h2>
+              <h2 className="text-[18px] font-[600]">Tổng số người dùng và tổng doanh thu</h2>
             </div>
     
             <div className="flex items-center gap-5 px-5 py-5 pt-1">
               <span className="flex items-center gap-1 text-[15px] cursor-pointer" onClick={getTotalUsersByYear}>
                 <span className="block w-[8px] h-[8px] rounded-full bg-primary "
                 ></span>
-                Total Users
+                Tổng số người dùng
               </span>
     
               <span className="flex items-center gap-1 text-[15px] cursor-pointer" onClick={getTotalSalesByYear}>
                 <span className="block w-[8px] h-[8px] rounded-full bg-green-600  "
                 ></span>
-                Total Sales
+                Tổng doanh thu
               </span>
             </div>
     

@@ -121,7 +121,7 @@ const logout = () => {
             <div className="flex items-center justify-between">
               <div className="col1 w-[50%] hidden lg:block">
                 <p className="text-[12px] font-[500] mt-0 mb-0">
-                  Get up to 50% off new season styles, limited time only
+                  Giảm giá đến 50% cho các mẫu thời trang mùa mới, chỉ trong thời gian có hạn.
                 </p>
               </div>
 
@@ -174,14 +174,14 @@ const logout = () => {
                       to="/login"
                       className="link transition text-[15px] font-[500]"
                     >
-                      Login
+                      Đăng Nhập
                     </Link>{" "}
                     | &nbsp;
                     <Link
                       to="/register"
                       className="link  transition text-[15px]  font-[500]"
                     >
-                      Register
+                      Đăng Ký
                     </Link>
                   </li>
                 ) : (
@@ -254,7 +254,7 @@ const logout = () => {
                               className="flex gap-2 ! !py-2"
                             >
                               <FaRegUser className="text-[18px]" />{" "}
-                              <span className="text-[14px]">My Account</span>
+                              <span className="text-[14px]">Tài khoản của tôi</span>
                             </MenuItem>
                           </Link>
                           <Link to="/address" className="w-full block">
@@ -263,7 +263,7 @@ const logout = () => {
                               className="flex gap-2 ! !py-2"
                             >
                               <LuMapPin className="text-[18px]" />{" "}
-                              <span className="text-[14px]">Address</span>
+                              <span className="text-[14px]">Địa Chỉ</span>
                             </MenuItem>
                           </Link>
                           <Link to="/my-orders" className="w-full block">
@@ -272,7 +272,7 @@ const logout = () => {
                               className="flex gap-2 ! !py-2"
                             >
                               <IoBagCheckOutline className="text-[18px]" />{" "}
-                              <span className="text-[14px]">Orders</span>
+                              <span className="text-[14px]">Đơn Hàng</span>
                             </MenuItem>
                           </Link>
                           <Link to="/my-list" className="w-full block">
@@ -290,7 +290,7 @@ const logout = () => {
                             className="flex gap-2 ! !py-2"
                           >
                             <IoIosLogOut className="text-[18px]" />{" "}
-                            <span className="text-[14px]">Logout</span>
+                            <span className="text-[14px]">Đăng Xuất</span>
                           </MenuItem>
                         </Menu>
                       </li>

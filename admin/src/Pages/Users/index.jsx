@@ -231,7 +231,7 @@ export const Users = () => {
                     <div className="col w-[40%] ml-auto flex items-center gap-3">
                         {
                             sortedIds?.length !== 0 && <Button variant="contained" className="btn-sm" size="small" color="error"
-                                onClick={deleteMultiple}>Delete</Button>
+                                onClick={deleteMultiple}>Xóa</Button>
                         }
                         <SearchBox
                             searchQuery={searchQuery}
@@ -309,7 +309,7 @@ export const Users = () => {
                                                             <span
                                                                 className={`inline-block py-1 px-4 rounded-full text-[11px] capitalize bg-red-500  text-white font-[500]`}
                                                             >
-                                                                Not Verify
+                                                                Chưa Xác Minh
                                                             </span>
 
                                                             :
@@ -317,7 +317,7 @@ export const Users = () => {
                                                             <span
                                                                 className={`inline-flex items-center justify-center gap-1 py-1 px-4 rounded-full text-[11px] capitalize bg-green-500 text-white font-[500]`}
                                                             >
-                                                                <FaCheckDouble /> Verifyed
+                                                                <FaCheckDouble /> Đã Xác Minh
                                                             </span>
 
 
@@ -329,7 +329,7 @@ export const Users = () => {
                                                 </TableCell>
 
                                                 <TableCell style={{ minWidth: columns.minWidth }}>
-                                                    <Button onClick={() => deleteUser(user?._id)} variant="outlined" color="error" size="small">Delete</Button>
+                                                    <Button onClick={() => deleteUser(user?._id)} variant="outlined" color="error" size="small">Xóa</Button>
                                                 </TableCell>
 
                                             </TableRow>

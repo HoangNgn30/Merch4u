@@ -332,50 +332,50 @@ const EditProduct = () => {
 
 
         if (formFields.name === "") {
-            context.alertBox("error", "Please enter product name");
+            context.alertBox("error", "Vui lòng nhập tên sản phẩm");
             return false;
         }
 
         if (formFields.description === "") {
-            context.alertBox("error", "Please enter product description");
+            context.alertBox("error", "Vui lòng nhập mô tả sản phẩm");
             return false;
         }
 
 
 
         if (formFields?.catId === "") {
-            context.alertBox("error", "Please select product category");
+            context.alertBox("error", "Vui lòng chọn danh mục sản phẩm");
             return false;
         }
 
 
 
         if (formFields?.price === "") {
-            context.alertBox("error", "Please enter product price");
+            context.alertBox("error", "Vui lòng nhập giá sản phẩm");
             return false;
         }
 
 
         if (formFields?.oldPrice === "") {
-            context.alertBox("error", "Please enter product old Price");
+            context.alertBox("error", "Vui lòng nhập giá cũ của sản phẩm.");
             return false;
         }
 
 
         if (formFields?.countInStock === "") {
-            context.alertBox("error", "Please enter  product stock");
+            context.alertBox("error", "Vui lòng nhập số lượng hàng tồn kho");
             return false;
         }
 
 
         if (formFields?.brand === "") {
-            context.alertBox("error", "Please enter product brand");
+            context.alertBox("error", "Vui lòng nhập thương hiệu sản phẩm");
             return false;
         }
 
 
         if (formFields?.discount === "") {
-            context.alertBox("error", "Please enter product discount");
+            context.alertBox("error", "Vui lòng nhập mã giảm giá sản phẩm");
             return false;
         }
 
@@ -383,13 +383,13 @@ const EditProduct = () => {
 
 
         if (formFields?.rating === "") {
-            context.alertBox("error", "Please enter  product rating");
+            context.alertBox("error", "Vui lòng nhập đánh giá sản phẩm");
             return false;
         }
 
 
         if (previews?.length === 0) {
-            context.alertBox("error", "Please select product images");
+            context.alertBox("error", "Vui lòng chọn hình ảnh sản phẩm");
             return false;
         }
 
@@ -432,14 +432,14 @@ const EditProduct = () => {
 
                     <div className='grid grid-cols-1 mb-3'>
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Product Name</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Tên sản phẩm</h3>
                             <input type="text" className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm' name="name" value={formFields.name} onChange={onChangeInput} />
                         </div>
                     </div>
 
                     <div className='grid grid-cols-1 mb-3'>
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Product Description</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Mô tả sản phẩm</h3>
                             <textarea type="text" className='w-full h-[140px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm' name="description" value={formFields.description} onChange={onChangeInput} />
                         </div>
                     </div>
@@ -448,7 +448,7 @@ const EditProduct = () => {
 
                     <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mb-3 gap-4'>
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Product Category</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Danh mục sản phẩm</h3>
 
                             {
                                 context?.catData?.length !== 0 &&
@@ -477,7 +477,7 @@ const EditProduct = () => {
                         </div>
 
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Product Sub Category</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Danh mục phụ sản phẩm</h3>
 
                             {
                                 context?.catData?.length !== 0 &&
@@ -515,7 +515,7 @@ const EditProduct = () => {
 
 
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Product Third Lavel Category</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Danh mục phụ cấp ba sản phẩm</h3>
 
                             {
                                 context?.catData?.length !== 0 &&
@@ -554,18 +554,18 @@ const EditProduct = () => {
 
 
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Product Price</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Giá sản phẩm hiện tại</h3>
                             <input type="number" className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm ' name="price" value={formFields.price} onChange={onChangeInput} />
                         </div>
 
 
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1  text-black'>Product Old Price</h3>
+                            <h3 className='text-[14px] font-[500] mb-1  text-black'>Giá gốc sản phẩm</h3>
                             <input type="number" className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm ' name="oldPrice" value={formFields.oldPrice} onChange={onChangeInput} />
                         </div>
 
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Is Featured?</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Giới thiệu sản phẩm này không ?</h3>
                             <Select
                                 labelId="demo-simple-select-label"
                                 id="productCatDrop"
@@ -575,32 +575,32 @@ const EditProduct = () => {
                                 label="Category"
                                 onChange={handleChangeProductFeatured}
                             >
-                                <MenuItem value={true}>True</MenuItem>
-                                <MenuItem value={false}>False</MenuItem>
+                                <MenuItem value={true}>Có</MenuItem>
+                                <MenuItem value={false}>Không</MenuItem>
                             </Select>
                         </div>
 
 
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Product Stock</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Hàng tồn kho</h3>
                             <input type="number" className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm ' name="countInStock" value={formFields.countInStock} onChange={onChangeInput} />
                         </div>
 
 
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Product Brand</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Thương hiệu sản phẩm</h3>
                             <input type="text" className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm ' name="brand" value={formFields.brand} onChange={onChangeInput} />
                         </div>
 
 
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Product Discount</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Giảm giá sản phẩm</h3>
                             <input type="number" className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm ' name="discount" value={formFields.discount} onChange={onChangeInput} />
                         </div>
 
 
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Product RAMS</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>RAMS sản phẩm</h3>
                             {
                                 productRamsData?.length !== 0 &&
                                 <Select
@@ -625,7 +625,7 @@ const EditProduct = () => {
                         </div>
 
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Product Weight</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Khối lượng sản phẩm</h3>
                             {
                                 productWeightData?.length !== 0 &&
                                 <Select
@@ -651,7 +651,7 @@ const EditProduct = () => {
 
 
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Product Size</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Size</h3>
                             {
                                 productSizeData?.length !== 0 &&
                                 <Select
@@ -686,7 +686,7 @@ const EditProduct = () => {
 
 
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1  text-black'>Product Rating </h3>
+                            <h3 className='text-[14px] font-[500] mb-1  text-black'>Đánh giá sản phẩm </h3>
                             <Rating name="rating" value={formFields.rating} onChange={onChangeRating} />
                         </div>
 
@@ -697,7 +697,7 @@ const EditProduct = () => {
 
 
                     <div className='col w-full p-5 px-0'>
-                        <h3 className="font-[700] text-[18px] mb-3">Media & Images</h3>
+                        <h3 className="font-[700] text-[18px] mb-3">Ảnh</h3>
 
                         <div className="grid grid-cols-2  sm:grid-cols-4 md:grid-cols-5 gap-4">
                             {
@@ -730,7 +730,7 @@ const EditProduct = () => {
 
                         <div className='bg-gray-100 p-4 w-full'>
                             <div className="flex items-center gap-8">
-                                <h3 className="font-[700] text-[18px] mb-3">Banner Images</h3>
+                                <h3 className="font-[700] text-[18px] mb-3">Ảnh quảng cáo</h3>
                                 <Switch {...label} onChange={handleChangeSwitch} checked={checkedSwitch} />
                             </div>
                             <div className="grid grid-cols-2  sm:grid-cols-4 md:grid-cols-5 gap-4">
@@ -760,7 +760,7 @@ const EditProduct = () => {
 
                             <br />
 
-                            <h3 className="font-[700] text-[18px] mb-3">Banner Title</h3>
+                            <h3 className="font-[700] text-[18px] mb-3">Tiêu đề quảng cáo</h3>
                             <input type="text" className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm' name="bannerTitleName" value={formFields.bannerTitleName} onChange={onChangeInput} />
                         </div>
 
@@ -781,7 +781,7 @@ const EditProduct = () => {
                             :
                             <>
                                 <FaCloudUploadAlt className='text-[25px] text-white' />
-                                Publish and View
+                                Đăng tải và xem
                             </>
                     }
                 </Button>
