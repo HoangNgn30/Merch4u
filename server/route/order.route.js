@@ -11,7 +11,8 @@ import {  captureOrderPaypalController,
     totalUsersController, 
     updateOrderStatusController, 
     createOrderPayosController,
-    receivePayosWebhookController 
+    receivePayosWebhookController,
+    verifyPayosPaymentController 
 } from "../controllers/order.controller.js";
 
 const orderRouter = Router();
@@ -24,6 +25,7 @@ orderRouter.post('/capture-order-paypal',auth,captureOrderPaypalController)
 
 orderRouter.post('/create-order-payos', auth, createOrderPayosController)
 orderRouter.post('/payos-webhook', receivePayosWebhookController)
+orderRouter.get('/verify-payos/:orderCode', auth, verifyPayosPaymentController)
 
 
 orderRouter.put('/order-status/:id',auth,updateOrderStatusController)

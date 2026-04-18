@@ -37,7 +37,7 @@ const orderSchema = new mongoose.Schema({
     },
     order_status : {
         type : String,
-        default : "confirm"
+        default : "pending"
     },
     delivery_address: {
         type: mongoose.Schema.ObjectId,

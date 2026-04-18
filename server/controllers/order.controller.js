@@ -5,6 +5,7 @@ import paypal from "@paypal/checkout-server-sdk";
 import { PayOS } from '@payos/node';
 import OrderConfirmationEmail from "../utils/orderEmailTemplate.js";
 import sendEmailFun from "../config/sendEmail.js";
+import CartProductModel from "../models/cartProduct.modal.js";
 
 
 const payos = new PayOS({
@@ -225,56 +226,71 @@ export const captureOrderPaypalController = async (request, response) => {
         const req = new paypal.orders.OrdersCaptureRequest(paymentId);
         req.requestBody({});
 
-        const orderInfo = {
-            userId: request.body.userId,
-            products: request.body.products,
-            paymentId: request.body.paymentId,
-            payment_status: request.body.payment_status,
-            delivery_address: request.body.delivery_address,
-            totalAmt: request.body.totalAmount,
-            date: request.body.date
-        }
+        const client = getPayPalClient();
+        const capture = await client.execute(req);
 
-        const order = new OrderModel(orderInfo);
-        await order.save();
-
-        const user = await UserModel.findOne({ _id: request.body.userId })
-
-        const recipients = [];
-        recipients.push(user?.email);
-
-        // Send verification email
-        await sendEmailFun({
-            sendTo: recipients,
-            subject: "Order Confirmation",
-            text: "",
-            html: OrderConfirmationEmail(user?.name, order)
-        })
-
-
-        for (let i = 0; i < request.body.products.length; i++) {
-
-            const product = await ProductModel.findOne({ _id: request.body.products[i].productId })
-
-            await ProductModel.findByIdAndUpdate(
-                request.body.products[i].productId,
-                {
-                    countInStock: parseInt(request.body.products[i].countInStock - request.body.products[i].quantity),
-                    sale: parseInt(product?.sale + request.body.products[i].quantity)
-                },
-                { new: true }
-            );
-        }
-
-
-        return response.status(200).json(
-            {
-                success: true,
-                error: false,
-                order: order,
-                message: "Order Placed"
+        if (capture.result.status === "COMPLETED") {
+            const orderInfo = {
+                userId: request.body.userId,
+                products: request.body.products,
+                paymentId: request.body.paymentId,
+                payment_status: "Paid",
+                order_status: "confirm",
+                delivery_address: request.body.delivery_address,
+                totalAmt: request.body.totalAmount,           
+                date: request.body.date
             }
-        );
+
+            const order = new OrderModel(orderInfo);
+            await order.save();
+
+            // Clear cart on backend after successful PayPal capture
+            await CartProductModel.deleteMany({ userId: request.body.userId });
+
+            const user = await UserModel.findOne({ _id: request.body.userId })
+
+            const recipients = [];
+            recipients.push(user?.email);
+
+            // Send verification email
+            await sendEmailFun({
+                sendTo: recipients,
+                subject: "Order Confirmation",
+                text: "",
+                html: OrderConfirmationEmail(user?.name, order)
+            })
+
+
+            for (let i = 0; i < request.body.products.length; i++) {
+
+                const product = await ProductModel.findOne({ _id: request.body.products[i].productId })
+
+                await ProductModel.findByIdAndUpdate(
+                    request.body.products[i].productId,
+                    {
+                        countInStock: parseInt(request.body.products[i].countInStock - request.body.products[i].quantity),
+                        sale: parseInt(product?.sale + request.body.products[i].quantity)
+                    },
+                    { new: true }
+                );
+            }
+
+
+            return response.status(200).json(
+                {
+                    success: true,
+                    error: false,
+                    order: order,
+                    message: "Order Placed"
+                }
+            );
+        } else {
+            return response.status(400).json({
+                success: false,
+                error: true,
+                message: "Thanh toán PayPal không thành công hoặc chưa hoàn tất"
+            });
+        }
 
     } catch (error) {
         return response.status(500).json({
@@ -717,14 +733,16 @@ export async function deleteOrder(request, response) {
 
 export const createOrderPayosController = async (request, response) => {
     try {
-        //const orderCode = Number(String(Date.now()).slice(-6));
-        const orderCode = Number(String(Date.now())); 
+        // Sử dụng 10 chữ số cuối của timestamp để đảm bảo độ dài an toàn cho PayOS (thường < 15 chữ số)
+        const orderCode = Number(String(Date.now()).slice(-10)); 
+        console.log("Creating PayOS order with code:", orderCode);
 
         let order = new OrderModel({
             userId: request.body.userId,
             products: request.body.products,
             paymentId: String(orderCode), 
             payment_status: "Pending",   
+            order_status: "pending",   
             delivery_address: request.body.delivery_address,
             totalAmt: request.body.totalAmt || request.body.totalAmount,
             date: request.body.date
@@ -732,14 +750,12 @@ export const createOrderPayosController = async (request, response) => {
 
         order = await order.save();
 
-        //Gọi sang PayOS để tạo link thanh toán
         const orderBody = {
             orderCode: orderCode,
             amount: request.body.totalAmt || request.body.totalAmount, 
             description: 'Thanh toan don hang',
-
             returnUrl: `${process.env.CLIENT_URL}/order/success`, 
-            cancelUrl: `${process.env.CLIENT_URL}/order/failed`
+            cancelUrl: `${process.env.CLIENT_URL}/checkout`
         };
 
         const paymentLink = await payos.paymentRequests.create(orderBody);
@@ -748,11 +764,12 @@ export const createOrderPayosController = async (request, response) => {
             error: false,
             success: true,
             message: "Created PayOS Link",
-            checkoutUrl: paymentLink.checkoutUrl, // Link để client redirect
+            checkoutUrl: paymentLink.checkoutUrl, 
             order: order
         });
 
     } catch (error) {
+        console.error("Lỗi tạo đơn PayOS:", error);
         return response.status(500).json({
             message: error.message || error,
             error: true,
@@ -764,46 +781,141 @@ export const createOrderPayosController = async (request, response) => {
 export const receivePayosWebhookController = async (request, response) => {
     try {
         const webhookData = request.body;
+        console.log("Received PayOS Webhook:", JSON.stringify(webhookData));
         
         const data = await payos.webhooks.verify(webhookData);
+        console.log("Verified Webhook Data:", JSON.stringify(data));
 
-        if (data.code === '00') {
-            const order = await OrderModel.findOne({ paymentId: String(data.orderCode) });
+        if (data.code === '00' || webhookData.code === '00') {
+            const orderCode = data.orderCode || webhookData.data?.orderCode;
+            console.log("Searching for order with paymentId:", String(orderCode));
+            
+            const order = await OrderModel.findOne({ paymentId: String(orderCode) });
 
-            if (order && order.payment_status !== "Paid") {
-                
-                order.payment_status = "Paid";
-                await order.save();
+            if (order) {
+                console.log("Found order:", order._id, "Current status:", order.payment_status);
+                if (order.payment_status !== "Paid") {
+                    order.payment_status = "Paid";
+                    order.order_status = "confirm";
+                    await order.save();
+                    console.log("Order updated to Paid/confirm");
 
-                for (let i = 0; i < order.products.length; i++) {
-                    const product = await ProductModel.findOne({ _id: order.products[i].productId });
-                    
-                    await ProductModel.findByIdAndUpdate(
-                        order.products[i].productId,
-                        {
-                            countInStock: parseInt(product?.countInStock - order.products[i].quantity),
-                            sale: parseInt(product?.sale + order.products[i].quantity)
-                        },
-                        { new: true }
-                    );
+                    // Clear cart on backend after successful PayOS Webhook confirmation
+                    await CartProductModel.deleteMany({ userId: order.userId });
+                    console.log("Cart cleared for user:", order.userId);
+
+                    for (let i = 0; i < order.products.length; i++) {
+                        const product = await ProductModel.findOne({ _id: order.products[i].productId });
+                        await ProductModel.findByIdAndUpdate(
+                            order.products[i].productId,
+                            {
+                                countInStock: parseInt(product?.countInStock - order.products[i].quantity),
+                                sale: parseInt(product?.sale + order.products[i].quantity)
+                            },
+                            { new: true }
+                        );
+                    }
+
+                    const user = await UserModel.findOne({ _id: order.userId });
+                    if(user) {
+                        await sendEmailFun({
+                            sendTo: [user.email],
+                            subject: "Order Confirmation",
+                            text: "",
+                            html: OrderConfirmationEmail(user.name, order)
+                        });
+                    }
                 }
-
-                const user = await UserModel.findOne({ _id: order.userId });
-                if(user) {
-                    await sendEmailFun({
-                        sendTo: [user.email],
-                        subject: "Order Confirmation",
-                        text: "",
-                        html: OrderConfirmationEmail(user.name, order)
-                    });
-                }
+            } else {
+                console.warn("Order not found with paymentId:", orderCode);
             }
             return response.json({ success: true });
         } else {
+            console.log("Webhook code not success:", data.code);
             return response.json({ success: false });
         }
     } catch (error) {
-        console.error("Lỗi Webhook:", error);
+        console.error("Lỗi Webhook PayOS:", error);
         return response.status(400).json({ success: false });
+    }
+}
+
+
+export const verifyPayosPaymentController = async (request, response) => {
+    try {
+        const { orderCode } = request.params;
+        console.log("Verifying PayOS payment for code:", orderCode);
+        
+        // Chuyển đổi sang Number trước khi gọi SDK - Dùng đúng method của version 2.0.5
+        const paymentInfo = await payos.paymentRequests.get(Number(orderCode));
+        console.log("PayOS Payment Info status:", paymentInfo.status);
+
+        if (paymentInfo.status === 'PAID') {
+            const order = await OrderModel.findOne({ paymentId: String(orderCode) });
+
+            if (order) {
+                console.log("Found order for verification:", order._id, "Current status:", order.payment_status);
+                if (order.payment_status !== "Paid") {
+                    order.payment_status = "Paid";
+                    order.order_status = "confirm";
+                    await order.save();
+                    console.log("Order updated to Paid via verification");
+
+                    // Clear cart on backend after successful PayOS active verification
+                    await CartProductModel.deleteMany({ userId: order.userId });
+                    console.log("Cart cleared for user:", order.userId);
+
+                    for (let i = 0; i < order.products.length; i++) {
+                        const product = await ProductModel.findOne({ _id: order.products[i].productId });
+                        await ProductModel.findByIdAndUpdate(
+                            order.products[i].productId,
+                            {
+                                countInStock: parseInt(product?.countInStock - order.products[i].quantity),
+                                sale: parseInt(product?.sale + order.products[i].quantity)
+                            },
+                            { new: true }
+                        );
+                    }
+
+                    const user = await UserModel.findOne({ _id: order.userId });
+                    if(user) {
+                        await sendEmailFun({
+                            sendTo: [user.email],
+                            subject: "Order Confirmation",
+                            text: "",
+                            html: OrderConfirmationEmail(user.name, order)
+                        });
+                    }
+
+                    return response.status(200).json({
+                        success: true,
+                        message: "Thanh toán thành công và đã được xác thực",
+                        order: order
+                    });
+                } else {
+                    return response.status(200).json({
+                        success: true,
+                        message: "Đơn hàng đã được xử lý trước đó",
+                        order: order
+                    });
+                }
+            } else {
+                console.warn("Order not found during verification for code:", orderCode);
+                return response.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+            }
+        } else {
+            return response.status(200).json({
+                success: false,
+                message: "Thanh toán chưa hoàn tất hoặc thất bại",
+                status: paymentInfo.status
+            });
+        }
+    } catch (error) {
+        console.error("Lỗi Verify PayOS:", error);
+        return response.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        })
     }
 }

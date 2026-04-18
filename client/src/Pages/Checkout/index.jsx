@@ -96,6 +96,9 @@ const Checkout = () => {
             onApprove: async (data) => {
               onApprovePayment(data);
             },
+            onCancel: () => {
+              context.alertBox("warning", "Thanh toán đã bị hủy");
+            },
             onError: (err) => {
               history("/order/failed");
               console.error("PayPal Checkout onError:", err);
