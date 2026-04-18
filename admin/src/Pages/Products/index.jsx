@@ -232,7 +232,6 @@ export const Products = () => {
     const handleChangeProductSubCat = (event) => {
         if (event.target.value !== null) {
             setProductSubCat(event.target.value);
-            setProductCat('');
             setProductThirdLavelCat('');
             setIsloading(true)
             fetchDataFromApi(`/api/product/getAllProductsBySubCatId/${event.target.value}`).then((res) => {
@@ -253,17 +252,34 @@ export const Products = () => {
             })
         } else {
             setProductSubCat(event.target.value);
-            getProducts(0, 50);
-            setProductCat('');
             setProductThirdLavelCat('');
+            if (productCat) {
+                setIsloading(true)
+                fetchDataFromApi(`/api/product/getAllProductsByCatId/${productCat}`).then((res) => {
+                    if (res?.error === false) {
+                        setProductData({
+                            error: false,
+                            success: true,
+                            products: res?.products,
+                            total: res?.products?.length,
+                            page: parseInt(page),
+                            totalPages: Math.ceil(res?.products?.length / rowsPerPage),
+                            totalCount: res?.products?.length
+                        });
+                        setTimeout(() => {
+                            setIsloading(false)
+                        }, 500);
+                    }
+                })
+            } else {
+                getProducts(0, 50);
+            }
         }
     };
 
     const handleChangeProductThirdLavelCat = (event) => {
         if (event.target.value !== null) {
             setProductThirdLavelCat(event.target.value);
-            setProductCat('');
-            setProductSubCat('');
             setIsloading(true)
             fetchDataFromApi(`/api/product/getAllProductsByThirdLavelCat/${event.target.value}`).then((res) => {
                 console.log(res)
@@ -284,9 +300,45 @@ export const Products = () => {
             })
         } else {
             setProductThirdLavelCat(event.target.value);
-            getProducts(0, 50);
-            setProductCat('');
-            setProductSubCat('');
+            if (productSubCat) {
+                setIsloading(true)
+                fetchDataFromApi(`/api/product/getAllProductsBySubCatId/${productSubCat}`).then((res) => {
+                    if (res?.error === false) {
+                        setProductData({
+                            error: false,
+                            success: true,
+                            products: res?.products,
+                            total: res?.products?.length,
+                            page: parseInt(page),
+                            totalPages: Math.ceil(res?.products?.length / rowsPerPage),
+                            totalCount: res?.products?.length
+                        });
+                        setTimeout(() => {
+                            setIsloading(false)
+                        }, 300);
+                    }
+                })
+            } else if (productCat) {
+                setIsloading(true)
+                fetchDataFromApi(`/api/product/getAllProductsByCatId/${productCat}`).then((res) => {
+                    if (res?.error === false) {
+                        setProductData({
+                            error: false,
+                            success: true,
+                            products: res?.products,
+                            total: res?.products?.length,
+                            page: parseInt(page),
+                            totalPages: Math.ceil(res?.products?.length / rowsPerPage),
+                            totalCount: res?.products?.length
+                        });
+                        setTimeout(() => {
+                            setIsloading(false)
+                        }, 300);
+                    }
+                })
+            } else {
+                getProducts(0, 50);
+            }
         }
     };
 
@@ -415,11 +467,11 @@ export const Products = () => {
                             >
                                 <MenuItem value={null}>None</MenuItem>
                                 {
-                                    context?.catData?.map((cat, index) => {
+                                    context?.catData?.filter(cat => cat._id === productCat).map((cat, index) => {
                                         return (
                                             cat?.children?.length !== 0 && cat?.children?.map((subCat, index_) => {
                                                 return (
-                                                    <MenuItem value={subCat?._id}>
+                                                    <MenuItem value={subCat?._id} key={index_}>
                                                         {subCat?.name}</MenuItem>
                                                 )
                                             })
@@ -449,9 +501,9 @@ export const Products = () => {
                             >
                                 <MenuItem value={null}>None</MenuItem>
                                 {
-                                    context?.catData?.map((cat) => {
+                                    context?.catData?.filter(cat => cat._id === productCat).map((cat) => {
                                         return (
-                                            cat?.children?.length !== 0 && cat?.children?.map((subCat) => {
+                                            cat?.children?.length !== 0 && cat?.children?.filter(subCat => subCat._id === productSubCat).map((subCat) => {
                                                 return (
                                                     subCat?.children?.length !== 0 && subCat?.children?.map((thirdLavelCat, index) => {
                                                         return <MenuItem value={thirdLavelCat?._id} key={index}

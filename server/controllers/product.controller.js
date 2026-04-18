@@ -164,9 +164,9 @@ export async function getAllProducts(request, response) {
     try {
 
         const { page, limit } = request.query;
-        const totalProducts = await ProductModel.find();
+        const totalProducts = await ProductModel.find().populate("category");
 
-        const products = await ProductModel.find().sort({ createdAt: -1 }).skip((page - 1) * limit).limit(parseInt(limit));
+        const products = await ProductModel.find().sort({ createdAt: -1 }).populate("category").skip((page - 1) * limit).limit(parseInt(limit));
 
         const total = await ProductModel.countDocuments(products);
 

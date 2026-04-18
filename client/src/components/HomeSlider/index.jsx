@@ -11,7 +11,7 @@ const HomeSlider = (props) => {
   const context  = useContext(MyContext);
 
   return (
-    <div className="homeSlider pb-3 pt-3 lg:pb-5 lg:pt-5 relative z-[99]">
+    <div className="homeSlider pb-3 pt-3 lg:pb-5 lg:pt-5 relative z-[99] overflow-hidden">
       <div className="container">
         <Swiper
           loop={true}

@@ -141,9 +141,9 @@ const Home = () => {
       {
         homeSlidesData?.length === 0 && <BannerLoading />
       }
-      <div className="heroBanner relative">
+      {/* <div className="heroBanner relative">
         <HeroBannerScroll/>
-      </div>
+      </div> */}
 
 
       <div className="body-container ">
@@ -248,12 +248,15 @@ const Home = () => {
             }
 
 
-
-          </div>
-
+            
             {
               homeSlidesData?.length !== 0 && <HomeSlider data={homeSlidesData} />
             }
+
+
+          </div>
+
+            
         </section>
         <section className="py-2 lg:py-0 pt-0 bg-white">
           <div className="container">

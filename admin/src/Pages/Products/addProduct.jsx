@@ -94,8 +94,17 @@ const AddProduct = () => {
 
     const handleChangeProductCat = (event) => {
         setProductCat(event.target.value);
-        formFields.catId = event.target.value
-        formFields.category = event.target.value
+        setProductSubCat('');
+        setProductThirdLavelCat('');
+        setFormFields({
+            ...formFields,
+            catId: event.target.value,
+            category: event.target.value,
+            subCatId: "",
+            subCat: "",
+            thirdsubCat: "",
+            thirdsubCatId: ""
+        })
 
     };
 
@@ -105,7 +114,13 @@ const AddProduct = () => {
 
     const handleChangeProductSubCat = (event) => {
         setProductSubCat(event.target.value);
-        formFields.subCatId = event.target.value
+        setProductThirdLavelCat('');
+        setFormFields({
+            ...formFields,
+            subCatId: event.target.value,
+            thirdsubCat: "",
+            thirdsubCatId: ""
+        })
     };
 
     const selectSubCatByName = (name) => {
@@ -114,11 +129,17 @@ const AddProduct = () => {
 
     const handleChangeProductThirdLavelCat = (event) => {
         setProductThirdLavelCat(event.target.value);
-        formFields.thirdsubCatId = event.target.value
+        setFormFields({
+            ...formFields,
+            thirdsubCatId: event.target.value
+        })
     };
 
     const selectSubCatByThirdLavel = (name) => {
-        formFields.thirdsubCat = name
+        setFormFields({
+            ...formFields,
+            thirdsubCat: name
+        })
     }
 
 
@@ -434,7 +455,7 @@ const AddProduct = () => {
                                     onChange={handleChangeProductSubCat}
                                 >
                                     {
-                                        context?.catData?.map((cat, index) => {
+                                        context?.catData?.filter(cat => cat._id === productCat).map((cat, index) => {
                                             return (
                                                 cat?.children?.length !== 0 && cat?.children?.map((subCat, index_) => {
                                                     return (
@@ -472,9 +493,9 @@ const AddProduct = () => {
                                     onChange={handleChangeProductThirdLavelCat}
                                 >
                                     {
-                                        context?.catData?.map((cat) => {
+                                        context?.catData?.filter(cat => cat._id === productCat).map((cat) => {
                                             return (
-                                                cat?.children?.length !== 0 && cat?.children?.map((subCat) => {
+                                                cat?.children?.length !== 0 && cat?.children?.filter(subCat => subCat._id === productSubCat).map((subCat) => {
                                                     return (
                                                         subCat?.children?.length !== 0 && subCat?.children?.map((thirdLavelCat, index) => {
                                                             return <MenuItem value={thirdLavelCat?._id} key={index}

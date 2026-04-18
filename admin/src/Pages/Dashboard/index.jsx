@@ -17,12 +17,23 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell
 } from "recharts";
 
 import { MyContext } from '../../App';
 import SearchBox from "../../Components/SearchBox";
 import { fetchDataFromApi } from "../../utils/api";
 import Products from "../Products";
+
+const CHART_COLORS = [
+  "#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
+  "#ec4899", "#06b6d4", "#f97316", "#84cc16", "#14b8a6",
+  "#3b82f6", "#f43f5e", "#a855f7", "#0ea5e9", "#22c55e"
+];
 
 
 const Dashboard = () => {
@@ -49,6 +60,10 @@ const Dashboard = () => {
   const [users, setUsers] = useState([]);
   const [allReviews, setAllReviews] = useState([]);
   const [ordersCount, setOrdersCount] = useState(null);
+  const [orderStatusData, setOrderStatusData] = useState([]);
+  const [categoryData, setCategoryData] = useState([]);
+  const [topProductsData, setTopProductsData] = useState([]);
+  const [combinedChartData, setCombinedChartData] = useState([]);
 
   const context = useContext(MyContext);
 
@@ -156,6 +171,7 @@ const Dashboard = () => {
           index === self.findIndex((t) => t.name === obj.name)
       );
       setChartData(uniqueArr);
+      updateCombinedData("users", uniqueArr);
     })
   }
 
@@ -175,8 +191,79 @@ const Dashboard = () => {
           index === self.findIndex((t) => t.name === obj.name)
       );
       setChartData(uniqueArr);
+      updateCombinedData("sales", uniqueArr);
     });
   }
+
+  const updateCombinedData = (type, data) => {
+    setCombinedChartData((prev) => {
+      const newCombined = [...prev];
+      data.forEach((item) => {
+        const existingRec = newCombined.find((r) => r.name === item.name);
+        if (existingRec) {
+          if (type === "sales") existingRec.TotalSales = item.TotalSales;
+          if (type === "users") existingRec.TotalUsers = item.TotalUsers;
+        } else {
+          newCombined.push({
+            name: item.name,
+            TotalSales: type === "sales" ? item.TotalSales : 0,
+            TotalUsers: type === "users" ? item.TotalUsers : 0,
+          });
+        }
+      });
+      return newCombined.sort((a, b) => {
+        const months = ["JAN", "FEB", "MAR", "APRIL", "MAY", "JUNE", "JULY", "AUG", "SEP", "OCT", "NOV", "DEC"];
+        return months.indexOf(a.name) - months.indexOf(b.name);
+      });
+    });
+  }
+
+  useEffect(() => {
+    if (totalOrdersData?.data?.length > 0) {
+      const statusCounts = {};
+      totalOrdersData.data.forEach((order) => {
+        const status = order.order_status || "unknown";
+        statusCounts[status] = (statusCounts[status] || 0) + 1;
+      });
+      const formattedStatusData = Object.keys(statusCounts).map((status) => ({
+        name: status,
+        value: statusCounts[status],
+      }));
+      setOrderStatusData(formattedStatusData);
+    }
+  }, [totalOrdersData]);
+
+  useEffect(() => {
+    if (productData?.products?.length > 0) {
+      // Top Selling Products
+      const topProducts = [...productData.products]
+        .sort((a, b) => (b.sale || 0) - (a.sale || 0))
+        .slice(0, 5)
+        .map(p => ({
+          name: p.name.length > 20 ? p.name.substring(0, 20) + "..." : p.name,
+          sales: p.sale || 0
+        }));
+      setTopProductsData(topProducts);
+
+      // Category Sales Distribution
+      const catSales = {};
+      productData.products.forEach(p => {
+        const catName = p.category?.name || p.catName || "Other";
+        catSales[catName] = (catSales[catName] || 0) + (p.sale || 0);
+      });
+      const formattedCatData = Object.keys(catSales)
+        .map(cat => ({
+          name: cat,
+          value: catSales[cat]
+        }))
+        .filter(item => item.value > 0); // Only show categories with actual sales
+      setCategoryData(formattedCatData);
+    }
+  }, [productData]);
+
+  useEffect(() => {
+    getTotalUsersByYear();
+  }, []);
 
 
 
@@ -208,7 +295,7 @@ const Dashboard = () => {
         productData?.products?.length !== 0 && users?.length !== 0 && allReviews?.length !== 0 && <DashboardBoxes orders={ordersCount} products={productData?.products?.length} users={users?.length} reviews={allReviews?.length} category={context?.catData?.length} />
       }
 
-      <Products/>
+      {/* <Products/> */}
 
       <div className="card my-4 shadow-md sm:rounded-lg bg-white">
         <div className="grid grid-cols-1 lg:grid-cols-2 px-5 py-5 flex-col sm:flex-row">
@@ -453,75 +540,132 @@ const Dashboard = () => {
       </div>
 
 
-       <div className="card my-4 shadow-md sm:rounded-lg bg-white">
-            <div className="flex items-center justify-between px-5 py-5 pb-0">
-              <h2 className="text-[18px] font-[600]">Tổng số người dùng và tổng doanh thu</h2>
-            </div>
-    
-            <div className="flex items-center gap-5 px-5 py-5 pt-1">
-              <span className="flex items-center gap-1 text-[15px] cursor-pointer" onClick={getTotalUsersByYear}>
-                <span className="block w-[8px] h-[8px] rounded-full bg-primary "
-                ></span>
-                Tổng số người dùng
-              </span>
-    
-              <span className="flex items-center gap-1 text-[15px] cursor-pointer" onClick={getTotalSalesByYear}>
-                <span className="block w-[8px] h-[8px] rounded-full bg-green-600  "
-                ></span>
-                Tổng doanh thu
-              </span>
-            </div>
-    
-    
-            <div className="px-5 overflow-x-scroll">
-    
-              {chartData?.length !== 0 &&
-                <BarChart
-                  width={context?.windowWidth > 920 ? (context?.windowWidth - 350) : 800}
-                  height={500}
-                  data={chartData}
-                  margin={{
-                    top: 5,
-                    right: 5,
-                    left: 5,
-                    bottom: 5,
-                  }}
-                >
-                  <XAxis
-                    dataKey="name"
-                    scale="point"
-                    padding={{ left: 10, right: 10 }}
-                    tick={{ fontSize: 12 }}
-                    label={{ position: "insideBottom", fontSize: 14 }}
-                    style={{ fill: context?.theme === "dark" ? "white" : "#000" }}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 12 }}
-                    label={{ position: "insideBottom", fontSize: 14 }}
-                    style={{ fill: context?.theme === "dark" ? "white" : "#000" }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#071739  ",
-                      color: "white",
-                    }} // Set tooltip background and text color
-                    labelStyle={{ color: "yellow" }} // Label text color
-                    itemStyle={{ color: "cyan" }} // Set color for individual items in the tooltip
-                    cursor={{ fill: "white" }} // Customize the tooltip cursor background on hover
-                  />
-                  <Legend />
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    horizontal={false}
-                    vertical={false}
-                  />
-                  <Bar dataKey="TotalSales" stackId="a" fill="#16a34a" />
-                  <Bar dataKey="TotalUsers" stackId="b" fill="#0858f7" />
-    
-                </BarChart>
-              }
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        {/* Sales & User Growth Chart */}
+        <div className="card shadow-md sm:rounded-lg bg-white p-5 md:col-span-2">
+          <h2 className="text-[18px] font-[600] mb-4">Tăng trưởng doanh thu và người dùng</h2>
+          <div className="h-[400px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={combinedChartData}>
+                <defs>
+                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: "#1e293b", color: "#fff", borderRadius: "8px", border: "none" }}
+                  itemStyle={{ color: "#fff" }}
+                />
+                <Legend verticalAlign="top" height={36} />
+                <Area
+                  type="monotone"
+                  dataKey="TotalSales"
+                  name="Doanh thu"
+                  stroke="#6366f1"
+                  fillOpacity={1}
+                  fill="url(#colorSales)"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="TotalUsers"
+                  name="Người dùng mới"
+                  stroke="#10b981"
+                  fillOpacity={1}
+                  fill="url(#colorUsers)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
+        </div>
+
+        {/* Order Status Chart */}
+        <div className="card shadow-md sm:rounded-lg bg-white p-5">
+          <h2 className="text-[18px] font-[600] mb-4">Trạng thái đơn hàng</h2>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={orderStatusData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {orderStatusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Category Sales Distribution Chart */}
+        <div className="card shadow-md sm:rounded-lg bg-white p-5">
+          <h2 className="text-[18px] font-[600] mb-4">Tỉ lệ hàng bán theo danh mục</h2>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={categoryData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {categoryData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS[(index + 5) % CHART_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Top Selling Products Chart */}
+        <div className="card shadow-md sm:rounded-lg bg-white p-5 md:col-span-2">
+          <h2 className="text-[18px] font-[600] mb-4">Top 5 sản phẩm bán chạy nhất</h2>
+          <div className="h-[350px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                layout="vertical"
+                data={topProductsData}
+                margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                <XAxis type="number" hide />
+                <YAxis
+                  dataKey="name"
+                  type="category"
+                  width={150}
+                  tick={{ fontSize: 12 }}
+                />
+                <Tooltip
+                  cursor={{ fill: "transparent" }}
+                  contentStyle={{ backgroundColor: "#1e293b", color: "#fff", borderRadius: "8px" }}
+                />
+                <Bar dataKey="sales" name="Lượt bán" fill="#f97316" radius={[0, 4, 4, 0]} barSize={30} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
     </>
   );
 };
