@@ -8,6 +8,7 @@ import { ProductDetailsComponent } from "../../components/ProductDetails";
 import { fetchDataFromApi } from "../../utils/api";
 import CircularProgress from '@mui/material/CircularProgress';
 import { Reviews } from "./reviews";
+import AIRecommendations from "../../components/AIRecommendations";
 
 export const ProductDetails = () => {
 
@@ -168,6 +169,9 @@ export const ProductDetails = () => {
                   <ProductsSlider items={6} data={relatedProductData}/>
                 </div>
               }
+
+              {/* AI Gợi ý cá nhân hóa */}
+              <AIRecommendations title="✨ Bạn cũng có thể thích" />
 
 
             </>

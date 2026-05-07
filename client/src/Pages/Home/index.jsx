@@ -24,6 +24,7 @@ import { MdArrowRightAlt } from "react-icons/md";
 import { Link } from "react-router-dom";
 import HeroBannerScroll from "../../components/HeroBannerScroll";
 import RightBanner from "../../components/RightBanner";
+import AIRecommendations from "../../components/AIRecommendations";
 
 const Home = () => {
   const [value, setValue] = useState(0);
@@ -191,6 +192,9 @@ const Home = () => {
           </div>
         </section>
 
+
+        {/* AI Gợi ý cá nhân hóa */}
+        <AIRecommendations />
 
 
         <section className="py-6 pt-0 bg-white">

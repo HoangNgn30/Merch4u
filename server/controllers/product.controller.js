@@ -6,6 +6,29 @@ import ProductSIZEModel from '../models/productSIZE.js';
 import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
 import { request } from 'http';
+import { GoogleGenAI } from '@google/genai';
+
+// ─── Gemini Embedding Helper ──────────────────────────────────────────────────
+const _genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+/**
+ * Tạo vector embedding và lưu vào product.embedding
+ * Gọi bất đồng bộ sau khi lưu product — không block response
+ */
+async function generateAndSaveEmbedding(productId, text) {
+    try {
+        const result = await _genAI.models.embedContent({
+            model: 'gemini-embedding-001',
+            contents: [text],
+        });
+        const embedding = result.embeddings[0].values;
+        await ProductModel.findByIdAndUpdate(productId, { embedding });
+        console.log(`[Embedding] ✅ Đã tạo embedding cho product ${productId}`);
+    } catch (err) {
+        // Không throw — chỉ log, tránh làm fail request tạo/sửa sản phẩm
+        console.warn(`[Embedding] ⚠️ Không thể tạo embedding cho ${productId}:`, err?.message);
+    }
+}
 
 
 cloudinary.config({
@@ -137,6 +160,9 @@ export async function createProduct(request, response) {
             });
         }
 
+        // Tạo embedding bất đồng bộ (không block response)
+        const embeddingText = `${product.name}. ${product.description}. Danh mục: ${product.catName}. Brand: ${product.brand}`;
+        generateAndSaveEmbedding(product._id, embeddingText);
 
         imagesArr = [];
 
@@ -954,6 +980,12 @@ export async function updateProduct(request, response) {
                 message: "the product can not be updated!",
                 status: false,
             });
+        }
+
+        // Cập nhật embedding nếu tên hoặc mô tả thay đổi
+        if (request.body.name || request.body.description) {
+            const embeddingText = `${product.name}. ${product.description}. Danh mục: ${product.catName}. Brand: ${product.brand}`;
+            generateAndSaveEmbedding(product._id, embeddingText);
         }
 
         imagesArr = [];

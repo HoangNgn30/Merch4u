@@ -31,7 +31,7 @@ export const Sidebar = (props) => {
 
 
 
-  const [price, setPrice] = useState([0, 500000000]);
+  const [price, setPrice] = useState([0, 50000000]);
 
   const context = useContext(MyContext);
 
@@ -192,9 +192,9 @@ export const Sidebar = (props) => {
           <RangeSlider
             value={price}
             onInput={setPrice}
-            min={100}
-            max={500000000}
-            step={5}
+            min={0}
+            max={50000000}
+            step={10000}
           />
           <div className="flex pt-4 pb-2 priceRange">
             <span className="text-[13px]">

@@ -17,6 +17,7 @@ import rightBannerRouter from './route/rightBanner.route.js';
 import blogRouter from './route/blog.route.js';
 import orderRouter from './route/order.route.js';
 import logoRouter from './route/logo.route.js';
+import aiRouter from './route/ai.route.js';
 
 const app = express();
 app.use(cors());
@@ -50,6 +51,8 @@ app.use("/api/rightBanner",rightBannerRouter)
 app.use("/api/blog",blogRouter)
 app.use("/api/order",orderRouter)
 app.use("/api/logo",logoRouter)
+app.use("/api/ai",aiRouter)
+
 
 
 connectDB().then(() => {

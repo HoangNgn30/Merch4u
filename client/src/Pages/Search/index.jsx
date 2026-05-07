@@ -12,6 +12,7 @@ import Pagination from "@mui/material/Pagination";
 import ProductLoadingGrid from "../../components/ProductLoading/productLoadingGrid";
 import { postData } from "../../utils/api";
 import { MyContext } from "../../App";
+import AIRecommendations from "../../components/AIRecommendations";
 
 const SearchPage = () => {
   const [itemView, setItemView] = useState("grid");
@@ -219,6 +220,9 @@ const SearchPage = () => {
           </div>
         </div>
       </div>
+
+      {/* AI Gợi ý cá nhân hóa */}
+      <AIRecommendations title="✨ Có thể bạn cũng thích" />
     </section>
   );
 };

@@ -1,0 +1,115 @@
+/* ─── AIRecommendations Styles ─────────────────────────────────────────────── */
+
+.ai-recommendations-section {
+    padding: 8px 0 24px;
+    background: #fff;
+    position: relative;
+}
+
+.ai-recommendations-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    /* background: linear-gradient(90deg, #6c63ff, #e040fb, #6c63ff); */
+    background-size: 200% 100%;
+    animation: gradient-slide 3s linear infinite;
+}
+
+@keyframes gradient-slide {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+
+.ai-rec-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 16px;
+}
+
+.ai-rec-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ai-rec-badge {
+    background: linear-gradient(135deg, #6c63ff, #e040fb);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    text-transform: uppercase;
+}
+
+.ai-rec-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(135deg, #6c63ff, #e040fb);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.ai-rec-subtitle {
+    font-size: 13px;
+    color: #9e9e9e;
+    margin: 0;
+}
+
+/* Skeleton Loading */
+.ai-rec-skeleton-row {
+    display: flex;
+    gap: 16px;
+    overflow: hidden;
+}
+
+.ai-rec-skeleton-card {
+    flex: 1;
+    min-width: 160px;
+    max-width: 210px;
+}
+
+.ai-rec-skeleton-img {
+    width: 100%;
+    padding-top: 100%;
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
+
+.ai-rec-skeleton-line {
+    height: 14px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+}
+
+.ai-rec-skeleton-line.short { width: 60%; }
+
+.skeleton-pulse {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+@keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+@media (max-width: 768px) {
+    .ai-rec-header {
+        flex-direction: column;
+    }
+
+    .ai-rec-skeleton-card:nth-child(n+4) {
+        display: none;
+    }
+}

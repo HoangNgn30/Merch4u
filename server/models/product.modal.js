@@ -107,6 +107,13 @@ const productSchema = mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    // Vector embedding (Gemini gemini-embedding-001, 3072 dims)
+    // select: false => không bao giờ trả về trong query thông thường
+    embedding: {
+        type: [Number],
+        select: false,
+        default: undefined,
+    },
 },{
     timestamps : true
 });

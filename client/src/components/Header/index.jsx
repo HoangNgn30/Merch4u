@@ -105,6 +105,8 @@ const logout = () => {
       context.setIsLogin(false);
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
+      localStorage.removeItem("merch4u_chat_history"); // Xóa lịch sử chat AI
+      localStorage.removeItem("merch4u_chat_greeted"); // Xóa trạng thái đã chào
       context.setUserData(null);
       context?.setCartData([]);
       context?.setMyListData([]);

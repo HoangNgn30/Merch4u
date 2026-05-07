@@ -26,11 +26,13 @@ import { OrderSuccess } from "./Pages/Orders/success";
 import { OrderFailed } from "./Pages/Orders/failed";
 import SearchPage from "./Pages/Search";
 import Header2 from "./components/Header2";
+import AIChatBot from "./components/AIChatBot";
 
 
 const MyContext = createContext();
 
 function App() {
+  console.log("%c🚀 Client App is running...", "color: #4caf50; font-weight: bold;");
   const [openProductDetailsModal, setOpenProductDetailsModal] = useState({
     open: false,
     item: {}
@@ -256,6 +258,7 @@ function App() {
     <>
       <BrowserRouter>
         <MyContext.Provider value={values}>
+          <AIChatBot />
           <Header2/>
           <Routes>
             <Route path={"/"} exact={true} element={<Home />} />
