@@ -13,6 +13,11 @@ import { useContext } from 'react';
 
 import { MyContext } from "../../App.jsx";
 
+const addressTypeLabel = {
+  Home: "Nhà riêng",
+  Office: "Công ty",
+};
+
 export const Orders = () => {
 
   const [isOpenOrderdProduct, setIsOpenOrderdProduct] = useState(null);
@@ -93,23 +98,29 @@ export const Orders = () => {
 
 
     const deleteOrder = (id) => {
-          if (context?.userData?.role === "ADMIN") {
-              deleteData(`/api/order/deleteOrder/${id}`).then((res) => {
-                fetchDataFromApi(`/api/order/order-list?page=${pageOrder}&limit=5`).then((res) => {
-                  if (res?.error === false) {
-                    setOrdersData(res?.data)
-                    context?.setProgress(100);
-                    context.alertBox("success", "Order Delete successfully!");
-                  }
-                })
+          if (["ADMIN", "SUPERBOSS"].includes(context?.userData?.role)) {
+              context?.showConfirmDelete(
+                "Xóa đơn hàng?",
+                "Bạn có chắc chắn muốn xóa đơn hàng này?",
+                () => {
+                  deleteData(`/api/order/deleteOrder/${id}`).then((res) => {
+                    fetchDataFromApi(`/api/order/order-list?page=${pageOrder}&limit=5`).then((res) => {
+                      if (res?.error === false) {
+                        setOrdersData(res?.data)
+                        context?.setProgress(100);
+                        context.alertBox("success", "Xóa đơn hàng thành công");
+                      }
+                    })
 
-                fetchDataFromApi(`/api/order/order-list`).then((res) => {
-                  if (res?.error === false) {
-                    setTotalOrdersData(res)
-                  }
-                })
-                
-              })
+                    fetchDataFromApi(`/api/order/order-list`).then((res) => {
+                      if (res?.error === false) {
+                        setTotalOrdersData(res)
+                      }
+                    })
+                    
+                  })
+                }
+              )
           } else {
               context.alertBox("error", "Only admin can delete data");
           }
@@ -119,7 +130,7 @@ export const Orders = () => {
   return (
     <div className="card my-2 md:mt-4 shadow-md sm:rounded-lg bg-white">
       <div className="grid grid-cols-1 lg:grid-cols-2 px-5 py-5 flex-col sm:flex-row">
-        <h2 className="text-[18px] font-[600] text-left mb-2 lg:mb-0">Recent Orders</h2>
+        <h2 className="text-[18px] font-[600] text-left mb-2 lg:mb-0">Đơn hàng gần đây</h2>
         <div className="ml-auto w-full">
           <SearchBox
             searchQuery={searchQuery}
@@ -133,44 +144,44 @@ export const Orders = () => {
         <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
           <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
-              <th scope="col" className="px-6 py-3">
+              <th scope="col" className="px-6 py-3 w-[50px]">
                 &nbsp;
               </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                Order Id
+              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
+                Mã đơn hàng
+              </th>
+              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
+                Mã thanh toán
               </th>
               <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                Paymant Id
+                Họ tên
+              </th>
+              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
+                Số điện thoại
               </th>
               <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                Name
+                Địa chỉ
               </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                Phone Number
+              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
+                Mã bưu chính
               </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                Address
+              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
+                Tổng tiền
               </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                Pincode
-              </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                Total Amount
-              </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap">
+              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
                 Email
               </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                User Id
+              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
+                Mã người dùng
               </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                Order Status
+              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
+                Trạng thái đơn hàng
               </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                Date
+              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
+                Ngày tạo
               </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                Action
+              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
+                Thao tác
               </th>
             </tr>
           </thead>
@@ -179,83 +190,90 @@ export const Orders = () => {
             {
               ordersData?.length !== 0 && ordersData?.map((order, index) => {
                 return (
-                  <>
+                  <React.Fragment key={order?._id || index}>
                     <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                      <td className="px-6 py-4 font-[500]">
-                        <Button
-                          className="!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-[#f1f1f1]"
+                      <td className="px-6 py-4 font-[500] w-[50px]">
+                        <button
+                          type="button"
                           onClick={() => isShowOrderdProduct(index)}
+                          className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 border border-gray-300 flex items-center justify-center transition-colors focus:outline-none"
                         >
-                          {
-                            isOpenOrderdProduct === index ? <FaAngleUp className="text-[16px] text-[rgba(0,0,0,0.7)]" /> : <FaAngleDown className="text-[16px] text-[rgba(0,0,0,0.7)]" />
-                          }
-
-                        </Button>
+                          {isOpenOrderdProduct === index ? (
+                            <FaAngleUp className="text-[15px] text-gray-700" />
+                          ) : (
+                            <FaAngleDown className="text-[15px] text-gray-700" />
+                          )}
+                        </button>
                       </td>
-                      <td className="px-6 py-4 font-[500]">
-                        <span className="text-primary">
+                      <td className="px-6 py-4 font-[500] text-center">
+                        <span className="text-primary font-[500]">
                           {order?._id}
                         </span>
                       </td>
 
-                      <td className="px-6 py-4 font-[500]">
-                        <span className="text-primary whitespace-nowrap text-[13px]">{order?.paymentId ? order?.paymentId : 'CASH ON DELIVERY'}</span>
+                      <td className="px-6 py-4 font-[500] text-center">
+                        <span className="text-primary whitespace-nowrap text-[13px]">{order?.paymentId ? order?.paymentId : 'Thanh toán khi nhận hàng'}</span>
                       </td>
 
                       <td className="px-6 py-4 font-[500] whitespace-nowrap">
                         {order?.userId?.name}
                       </td>
 
-                      <td className="px-6 py-4 font-[500]">{order?.delivery_address?.mobile}</td>
+                      <td className="px-6 py-4 font-[500] text-center">{order?.delivery_address?.mobile}</td>
 
                       <td className="px-6 py-4 font-[500]">
-                        <span className='inline-block text-[13px] font-[500] p-1 bg-[#f1f1f1] rounded-md'>{order?.delivery_address?.addressType}</span>
-                        <span className="block w-[400px]">
-                          {order?.delivery_address?.
-                            address_line1 + " " +
-                            order?.delivery_address?.city + " " +
-                            order?.delivery_address?.landmark + " " +
-                            order?.delivery_address?.state + " " +
-                            order?.delivery_address?.country
-                          }
+                        <span className='inline-block text-[13px] font-[500] px-2.5 py-0.5 bg-[#f1f1f1] rounded-full mb-1 whitespace-nowrap text-gray-600 border border-gray-200'>
+                          {addressTypeLabel[order?.delivery_address?.addressType] || order?.delivery_address?.addressType}
+                        </span>
+                        <span className="block w-[300px] text-[13px] leading-snug text-gray-800 font-[600]">
+                          {order?.delivery_address?.address_line1 + " " +
+                           order?.delivery_address?.city + " " +
+                           order?.delivery_address?.landmark + " " +
+                           order?.delivery_address?.state + " " +
+                           order?.delivery_address?.country}
+                        </span>
+                        <span className="block text-[13px] text-gray-500 font-[600] mt-0.5">
+                          {order?.delivery_address?.mobile}
                         </span>
                       </td>
 
-                      <td className="px-6 py-4 font-[500]">{order?.delivery_address?.pincode}</td>
+                      <td className="px-6 py-4 font-[500] text-center">{order?.delivery_address?.pincode}</td>
 
-                      <td className="px-6 py-4 font-[500]">{order?.totalAmt?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</td>
+                      <td className="px-6 py-4 font-[500] text-center">{order?.totalAmt?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</td>
 
-                      <td className="px-6 py-4 font-[500]">
+                      <td className="px-6 py-4 font-[500] text-center">
                         {order?.userId?.email?.substr(0,5)+'***'}
                       </td>
 
-                      <td className="px-6 py-4 font-[500]">
+                      <td className="px-6 py-4 font-[500] text-center">
                         <span className="text-primary">
                           {order?.userId?._id}
                         </span>
                       </td>
 
-                      <td className="px-6 py-4 font-[500]">
+                      <td className="px-6 py-4 font-[500] text-center">
                         <Select
                           labelId="demo-simple-select-helper-label"
                           id="demo-simple-select-helper"
                           value={order?.order_status !== null ? order?.order_status : orderStatus}
-                          label="Status"
+                          label="Trạng thái"
                           size="small"
                           style={{ zoom: '80%' }}
                           className="w-full"
                           onChange={(e) => handleChange(e, order?._id)}
                         >
-                          <MenuItem value={'pending'}>Pending</MenuItem>
-                          <MenuItem value={'confirm'}>Confirm</MenuItem>
-                          <MenuItem value={'delivered'}>Delivered</MenuItem>
+                          <MenuItem value={'pending'}>Chờ xử lý</MenuItem>
+                          <MenuItem value={'confirm'}>Đã xác nhận</MenuItem>
+                          <MenuItem value={'shipped'}>Đang giao</MenuItem>
+                          <MenuItem value={'delivered'}>Đã giao</MenuItem>
+                          <MenuItem value={'cancelled'} disabled>Đã hủy</MenuItem>
                         </Select>
                       </td>
-                      <td className="px-6 py-4 font-[500] whitespace-nowrap">
+                      <td className="px-6 py-4 font-[500] whitespace-nowrap text-center">
                         {order?.createdAt?.split("T")[0]}
                       </td>
-                      <td className="px-6 py-4 font-[500] whitespace-nowrap">
-                        <Button onClick={() => deleteOrder(order?._id)} variant="outlined" color="error" size="small">Delete</Button>
+                      <td className="px-6 py-4 font-[500] whitespace-nowrap text-center">
+                        <Button onClick={() => deleteOrder(order?._id)} variant="outlined" color="error" size="small">Xóa</Button>
                       </td>
                     </tr>
 
@@ -270,37 +288,37 @@ export const Orders = () => {
                                     scope="col"
                                     className="px-6 py-3 whitespace-nowrap"
                                   >
-                                    Product Id
+                                    Mã sản phẩm
                                   </th>
                                   <th
                                     scope="col"
                                     className="px-6 py-3 whitespace-nowrap"
                                   >
-                                    Product Title
+                                    Tên sản phẩm
                                   </th>
                                   <th
                                     scope="col"
                                     className="px-6 py-3 whitespace-nowrap"
                                   >
-                                    Image
+                                    Ảnh
                                   </th>
                                   <th
                                     scope="col"
                                     className="px-6 py-3 whitespace-nowrap"
                                   >
-                                    Quantity
+                                    Số lượng
                                   </th>
                                   <th
                                     scope="col"
                                     className="px-6 py-3 whitespace-nowrap"
                                   >
-                                    Price
+                                    Giá
                                   </th>
                                   <th
                                     scope="col"
                                     className="px-6 py-3 whitespace-nowrap"
                                   >
-                                    Sub Total
+                                    Tạm tính
                                   </th>
                                 </tr>
                               </thead>
@@ -352,7 +370,7 @@ export const Orders = () => {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 )
               })
 

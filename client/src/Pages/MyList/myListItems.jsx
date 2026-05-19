@@ -10,11 +10,17 @@ const MyListItems = (props) => {
   const context = useContext(MyContext);
 
   const removeItem=(id)=>{
-    deleteData(`/api/myList/${id}`).then((res)=>{
-      context?.alertBox("success", "Product remove from My List");
-      context?.getMyListData();
-     
-    })
+    context?.showConfirmBox(
+      "Xóa khỏi danh sách yêu thích?",
+      "Sản phẩm này sẽ được xóa khỏi danh sách yêu thích của bạn.",
+      () => {
+        deleteData(`/api/myList/${id}`).then((res)=>{
+          context?.alertBox("success", "Product remove from My List");
+          context?.getMyListData();
+         
+        })
+      }
+    )
   }
 
   return (

@@ -1,6 +1,7 @@
 import { Router } from 'express'
-import {addReview, authWithGoogle, changePasswordController, deleteMultiple, deleteUser, forgotPasswordController, getAllReviews, getAllUsers, getReviews, loginUserController, logoutController, refreshToken, registerUserController, removeImageFromCloudinary, resetpassword, updateUserDetails, userAvatarController, userDetails, verifyEmailController, verifyForgotPasswordOtp} from '../controllers/user.controller.js';
-import auth from '../middlewares/auth.js';
+import {addReview, approveAdminAccount, authWithGoogle, changePasswordController, changeUserRole, deleteMultiple, deleteUser, forgotPasswordController, getAllReviews, getAllUsers, getReviews, loginUserController, logoutController, refreshToken, registerUserController, rejectAdminAccount, removeImageFromCloudinary, resetpassword, updateUserDetails, userAvatarController, userDetails, verifyEmailController, verifyForgotPasswordOtp} from '../controllers/user.controller.js';
+import { trackProductView } from '../controllers/userActivity.controller.js';
+import auth, { authRole } from '../middlewares/auth.js';
 import upload from '../middlewares/multer.js';
 
 const userRouter = Router()
@@ -18,12 +19,16 @@ userRouter.post('/reset-password',resetpassword)
 userRouter.post('/forgot-password/change-password',changePasswordController)
 userRouter.post('/refresh-token',refreshToken)
 userRouter.get('/user-details',auth,userDetails);
+userRouter.post('/track-view',auth,trackProductView);
 userRouter.post('/addReview',auth,addReview);
 userRouter.get('/getReviews',getReviews);
-userRouter.get('/getAllReviews',getAllReviews);
-userRouter.get('/getAllUsers',getAllUsers);
-userRouter.delete('/deleteMultiple',deleteMultiple);
-userRouter.delete('/deleteUser/:id',deleteUser);
+userRouter.get('/getAllReviews',auth,authRole('ADMIN'),getAllReviews);
+userRouter.get('/getAllUsers',auth,authRole('ADMIN'),getAllUsers);
+userRouter.post('/approve/:id',auth,authRole('SUPERBOSS'),approveAdminAccount);
+userRouter.post('/reject/:id',auth,authRole('SUPERBOSS'),rejectAdminAccount);
+userRouter.put('/change-role/:id',auth,authRole('SUPERBOSS'),changeUserRole);
+userRouter.delete('/deleteMultiple',auth,authRole('ADMIN'),deleteMultiple);
+userRouter.delete('/deleteUser/:id',auth,authRole('ADMIN'),deleteUser);
 
 
 export default userRouter

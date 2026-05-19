@@ -14,6 +14,27 @@ const blogSchema = new mongoose.Schema({
         type : String,
         default : '',
     },
+    author : {
+        type : String,
+        default : '',
+    },
+    tags : [
+        {
+            type : String,
+        }
+    ],
+    category : {
+        type : String,
+        default : '',
+    },
+    isPublished : {
+        type : Boolean,
+        default : true,
+    },
+    viewCount : {
+        type : Number,
+        default : 0,
+    },
 },{
     timestamps : true
 });

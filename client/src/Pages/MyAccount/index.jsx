@@ -5,30 +5,29 @@ import AccountSidebar from "../../components/AccountSidebar";
 import { MyContext } from "../../App";
 import { useNavigate } from "react-router-dom";
 import { editData, postData } from "../../utils/api";
-import CircularProgress from '@mui/material/CircularProgress';
+import CircularProgress from "@mui/material/CircularProgress";
 import { Collapse } from "react-collapse";
-import { PhoneInput } from 'react-international-phone';
-import 'react-international-phone/style.css';
+
+const PHONE_REGEX = /^0\d{9}$/;
+const PHONE_MESSAGE = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng 0. Ví dụ: 0326851181";
 
 const MyAccount = () => {
-
   const [isLoading, setIsLoading] = useState(false);
   const [isLoading2, setIsLoading2] = useState(false);
   const [userId, setUserId] = useState("");
-  const [isChangePasswordFormShow, setisChangePasswordFormShow] = useState(false);
-  const [phone, setPhone] = useState('');
+  const [isChangePasswordFormShow, setIsChangePasswordFormShow] = useState(false);
 
   const [formFields, setFormsFields] = useState({
-    name: '',
-    email: '',
-    mobile: ''
+    name: "",
+    email: "",
+    mobile: "",
   });
 
   const [changePassword, setChangePassword] = useState({
-    email: '',
-    oldPassword: '',
-    newPassword: '',
-    confirmPassword: ''
+    email: "",
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
 
   const context = useContext(MyContext);
@@ -40,154 +39,145 @@ const MyAccount = () => {
     if (token === null) {
       history("/");
     }
-
-
-  }, [context?.isLogin])
-
+  }, [context?.isLogin, history]);
 
   useEffect(() => {
-    if (context?.userData?._id !== "" && context?.userData?._id !== undefined) {
-      setUserId(context?.userData?._id);
-      setTimeout(() => {
-        setFormsFields({
-          name: context?.userData?.name,
-          email: context?.userData?.email,
-          mobile: context?.userData?.mobile
-        })
-      }, 200);
-      const ph = `"${context?.userData?.mobile}"`
-      setPhone(ph)
+    if (context?.userData?._id) {
+      setUserId(context.userData._id);
+      setFormsFields({
+        name: context?.userData?.name || "",
+        email: context?.userData?.email || "",
+        mobile: context?.userData?.mobile || "",
+      });
 
-      setChangePassword({
-        email: context?.userData?.email
-      })
+      setChangePassword((prev) => ({
+        ...prev,
+        email: context?.userData?.email || "",
+      }));
     }
-
-  }, [context?.userData])
-
-
+  }, [context?.userData]);
 
   const onChangeInput = (e) => {
     const { name, value } = e.target;
-    setFormsFields(() => {
-      return {
-        ...formFields,
-        [name]: value
-      }
-    })
+    const nextValue = name === "mobile" ? value.replace(/\D/g, "").slice(0, 10) : value;
 
-    setChangePassword(() => {
-      return {
-        ...formFields,
-        [name]: value
-      }
-    })
+    if (["name", "email", "mobile"].includes(name)) {
+      setFormsFields((prev) => ({
+        ...prev,
+        [name]: nextValue,
+      }));
+    }
 
+    if (["oldPassword", "newPassword", "confirmPassword"].includes(name)) {
+      setChangePassword((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
 
-  }
-
-
-  const valideValue = Object.values(formFields).every(el => el)
+  const validProfile = Object.values(formFields).every((el) => el);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     setIsLoading(true);
 
-    if (formFields.name === "") {
-      context.alertBox("error", "Please enter full name");
-      return false
+    if (formFields.name.trim() === "") {
+      context.alertBox("error", "Vui lòng nhập họ và tên");
+      setIsLoading(false);
+      return;
     }
 
-
-    if (formFields.email === "") {
-      context.alertBox("error", "Please enter email id");
-      return false
+    const nameRegex = /^[A-Za-zÀ-ỹ\s]+$/u;
+    if (!nameRegex.test(formFields.name)) {
+      context.alertBox("error", "Họ và tên chỉ được chứa chữ cái");
+      setIsLoading(false);
+      return;
     }
 
-
-    if (formFields.mobile === "") {
-      context.alertBox("error", "Please enter mobile number");
-      return false
+    if (formFields.email.trim() === "") {
+      context.alertBox("error", "Vui lòng nhập email");
+      setIsLoading(false);
+      return;
     }
 
+    if (!PHONE_REGEX.test(formFields.mobile)) {
+      context.alertBox("error", PHONE_MESSAGE);
+      setIsLoading(false);
+      return;
+    }
 
     editData(`/api/user/${userId}`, formFields, { withCredentials: true }).then((res) => {
-      console.log(res)
-      if (res?.error !== true) {
-        setIsLoading(false);
-        context.alertBox("success", res?.data?.message);
-
+      if (res?.data?.error !== true) {
+        context.alertBox("success", res?.data?.message || "Cập nhật hồ sơ thành công");
+        context?.getUserDetails?.();
       } else {
-        context.alertBox("error", res?.data?.message);
-        setIsLoading(false);
+        context.alertBox("error", res?.data?.message || "Không thể cập nhật hồ sơ");
       }
 
-    })
-
-
-  }
-
-  const valideValue2 = Object.values(formFields).every(el => el)
-
-
+      setIsLoading(false);
+    });
+  };
 
   const handleSubmitChangePassword = (e) => {
     e.preventDefault();
-
     setIsLoading2(true);
 
-    if (changePassword.oldPassword === "") {
-      context.alertBox("error", "Please enter old password");
-      return false
+    if (context?.userData?.signUpWithGoogle === false && changePassword.oldPassword === "") {
+      context.alertBox("error", "Vui lòng nhập mật khẩu cũ");
+      setIsLoading2(false);
+      return;
     }
-
 
     if (changePassword.newPassword === "") {
-      context.alertBox("error", "Please enter new password");
-      return false
+      context.alertBox("error", "Vui lòng nhập mật khẩu mới");
+      setIsLoading2(false);
+      return;
     }
 
-
     if (changePassword.confirmPassword === "") {
-      context.alertBox("error", "Please enter confirm password");
-      return false
+      context.alertBox("error", "Vui lòng nhập lại mật khẩu mới");
+      setIsLoading2(false);
+      return;
     }
 
     if (changePassword.confirmPassword !== changePassword.newPassword) {
-      context.alertBox("error", "password and confirm password not match");
-      return false
+      context.alertBox("error", "Mật khẩu xác nhận không khớp");
+      setIsLoading2(false);
+      return;
     }
 
-
-    postData(`/api/user/reset-password`, changePassword, { withCredentials: true }).then((res) => {
-
+    postData("/api/user/reset-password", changePassword, { withCredentials: true }).then((res) => {
       if (res?.error !== true) {
-        setIsLoading2(false);
-        context.alertBox("success", res?.message);
+        context.alertBox("success", res?.message || "Đổi mật khẩu thành công");
+        setChangePassword((prev) => ({
+          ...prev,
+          oldPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        }));
       } else {
-        context.alertBox("error", res?.message);
-        setIsLoading2(false);
+        context.alertBox("error", res?.message || "Không thể đổi mật khẩu");
       }
 
-    })
-
-
-  }
+      setIsLoading2(false);
+    });
+  };
 
   return (
     <section className="py-3 lg:py-10 w-full">
       <div className="container flex flex-col lg:flex-row gap-5">
         <div className="w-full lg:w-[20%]">
-
           <AccountSidebar />
         </div>
 
         <div className="col2 w-full lg:w-[50%]">
           <div className="card bg-white p-5 shadow-md rounded-md mb-5">
             <div className="flex items-center pb-3">
-              <h2 className="pb-0">My Profile</h2>
-              <Button className="!ml-auto" onClick={() => setisChangePasswordFormShow(!isChangePasswordFormShow)}>Change Password</Button>
+              <h2 className="pb-0">Hồ sơ của tôi</h2>
+              <Button className="!ml-auto" onClick={() => setIsChangePasswordFormShow(!isChangePasswordFormShow)}>
+                Đổi mật khẩu
+              </Button>
             </div>
             <hr />
 
@@ -195,13 +185,13 @@ const MyAccount = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 ">
                 <div className="col">
                   <TextField
-                    label="Full Name"
+                    label="Họ và tên"
                     variant="outlined"
                     size="small"
                     className="w-full"
                     name="name"
                     value={formFields.name}
-                    disabled={isLoading === true ? true : false}
+                    disabled={isLoading === true}
                     onChange={onChangeInput}
                   />
                 </div>
@@ -220,78 +210,61 @@ const MyAccount = () => {
                   />
                 </div>
 
-
-                
-               <div className="col">
-                  <PhoneInput
-                    defaultCountry="vn"
-                    value={phone}
-                    disabled={isLoading === true ? true : false}
-                    onChange={(phone) => {
-                      setPhone(phone);
-                      setFormsFields({
-                        mobile: phone
-                      })
-                    }}
+                <div className="col">
+                  <TextField
+                    label="Số điện thoại"
+                    variant="outlined"
+                    size="small"
+                    className="w-full"
+                    name="mobile"
+                    value={formFields.mobile}
+                    disabled={isLoading === true}
+                    onChange={onChangeInput}
+                    placeholder="VD: 0326851181"
+                    inputProps={{ inputMode: "numeric", maxLength: 10 }}
                   />
-
                 </div>
-
               </div>
-
 
               <br />
 
               <div className="flex items-center gap-4">
-                <Button type="submit" disabled={!valideValue} className="btn-org btn-sm w-[150px]">
-                  {
-                    isLoading === true ? <CircularProgress color="inherit" />
-                      :
-                      'Update Profile'
-                  }
+                <Button type="submit" disabled={!validProfile} className="btn-org btn-sm w-[170px]">
+                  {isLoading === true ? <CircularProgress color="inherit" /> : "Cập nhật hồ sơ"}
                 </Button>
-
               </div>
             </form>
           </div>
 
-
-
-
-
           <Collapse isOpened={isChangePasswordFormShow}>
             <div className="card bg-white p-5 shadow-md rounded-md">
               <div className="flex items-center pb-3">
-                <h2 className="pb-0">Change Password</h2>
+                <h2 className="pb-0">Đổi mật khẩu</h2>
               </div>
               <hr />
 
-
               <form className="mt-8" onSubmit={handleSubmitChangePassword}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-
-                  {
-                    context?.userData?.signUpWithGoogle === false &&
+                  {context?.userData?.signUpWithGoogle === false && (
                     <div className="col">
                       <TextField
-                        label="Old Password"
+                        type="password"
+                        label="Mật khẩu cũ"
                         variant="outlined"
                         size="small"
                         className="w-full"
                         name="oldPassword"
                         value={changePassword.oldPassword}
-                        disabled={isLoading2 === true ? true : false}
+                        disabled={isLoading2 === true}
                         onChange={onChangeInput}
                       />
                     </div>
-                  }
-
-
+                  )}
 
                   <div className="col">
                     <TextField
-                      type="text"
-                      label="New Password"
+                      type="password"
+                      label="Mật khẩu mới"
                       variant="outlined"
                       size="small"
                       className="w-full"
@@ -303,7 +276,8 @@ const MyAccount = () => {
 
                   <div className="col">
                     <TextField
-                      label="Confirm Password"
+                      type="password"
+                      label="Nhập lại mật khẩu mới"
                       variant="outlined"
                       size="small"
                       className="w-full"
@@ -312,32 +286,18 @@ const MyAccount = () => {
                       onChange={onChangeInput}
                     />
                   </div>
-
-
                 </div>
-
 
                 <br />
 
                 <div className="flex items-center gap-4">
-                  <Button type="submit"  className="btn-org btn-sm w-[200px]">
-                    {
-                      isLoading2 === true ? <CircularProgress color="inherit" />
-                        :
-                        'Change Password'
-                    }
+                  <Button type="submit" className="btn-org btn-sm w-[200px]">
+                    {isLoading2 === true ? <CircularProgress color="inherit" /> : "Đổi mật khẩu"}
                   </Button>
-
                 </div>
               </form>
-
-
-
             </div>
           </Collapse>
-
-
-
         </div>
       </div>
     </section>

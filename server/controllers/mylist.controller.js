@@ -24,7 +24,7 @@ export const addToMyListController = async (request, response) => {
 
         if(item){
             return response.status(400).json({
-                message: "Item already in my list"
+                message: "Sản phẩm đã có trong danh sách yêu thích"
             })
         }
 
@@ -46,7 +46,7 @@ export const addToMyListController = async (request, response) => {
         return response.status(200).json({
             error:false,
             success:true,
-            message:"The product saved in the my list",
+            message:"Đã lưu sản phẩm vào danh sách yêu thích",
         })
 
     } catch (error) {
@@ -68,7 +68,7 @@ export const deleteToMyListController = async (request, response) => {
             return response.status(404).json({
                 error:true,
                 success:false,
-                message:"The item with this given id was not found"
+                message:"Không tìm thấy mục với mã đã cung cấp"
             })
         }
 
@@ -79,7 +79,7 @@ export const deleteToMyListController = async (request, response) => {
             return response.status(404).json({
                 error:true,
                 success:false,
-                message:"The item is not deleted"
+                message:"Không thể xóa mục"
             })
         }
 
@@ -87,7 +87,7 @@ export const deleteToMyListController = async (request, response) => {
         return response.status(200).json({
             error:false,
             success:true,
-            message:"The item removed from My List"
+            message:"Đã xóa mục khỏi danh sách yêu thích"
         })
         
     } catch (error) {

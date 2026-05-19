@@ -32,7 +32,8 @@ const SignUp = () => {
     const [formFields, setFormFields] = useState({
         name: "",
         email: "",
-        password: ""
+        password: "",
+        role: "ADMIN"
     })
 
     const context = useContext(MyContext);
@@ -66,19 +67,39 @@ const SignUp = () => {
         setIsLoading(true);
 
         if (formFields.name === "") {
-            context.alertBox("error", "Please enter full name");
+            context.alertBox("error", "Vui lòng nhập họ tên");
+            setIsLoading(false);
             return false
+        }
+
+        if (formFields.name.length < 3 || formFields.name.length > 30) {
+            context.alertBox("error", "Họ và tên phải từ 3 đến 30 ký tự");
+            setIsLoading(false);
+            return false;
         }
 
         if (formFields.email === "") {
-            context.alertBox("error", "Please enter email id");
+            context.alertBox("error", "Vui lòng nhập email");
+            setIsLoading(false);
             return false
         }
 
+        if (formFields.email.length > 50) {
+            context.alertBox("error", "Email không được vượt quá 50 ký tự");
+            setIsLoading(false);
+            return false;
+        }
 
         if (formFields.password === "") {
-            context.alertBox("error", "Please enter password");
+            context.alertBox("error", "Vui lòng nhập mật khẩu");
+            setIsLoading(false);
             return false
+        }
+
+        if (formFields.password.length < 6 || formFields.password.length > 20) {
+            context.alertBox("error", "Mật khẩu phải từ 6 đến 20 ký tự");
+            setIsLoading(false);
+            return false;
         }
 
 
@@ -92,7 +113,8 @@ const SignUp = () => {
                 setFormFields({
                     name: "",
                     email: "",
-                    password: ""
+                    password: "",
+                    role: "ADMIN"
                 })
 
                 history("/verify-account")
@@ -125,13 +147,21 @@ const SignUp = () => {
                     password: null,
                     avatar: user.providerData[0].photoURL,
                     mobile: user.providerData[0].phoneNumber,
-                    role: "USER"
+                    role: "ADMIN"
                 };
 
 
                 postData("/api/user/authWithGoogle", fields).then((res) => {
 
                     if (res?.error !== true) {
+                        if (res?.requiresApproval) {
+                            setLoadingGoogle(false);
+                            setIsLoading(false);
+                            context.alertBox("success", res?.message);
+                            history("/login")
+                            return;
+                        }
+
                         setLoadingGoogle(false);
                         setIsLoading(false);
                         context.alertBox("success", res?.message);
@@ -179,13 +209,13 @@ const SignUp = () => {
                 <div className="hidden sm:flex items-center gap-0">
                     <NavLink to="/login" exact={true} activeClassName="isActive">
                         <Button className="!rounded-full !text-[rgba(0,0,0,0.8)] !px-5 flex gap-1">
-                            <CgLogIn className="text-[18px]" /> Login
+                            <CgLogIn className="text-[18px]" /> Đăng nhập
                         </Button>
                     </NavLink>
 
                     <NavLink to="/sign-up" exact={true} activeClassName="isActive">
                         <Button className="!rounded-full !text-[rgba(0,0,0,0.8)] !px-5 flex gap-1">
-                            <FaRegUser className="text-[15px]" /> Sign Up
+                            <FaRegUser className="text-[15px]" /> Đăng ký
                         </Button>
                     </NavLink>
                 </div>
@@ -198,7 +228,7 @@ const SignUp = () => {
                 </div>
 
                 <h1 className="text-center text-[18px] sm:text-[35px] font-[800] mt-4">
-                    Join us today! Get special <br />benefits and stay up-to-date.
+                    Tạo tài khoản quản trị <br />và chờ phê duyệt quyền truy cập.
                 </h1>
 
                 <div className="flex items-center justify-center w-full mt-5 gap-4">
@@ -211,7 +241,7 @@ const SignUp = () => {
                         variant="outlined"
                         className="!bg-none !py-2 !text-[15px] !capitalize !px-5 !text-[rgba(0,0,0,0.7)]"
                     >
-                        Signin with Google
+                        Đăng ký bằng Google
                     </LoadingButton>
 
                 </div>
@@ -221,7 +251,7 @@ const SignUp = () => {
                 <div className="w-full flex items-center justify-center gap-3">
                     <span className="flex items-center w-[100px] h-[1px] bg-[rgba(0,0,0,0.2)]"></span>
                     <span className="text-[10px] lg:text-[14px] font-[500]">
-                        Or, Sign Up with your email
+                        Hoặc đăng ký bằng email
                     </span>
                     <span className="flex items-center w-[100px] h-[1px] bg-[rgba(0,0,0,0.2)]"></span>
                 </div>
@@ -230,7 +260,7 @@ const SignUp = () => {
 
                 <form className="w-full px-8 mt-3" onSubmit={handleSubmit}>
                     <div className="form-group mb-4 w-full">
-                        <h4 className="text-[14px] font-[500] mb-1">Full Name</h4>
+                        <h4 className="text-[14px] font-[500] mb-1">Họ tên</h4>
                         <input
                             type="text"
                             className="w-full h-[50px] border-2 border-[rgba(0,0,0,0.1)] rounded-md focus:border-[rgba(0,0,0,0.7)] focus:outline-none px-3"
@@ -254,7 +284,7 @@ const SignUp = () => {
                     </div>
 
                     <div className="form-group mb-4 w-full">
-                        <h4 className="text-[14px] font-[500] mb-1">Password</h4>
+                        <h4 className="text-[14px] font-[500] mb-1">Mật khẩu</h4>
                         <div className="relative w-full">
                             <input
                                 type={isPasswordShow === false ? 'password' : 'text'}
@@ -278,11 +308,11 @@ const SignUp = () => {
 
 
                     <div className="flex items-center justify-between mb-4">
-                        <span className="text-[14px]">Already have an account?</span>
+                        <span className="text-[14px]">Đã có tài khoản?</span>
                         <Link to="/login"
                             className="text-primary font-[700] text-[15px] hover:underline hover:text-gray-700 cursor-pointer"
                         >
-                            Sign In
+                            Đăng nhập
                         </Link>
                     </div>
 
@@ -290,7 +320,7 @@ const SignUp = () => {
                         {
                             isLoading === true ? <CircularProgress color="inherit" />
                                 :
-                                'Sign Up'
+                                'Đăng ký'
                         }
                     </Button>
                 </form>

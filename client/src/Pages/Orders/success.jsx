@@ -40,11 +40,11 @@ export const OrderSuccess = () => {
                 </div>
             )}
             <img src="/checked.png" className="w-[80px] sm:w-[120px]" />
-            <h3 className='mb-0 text-[20px] sm:text-[25px]'>Your order is placed</h3>
-            <p className='mt-0 mb-0'>Thank you for your payment.</p>
-            <p className='mt-0 text-center'>Order Invoice send to your email <b>{context?.userData?.email}</b></p>
+            <h3 className='mb-0 text-[20px] sm:text-[25px]'>Đơn hàng đã được đặt</h3>
+            <p className='mt-0 mb-0'>Cảm ơn bạn đã thanh toán.</p>
+            <p className='mt-0 text-center'>Hóa đơn đơn hàng đã được gửi đến email <b>{context?.userData?.email}</b></p>
             <Link to="/">
-                <Button className="btn-org btn-border">Back to home</Button>
+                <Button className="btn-org btn-border">Về trang chủ</Button>
             </Link>
         </section>
     )

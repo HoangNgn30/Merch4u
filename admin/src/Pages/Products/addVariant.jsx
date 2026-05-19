@@ -9,9 +9,10 @@ import { fetchDataFromApi, postData, deleteData, editData } from '../../utils/ap
 import CircularProgress from '@mui/material/CircularProgress';
 
 
-const AddWeight = () => {
+const AddVariant = () => {
 
-    const [name, setName] = useState();
+    const [name, setName] = useState('');
+    const [type, setType] = useState('Size');
     const [data, setData] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [editId, seteditId] = useState('');
@@ -24,7 +25,7 @@ const AddWeight = () => {
 
 
    const getData=()=>{
-    fetchDataFromApi("/api/product/productWeight/get").then((res) => {
+    fetchDataFromApi("/api/product/productVariant/get").then((res) => {
         if (res?.error === false) {
             setData(res?.data);
         }
@@ -38,15 +39,16 @@ const AddWeight = () => {
         setIsLoading(true);
 
         if (name === "") {
-            context.alertBox("error", "Please enter product RAM");
+            context.alertBox("error", "Vui lòng nhập tên biến thể sản phẩm");
             return false;
         }
 
 
         if(editId===""){
 
-            postData(`/api/product/productWeight/create`, {
-                name: name
+            postData(`/api/product/productVariant/create`, {
+                name: name,
+                type: type
             }).then((res) => {
                 if(res?.error===false){
                     context.alertBox("success", res?.message);
@@ -54,6 +56,7 @@ const AddWeight = () => {
                     setIsLoading(false);
                     getData();
                     setName("");
+                    setType("Size");
                    },[300])
                   
                 }else{
@@ -66,8 +69,9 @@ const AddWeight = () => {
 
     
         if(editId!==""){
-            editData(`/api/product/productWeight/${editId}`, {
-                name: name
+            editData(`/api/product/productVariant/${editId}`, {
+                name: name,
+                type: type
             }).then((res) => {
           
                 if(res?.data?.error===false){
@@ -76,6 +80,7 @@ const AddWeight = () => {
                     setIsLoading(false);
                     getData();
                     setName("");
+                    setType("Size");
                     seteditId("");
                    },[300])
                   
@@ -92,16 +97,23 @@ const AddWeight = () => {
 
 
     const deleteItem = (id) => {
-        deleteData(`/api/product/productWeight/${id}`).then((res) => {
-            getData();
-            context.alertBox("success", "Item deleted");
+        context?.showConfirmDelete(
+            "Xóa biến thể?",
+            "Bạn có chắc chắn muốn xóa biến thể này?",
+            () => {
+                deleteData(`/api/product/productVariant/${id}`).then((res) => {
+                    getData();
+                    context.alertBox("success", "Đã xóa mục");
 
-        })
+                })
+            }
+        )
     }
 
     const editItem=(id)=>{
-        fetchDataFromApi(`/api/product/productWeight/${id}`).then((res)=>{
+        fetchDataFromApi(`/api/product/productVariant/${id}`).then((res)=>{
             setName(res?.data?.name)
+            setType(res?.data?.type || 'Size')
             seteditId(res?.data?._id);
         })
     }
@@ -110,14 +122,25 @@ const AddWeight = () => {
         <>
             <div className="flex items-center justify-between px-2 py-0 mt-3">
                 <h2 className="text-[18px] font-[600]">
-                    Add Product WEIGHT
+                    Thêm biến thể sản phẩm
                 </h2>
             </div>
 
             <div className="card my-4 pt-5 pb-5 shadow-md sm:rounded-lg bg-white w-[100%] sm:w-[100%] lg:w-[65%]">
                 <form className='form py-3 p-6' onSubmit={handleSubmit}>
                     <div className='col mb-4'>
-                        <h3 className='text-[14px] font-[500] mb-1 text-black'>PRODUCT WEIGHT</h3>
+                        <h3 className='text-[14px] font-[500] mb-1 text-black'>Loại biến thể</h3>
+                        <select className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-2 text-sm bg-white' value={type} onChange={(e) => setType(e.target.value)}>
+                            <option value="Size">Size</option>
+                            <option value="Color">Color</option>
+                            <option value="Type">Type</option>
+                            <option value="Material">Material</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div className='col mb-4'>
+                        <h3 className='text-[14px] font-[500] mb-1 text-black'>Tên biến thể</h3>
                         <input type="text" className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm' name="name" onChange={(e) => setName(e.target.value)} value={name} />
                     </div>
 
@@ -127,7 +150,7 @@ const AddWeight = () => {
                             :
                             <>
                                 <FaCloudUploadAlt className='text-[25px] text-white' />
-                                Publish and View
+                                Lưu và xem
                             </>
                     }
                     </Button>
@@ -144,12 +167,15 @@ const AddWeight = () => {
                             <thead className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
                                 <tr>
                                    
-                                    <th scope="col" className="px-6 py-3 whitespace-nowrap" width="60%">
-                                        PRODUCT WEIGHT
+                                    <th scope="col" className="px-6 py-3 whitespace-nowrap" width="30%">
+                                        Loại
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 whitespace-nowrap" width="40%">
+                                        Tên biến thể
                                     </th>
 
                                     <th scope="col" className="px-6 py-3 whitespace-nowrap" width="30%">
-                                        ACTION
+                                        Thao tác
                                     </th>
                                 </tr>
                             </thead>
@@ -157,23 +183,25 @@ const AddWeight = () => {
                                 {
                                     data?.map((item, index) => {
                                         return <tr className="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700" key={index}>
-                                           
-
+                                        
+                                            <td className="px-6 py-2">
+                                               <span className="font-[500] text-gray-500"> {item?.type}</span>
+                                            </td>
                                             <td className="px-6 py-2">
                                                <span className="font-[600]"> {item?.name}</span>
                                             </td>
 
                                             <td className="px-6 py-2">
                                                 <div className="flex items-center gap-1">
-                                                    <Button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:!bg-[#f1f1f1] !min-w-[35px]" onClick={()=>editItem(item?._id)}>
+                                                    <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:bg-[#e2e2e2] flex items-center justify-center transition-all" onClick={()=>editItem(item?._id)}>
                                                         <AiOutlineEdit className="text-[rgba(0,0,0,0.7)] text-[20px] " />
-                                                    </Button>
+                                                    </button>
 
 
 
-                                                    <Button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:!bg-[#f1f1f1] !min-w-[35px]" onClick={()=>deleteItem(item?._id)}>
+                                                    <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:bg-[#e2e2e2] flex items-center justify-center transition-all" onClick={()=>deleteItem(item?._id)}>
                                                         <GoTrash className="text-[rgba(0,0,0,0.7)] text-[18px] " />
-                                                    </Button>
+                                                    </button>
                                                 </div>
                                             </td>
 
@@ -195,4 +223,4 @@ const AddWeight = () => {
     )
 }
 
-export default AddWeight;
+export default AddVariant;

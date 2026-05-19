@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { Sidebar } from "../../components/Sidebar";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import ProductItem from "../../components/ProductItem";
@@ -13,6 +13,8 @@ import ProductLoadingGrid from "../../components/ProductLoading/productLoadingGr
 import { postData } from "../../utils/api";
 import { MyContext } from "../../App";
 import AIRecommendations from "../../components/AIRecommendations";
+import { useLocation, Link } from "react-router-dom";
+import EmptyState from "../../components/EmptyState";
 
 const ProductListing = () => {
   const [itemView, setItemView] = useState("grid");
@@ -24,13 +26,52 @@ const ProductListing = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const [selectedSortVal, setSelectedSortVal] = useState("Name, A to Z");
+  const [selectedSortVal, setSelectedSortVal] = useState("Tên, A đến Z");
+  const [selectedArtist, setSelectedArtist] = useState("all");
 
   const context = useContext(MyContext);
+
+  const artistOptions = useMemo(() => {
+    const brands = productsData?.products?.map((item) => item?.brand).filter(Boolean) || [];
+    return [...new Set(brands)].slice(0, 12);
+  }, [productsData]);
+
+  const visibleProducts = useMemo(() => {
+    const products = productsData?.products || [];
+    if (selectedArtist === "all") return products;
+    return products.filter((item) => item?.brand === selectedArtist);
+  }, [productsData, selectedArtist]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [])
+
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const catId = queryParams.get("catId");
+  const subCatId = queryParams.get("subCatId");
+
+  let catName = "";
+  let subCatName = "";
+
+  if (context?.catData?.length > 0) {
+    if (catId) {
+      const cat = context.catData.find((c) => c._id === catId);
+      if (cat) catName = cat.name;
+    }
+    if (subCatId) {
+      for (const cat of context.catData) {
+        if (cat.children) {
+          const subCat = cat.children.find((sc) => sc._id === subCatId);
+          if (subCat) {
+            subCatName = subCat.name;
+            catName = cat.name;
+            break;
+          }
+        }
+      }
+    }
+  }
 
 
   const open = Boolean(anchorEl);
@@ -54,6 +95,10 @@ const ProductListing = () => {
       setAnchorEl(null);
     })
   }
+
+  useEffect(() => {
+    setSelectedArtist("all");
+  }, [catId, subCatId, productsData?.page]);
 
   return (
     <section className=" pb-0">
@@ -80,7 +125,40 @@ const ProductListing = () => {
 
 
           <div className="rightContent w-full lg:w-[80%] py-3">
-            <div className="bg-[#f1f1f1] p-2 w-full mb-4 rounded-md flex items-center justify-between">
+            <div className="py-2 mb-3">
+              <Breadcrumbs aria-label="breadcrumb">
+                <Link
+                  underline="hover"
+                  color="inherit"
+                  to="/"
+                  className="link transition !text-[14px]"
+                >
+                  Trang chủ
+                </Link>
+                {catName && (
+                  <Link
+                    underline="hover"
+                    color="inherit"
+                    to={`/products?catId=${catId || context?.catData?.find(c => c.name === catName)?._id}`}
+                    className="link transition !text-[14px]"
+                  >
+                    {catName}
+                  </Link>
+                )}
+                {subCatName && (
+                  <span className="text-[14px] text-gray-500">
+                    {subCatName}
+                  </span>
+                )}
+                {!catName && !subCatName && (
+                  <span className="text-[14px] text-gray-500">
+                    Sản phẩm
+                  </span>
+                )}
+              </Breadcrumbs>
+            </div>
+
+            <div className="bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 p-3 w-full mb-5 rounded-[16px] flex items-center justify-between">
               <div className="col1 flex items-center itemViewActions">
                 <Button
                   className={`!w-[35px] !h-[35px] !min-w-[35px] !rounded-full 
@@ -98,13 +176,13 @@ const ProductListing = () => {
                 </Button>
 
                 <span className="text-[14px] hidden sm:block md:block lg:block font-[500] pl-3 text-[rgba(0,0,0,0.7)]">
-                  There are {productsData?.products?.length !== 0 ? productsData?.products?.length : 0}  products.
+                  Có {visibleProducts?.length || 0} sản phẩm.
                 </span>
               </div>
 
               <div className="col2 ml-auto flex items-center justify-end gap-3 pr-4">
                 <span className="text-[14px] font-[500] pl-3 text-[rgba(0,0,0,0.7)]">
-                  Sort By
+                  Sắp xếp
                 </span>
 
                 <Button
@@ -129,39 +207,61 @@ const ProductListing = () => {
                   }}
                 >
                   <MenuItem
-                    onClick={() => handleSortBy('name', 'asc', productsData?.products, 'Name, A to Z')}
+                    onClick={() => handleSortBy('name', 'asc', productsData?.products, 'Tên, A đến Z')}
                     className="!text-[13px] !text-[#000] !capitalize"
                   >
-                    Name, A to Z
+                    Tên, A đến Z
                   </MenuItem>
 
 
                   <MenuItem
-                    onClick={() => handleSortBy('name', 'desc', productsData?.products, 'Name, Z to A')}
+                    onClick={() => handleSortBy('name', 'desc', productsData?.products, 'Tên, Z đến A')}
                     className="!text-[13px] !text-[#000] !capitalize"
                   >
-                    Name, Z to A
+                    Tên, Z đến A
                   </MenuItem>
 
 
                   <MenuItem
-                    onClick={() => handleSortBy('price', 'asc', productsData?.products, 'Price, low to high')}
+                    onClick={() => handleSortBy('price', 'asc', productsData?.products, 'Giá tăng dần')}
                     className="!text-[13px] !text-[#000] !capitalize"
                   >
-                    Price, low to high
+                    Giá tăng dần
                   </MenuItem>
 
 
                   <MenuItem
-                    onClick={() => handleSortBy('price', 'desc', productsData?.products, ' Price, high to low')}
+                    onClick={() => handleSortBy('price', 'desc', productsData?.products, 'Giá giảm dần')}
                     className="!text-[13px] !text-[#000] !capitalize"
                   >
-                    Price, high to low
+                    Giá giảm dần
                   </MenuItem>
 
                 </Menu>
               </div>
             </div>
+
+            {artistOptions.length > 0 && (
+              <div className="artistFilterBar mb-6 overflow-x-auto">
+                <div className="flex items-center gap-3 min-w-max pb-2">
+                  <Button
+                    className={`!rounded-[12px] !capitalize !px-5 !py-2 !text-[13px] !font-medium transition-all ${selectedArtist === "all" ? "!bg-primary !text-white !shadow-md" : "!bg-gray-50 !text-gray-600 hover:!bg-gray-100"}`}
+                    onClick={() => setSelectedArtist("all")}
+                  >
+                    Tất cả
+                  </Button>
+                  {artistOptions.map((brand) => (
+                    <Button
+                      key={brand}
+                      className={`!rounded-[12px] !capitalize !px-5 !py-2 !text-[13px] !font-medium transition-all ${selectedArtist === brand ? "!bg-primary !text-white !shadow-md" : "!bg-gray-50 !text-gray-600 hover:!bg-gray-100"}`}
+                      onClick={() => setSelectedArtist(brand)}
+                    >
+                      {brand}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div
               className={`grid ${itemView === "grid"
@@ -176,7 +276,7 @@ const ProductListing = () => {
                     isLoading === true ? <ProductLoadingGrid view={itemView} />
                       :
 
-                      productsData?.products?.length !== 0 && productsData?.products?.map((item, index) => {
+                      visibleProducts?.length !== 0 && visibleProducts?.map((item, index) => {
                         return (
                           <ProductItem key={index} item={item} />
                         )
@@ -192,7 +292,7 @@ const ProductListing = () => {
                     isLoading === true ? <ProductLoadingGrid view={itemView} />
                       :
 
-                      productsData?.products?.length !== 0 && productsData?.products?.map((item, index) => {
+                      visibleProducts?.length !== 0 && visibleProducts?.map((item, index) => {
                         return (
                           <ProductItemListView key={index} item={item} />
                         )
@@ -203,6 +303,16 @@ const ProductListing = () => {
                 </>
               )}
             </div>
+
+            {isLoading === false && visibleProducts?.length === 0 && (
+              <EmptyState
+                type="search"
+                title="Không tìm thấy sản phẩm"
+                message="Thử chọn nhóm khác, bộ lọc khác hoặc tìm kiếm với từ khóa ngắn hơn."
+                actionLabel="Xem tất cả sản phẩm"
+                actionTo="/products"
+              />
+            )}
 
             {
               totalPages > 1 &&

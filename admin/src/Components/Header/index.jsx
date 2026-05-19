@@ -54,7 +54,7 @@ const StyledBadge = styled(Badge)(({ theme }) => ({
 const Header = () => {
   const [anchorMyAcc, setAnchorMyAcc] = React.useState(null);
   const openMyAcc = Boolean(anchorMyAcc);
-
+  const [logoSrc, setLogoSrc] = useState(() => localStorage.getItem("logo") || "/icon.svg");
 
   const history = useNavigate();
 
@@ -65,6 +65,8 @@ const Header = () => {
     setAnchorMyAcc(null);
   };
 
+
+
   const context = useContext(MyContext);
 
   const location = useLocation();
@@ -72,7 +74,11 @@ const Header = () => {
   useEffect(() => {
 
     fetchDataFromApi("/api/logo").then((res) => {
-      localStorage.setItem('logo', res?.logo[0]?.logo)
+      const url = res?.logo?.[0]?.logo;
+      if (url) {
+        localStorage.setItem("logo", url);
+        setLogoSrc(url);
+      }
     })
 
 
@@ -86,6 +92,10 @@ const Header = () => {
     }
 
   }, [context?.isLogin]);
+
+
+
+
 
 
   const logout = () => {
@@ -104,43 +114,24 @@ const Header = () => {
   return (
     <>
       <header
-        className={`w-full h-[auto] py-2 ${context.isSidebarOpen === true ? "pl-[22%]" : "pl-5"
-          } ${context.isSidebarOpen === true && context?.windowWidth < 992 && '!pl-80'} shadow-md pr-7 bg-[#fff]  flex items-center justify-between transition-all fixed top-0 left-0 z-[50]`}
+        className={`w-full h-auto py-2 shadow-md bg-[#fff] flex items-center justify-between transition-all fixed top-0 left-0 z-[50] pr-3 sm:pr-7 min-w-0 ${
+          context?.windowWidth < 992 ? "pl-3" : context.isSidebarOpen ? "pl-[clamp(12px,20vw,300px)]" : "pl-5"
+        }`}
       >
-        <div className="part1 flex items-center gap-4">
-
-          {
-            context.isSidebarOpen === false && context?.windowWidth > 992 &&
-            <div className="col"
-              onClick={() => {
-                context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-              }}
-            >
-              <Link to="/">
-                <img
-                  src={localStorage.getItem('logo')}
-                  className="w-[170px] md:w-[200px]"
-                />
-              </Link>
-            </div>
-          }
-
-
-
-          <Button
-            className="!w-[40px] !h-[40px] !rounded-full !min-w-[40px] !text-[rgba(0,0,0,0.8)]"
+        <div className="part1 flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+          <button
+            type="button"
+            aria-label="Menu"
+            className="w-10 h-10 rounded-full min-w-[40px] shrink-0 hover:bg-[#e2e2e2] flex items-center justify-center border border-[rgba(0,0,0,0.12)]"
             onClick={() => context.setisSidebarOpen(!context.isSidebarOpen)}
           >
-            <RiMenu2Line className="text-[18px] text-[rgba(0,0,0,0.8)]" />
-          </Button>
+            <RiMenu2Line className="text-[20px] text-[rgba(0,0,0,0.85)]" />
+          </button>
         </div>
 
         <div className="part2  flex items-center justify-end gap-5">
-          <IconButton aria-label="cart">
-            <StyledBadge badgeContent={4} color="secondary">
-              <FaRegBell />
-            </StyledBadge>
-          </IconButton>
+
+
 
           {context.isLogin === true ? (
             <div className="relative">
@@ -241,7 +232,7 @@ const Header = () => {
                     className="flex items-center gap-3"
                   >
                     <FaRegUser className="text-[16px]" />{" "}
-                    <span className="text-[14px]">Profile</span>
+                    <span className="text-[14px]">Hồ sơ</span>
                   </MenuItem>
                 </Link>
 
@@ -250,13 +241,13 @@ const Header = () => {
                   className="flex items-center gap-3"
                 >
                   <IoMdLogOut className="text-[18px]" />{" "}
-                  <span className="text-[14px]">Sign Out</span>
+                  <span className="text-[14px]">Đăng xuất</span>
                 </MenuItem>
               </Menu>
             </div>
           ) : (
             <Link to="/login">
-              <Button className="btn-blue btn-sm !rounded-full">Sign In</Button>
+              <Button className="btn-blue btn-sm !rounded-full">Đăng nhập</Button>
             </Link>
           )}
         </div>

@@ -20,6 +20,9 @@ import { firebaseApp } from "../../firebase";
 import { useEffect } from "react";
 const auth = getAuth(firebaseApp);
 const googleProvider = new GoogleAuthProvider();
+const ADMIN_ACCESS_ROLES = ["ADMIN", "SUPERBOSS"];
+
+const canAccessAdmin = (user) => ADMIN_ACCESS_ROLES.includes(user?.role) && (user?.accountStatus || "active") === "active";
 
 const Login = () => {
   const [loadingGoogle, setLoadingGoogle] = React.useState(false);
@@ -58,11 +61,11 @@ const Login = () => {
   const forgotPassword = () => {
 
     if (formFields.email === "") {
-      context.alertBox("error", "Please enter email id");
+      context.alertBox("error", "Vui lòng nhập email");
       return false;
     }
     else {
-      context.alertBox("success", `OTP send to ${formFields.email}`);
+      context.alertBox("success", `Mã OTP đã được gửi đến ${formFields.email}`);
       localStorage.setItem("userEmail", formFields.email);
       localStorage.setItem("actionType", 'forgot-password');
 
@@ -88,20 +91,37 @@ const Login = () => {
     setIsLoading(true);
 
     if (formFields.email === "") {
-      context.alertBox("error", "Please enter email id");
+      context.alertBox("error", "Vui lòng nhập email");
+      setIsLoading(false);
       return false
     }
 
 
     if (formFields.password === "") {
-      context.alertBox("error", "Please enter password");
+      context.alertBox("error", "Vui lòng nhập mật khẩu");
+      setIsLoading(false);
       return false
     }
 
 
-    postData("/api/user/login", formFields, { withCredentials: true }).then((res) => {
+    postData("/api/user/login", formFields, { withCredentials: true }).then(async (res) => {
 
       if (res?.error !== true) {
+        localStorage.setItem("accessToken", res?.data?.accesstoken);
+        localStorage.setItem("refreshToken", res?.data?.refreshToken);
+
+        const userDetails = await fetchDataFromApi("/api/user/user-details");
+
+        if (!canAccessAdmin(userDetails?.data)) {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          context.setIsLogin(false);
+          context.setUserData(null);
+          context.alertBox("error", "Tài khoản không có quyền truy cập trang quản trị");
+          setIsLoading(false);
+          return;
+        }
+
         setIsLoading(false);
         context.alertBox("success", res?.message);
         setFormsFields({
@@ -109,9 +129,7 @@ const Login = () => {
           password: ""
         })
 
-        localStorage.setItem("accessToken", res?.data?.accesstoken);
-        localStorage.setItem("refreshToken", res?.data?.refreshToken);
-
+        context.setUserData(userDetails.data);
         context.setIsLogin(true);
 
         history("/")
@@ -146,20 +164,43 @@ const Login = () => {
           password: null,
           avatar: user.providerData[0].photoURL,
           mobile: user.providerData[0].phoneNumber,
-          role: "USER"
+          role: "ADMIN"
         };
 
 
-        postData("/api/user/authWithGoogle", fields).then((res) => {
+        postData("/api/user/authWithGoogle", fields).then(async (res) => {
 
           if (res?.error !== true) {
+            if (res?.requiresApproval) {
+              setLoadingGoogle(false);
+              setIsLoading(false);
+              context.alertBox("success", res?.message);
+              history("/login");
+              return;
+            }
+
+            localStorage.setItem("accessToken", res?.data?.accesstoken);
+            localStorage.setItem("refreshToken", res?.data?.refreshToken);
+
+            const userDetails = await fetchDataFromApi("/api/user/user-details");
+
+            if (!canAccessAdmin(userDetails?.data)) {
+              localStorage.removeItem("accessToken");
+              localStorage.removeItem("refreshToken");
+              context.setIsLogin(false);
+              context.setUserData(null);
+              context.alertBox("error", "Tài khoản không có quyền truy cập trang quản trị");
+              setLoadingGoogle(false);
+              setIsLoading(false);
+              return;
+            }
+
             setLoadingGoogle(false);
             setIsLoading(false);
             context.alertBox("success", res?.message);
             localStorage.setItem("userEmail", fields.email)
-            localStorage.setItem("accessToken", res?.data?.accesstoken);
-            localStorage.setItem("refreshToken", res?.data?.refreshToken);
 
+            context.setUserData(userDetails.data);
             context.setIsLogin(true);
 
             history("/")
@@ -199,13 +240,13 @@ const Login = () => {
         <div className="hidden sm:flex items-center gap-0">
           <NavLink to="/login" exact={true} activeClassName="isActive">
             <Button className="!rounded-full !text-[rgba(0,0,0,0.8)] !px-5 flex gap-1">
-              <CgLogIn className="text-[18px]" /> Login
+              <CgLogIn className="text-[18px]" /> Đăng nhập
             </Button>
           </NavLink>
 
           <NavLink to="/sign-up" exact={true} activeClassName="isActive">
             <Button className="!rounded-full !text-[rgba(0,0,0,0.8)] !px-5 flex gap-1">
-              <FaRegUser className="text-[15px]" /> Sign Up
+              <FaRegUser className="text-[15px]" /> Đăng ký
             </Button>
           </NavLink>
         </div>
@@ -218,9 +259,9 @@ const Login = () => {
         </div>
 
         <h1 className="text-center text-[18px] sm:text-[35px] font-[800] mt-4">
-          Welcome Back!
+          Chào mừng trở lại!
           <br />
-          Sign in with your credentials.
+          Đăng nhập bằng thông tin quản trị của bạn.
         </h1>
 
         <div className="flex items-center justify-center w-full mt-5 gap-4">
@@ -233,7 +274,7 @@ const Login = () => {
             variant="outlined"
             className="!bg-none !py-2 !text-[15px] !capitalize !px-5 !text-[rgba(0,0,0,0.7)]"
           >
-            Signin with Google
+            Đăng nhập bằng Google
           </LoadingButton>
         </div>
 
@@ -242,7 +283,7 @@ const Login = () => {
         <div className="w-full flex items-center justify-center gap-3">
           <span className="flex items-center w-[100px] h-[1px] bg-[rgba(0,0,0,0.2)]"></span>
           <span className="text-[10px] lg:text-[14px] font-[500]">
-            Or, Sign in with your email
+            Hoặc đăng nhập bằng email
           </span>
           <span className="flex items-center w-[100px] h-[1px] bg-[rgba(0,0,0,0.2)]"></span>
         </div>
@@ -263,7 +304,7 @@ const Login = () => {
           </div>
 
           <div className="form-group mb-4 w-full">
-            <h4 className="text-[14px] font-[500] mb-1">Password</h4>
+            <h4 className="text-[14px] font-[500] mb-1">Mật khẩu</h4>
             <div className="relative w-full">
               <input
                 type={isPasswordShow === false ? 'password' : 'text'}
@@ -286,25 +327,25 @@ const Login = () => {
           <div className="form-group mb-4 w-full flex items-center justify-between">
             <FormControlLabel
               control={<Checkbox defaultChecked />}
-              label="Remember Me"
+              label="Ghi nhớ đăng nhập"
             />
 
             <a
               onClick={forgotPassword}
               className="text-primary font-[700] text-[15px] hover:underline hover:text-gray-700 cursor-pointer"
             >
-              Forgot Password?
+              Quên mật khẩu?
             </a>
           </div>
 
 
 
           <div className="flex items-center justify-between mb-4">
-            <span className="text-[14px]">Don't have an account?</span>
+            <span className="text-[14px]">Chưa có tài khoản?</span>
             <Link to="/sign-up"
               className="text-primary font-[700] text-[15px] hover:underline hover:text-gray-700 cursor-pointer"
             >
-              Sign Up
+              Đăng ký
             </Link>
           </div>
 
@@ -313,7 +354,7 @@ const Login = () => {
             {
               isLoading === true ? <CircularProgress color="inherit" />
                 :
-                'Sign In'
+                'Đăng nhập'
             }
           </Button>
         </form>

@@ -3,8 +3,7 @@ import "./responsive.css";
 import React from 'react';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Dashboard from "./Pages/Dashboard";
-import Header from "./Components/Header";
-import Sidebar from "./Components/Sidebar";
+import AdminShell from "./Components/AdminShell";
 import { createContext, useState } from "react";
 import Login from "./Pages/Login";
 import SignUp from "./Pages/SignUp";
@@ -24,10 +23,10 @@ import { fetchDataFromApi } from "./utils/api";
 import { useEffect } from "react";
 import Profile from "./Pages/Profile";
 import ProductDetails from "./Pages/Products/productDetails";
-import AddRAMS from "./Pages/Products/addRAMS.JSX";
-import AddWeight from "./Pages/Products/addWeight";
-import AddSize from "./Pages/Products/addSize";
 import RightBannerList from "./Pages/Banners/rightBannerList";
+import Coupons from "./Pages/Coupons";
+import AccessControl from "./Pages/AccessControl";
+import ConfirmDeleteDialog from "./Components/ConfirmDeleteDialog";
 import { BlogList } from "./Pages/Blog";
 import ManageLogo from "./Pages/ManageLogo";
 import LoadingBar from "react-top-loading-bar";
@@ -43,7 +42,12 @@ function App() {
   const [sidebarWidth, setSidebarWidth] = useState(18);
 
   const [progress, setProgress] = useState(0);
-
+  const [confirmDeleteBox, setConfirmDeleteBox] = useState({
+    open: false,
+    title: "Xác nhận xóa",
+    message: "Bạn có chắc chắn muốn xóa mục này? Hành động này không thể hoàn tác.",
+    onConfirm: null,
+  });
 
   const [isOpenFullScreenPanel, setIsOpenFullScreenPanel] = useState({
     open: false,
@@ -63,7 +67,7 @@ function App() {
 
 
   useEffect(() => {
-    if (userData?.role !== "ADMIN") {
+    if (!["ADMIN", "SUPERBOSS"].includes(userData?.role)) {
       const handleContextmenu = e => {
         e.preventDefault()
       }
@@ -80,24 +84,9 @@ function App() {
       exact: true,
       element: (
         <>
-          <section className="main">
-            <Header />
-            <div className="contentMain flex">
-              <div
-                className={`overflow-hidden sidebarWrapper ${isSidebarOpen === true ? windowWidth < 992 ? `w-[${sidebarWidth / 1.5}%]` : `w-[20%]` : "w-[0px] opacity-0 invisible"
-                  } transition-all`}
-              >
-                <Sidebar />
-
-              </div>
-              <div
-                className={`contentRight overflow-hidden py-4 px-5 ${isSidebarOpen === true && windowWidth < 992 && 'opacity-0'}  transition-all`}
-                style={{ width: isSidebarOpen === false ? "100%" : '80%' }}
-              >
+          <AdminShell>
                 <Dashboard />
-              </div>
-            </div>
-          </section>
+          </AdminShell>
         </>
       ),
     },
@@ -151,23 +140,9 @@ function App() {
       exact: true,
       element: (
         <>
-          <section className="main">
-            <Header />
-            <div className="contentMain flex">
-              <div
-                className={`overflow-hidden sidebarWrapper ${isSidebarOpen === true ? windowWidth < 992 ? `w-[${sidebarWidth / 1.5}%]` : `w-[20%]` : "w-[0px] opacity-0 invisible"
-                  } transition-all`}
-              >
-                <Sidebar />
-              </div>
-              <div
-                className={`contentRight overflow-hidden py-4 px-5 ${isSidebarOpen === true && windowWidth < 992 && 'opacity-0'}  transition-all`}
-                style={{ width: isSidebarOpen === false ? "100%" : '80%' }}
-              >
+          <AdminShell>
                 <Products />
-              </div>
-            </div>
-          </section>
+          </AdminShell>
         </>
       ),
     },
@@ -176,23 +151,9 @@ function App() {
       exact: true,
       element: (
         <>
-          <section className="main">
-            <Header />
-            <div className="contentMain flex">
-              <div
-                className={`overflow-hidden sidebarWrapper ${isSidebarOpen === true ? windowWidth < 992 ? `w-[${sidebarWidth / 1.5}%]` : `w-[20%]` : "w-[0px] opacity-0 invisible"
-                  } transition-all`}
-              >
-                <Sidebar />
-              </div>
-              <div
-                className={`contentRight overflow-hidden py-4 px-5 ${isSidebarOpen === true && windowWidth < 992 && 'opacity-0'}  transition-all`}
-                style={{ width: isSidebarOpen === false ? "100%" : '82%' }}
-              >
+          <AdminShell>
                 <HomeSliderBanners />
-              </div>
-            </div>
-          </section>
+          </AdminShell>
         </>
       ),
     },
@@ -201,23 +162,9 @@ function App() {
       exact: true,
       element: (
         <>
-          <section className="main">
-            <Header />
-            <div className="contentMain flex">
-              <div
-                className={`overflow-hidden sidebarWrapper ${isSidebarOpen === true ? windowWidth < 992 ? `w-[${sidebarWidth / 1.5}%]` : `w-[20%]` : "w-[0px] opacity-0 invisible"
-                  } transition-all`}
-              >
-                <Sidebar />
-              </div>
-              <div
-                className={`contentRight overflow-hidden py-4 px-5 ${isSidebarOpen === true && windowWidth < 992 && 'opacity-0'}  transition-all`}
-                style={{ width: isSidebarOpen === false ? "100%" : '80%' }}
-              >
+          <AdminShell>
                 <CategoryList />
-              </div>
-            </div>
-          </section>
+          </AdminShell>
         </>
       ),
     },
@@ -226,23 +173,9 @@ function App() {
       exact: true,
       element: (
         <>
-          <section className="main">
-            <Header />
-            <div className="contentMain flex">
-              <div
-                className={`overflow-hidden sidebarWrapper ${isSidebarOpen === true ? windowWidth < 992 ? `w-[${sidebarWidth / 1.5}%]` : `w-[20%]` : "w-[0px] opacity-0 invisible"
-                  } transition-all`}
-              >
-                <Sidebar />
-              </div>
-              <div
-                className={`contentRight overflow-hidden py-4 px-5 ${isSidebarOpen === true && windowWidth < 992 && 'opacity-0'}  transition-all`}
-                style={{ width: isSidebarOpen === false ? "100%" : '80%' }}
-              >
+          <AdminShell>
                 <SubCategoryList />
-              </div>
-            </div>
-          </section>
+          </AdminShell>
         </>
       ),
     },
@@ -251,23 +184,9 @@ function App() {
       exact: true,
       element: (
         <>
-          <section className="main">
-            <Header />
-            <div className="contentMain flex">
-              <div
-                className={`overflow-hidden sidebarWrapper ${isSidebarOpen === true ? windowWidth < 992 ? `w-[${sidebarWidth / 1.5}%]` : `w-[20%]` : "w-[0px] opacity-0 invisible"
-                  } transition-all`}
-              >
-                <Sidebar />
-              </div>
-              <div
-                className={`contentRight overflow-hidden py-4 px-5 ${isSidebarOpen === true && windowWidth < 992 && 'opacity-0'}  transition-all`}
-                style={{ width: isSidebarOpen === false ? "100%" : '80%' }}
-              >
+          <AdminShell>
                 <Users />
-              </div>
-            </div>
-          </section>
+          </AdminShell>
         </>
       ),
     },
@@ -276,23 +195,9 @@ function App() {
       exact: true,
       element: (
         <>
-          <section className="main">
-            <Header />
-            <div className="contentMain flex">
-              <div
-                className={`overflow-hidden sidebarWrapper ${isSidebarOpen === true ? windowWidth < 992 ? `w-[${sidebarWidth / 1.5}%]` : `w-[20%]` : "w-[0px] opacity-0 invisible"
-                  } transition-all`}
-              >
-                <Sidebar />
-              </div>
-              <div
-                className={`contentRight overflow-hidden py-4 px-5 ${isSidebarOpen === true && windowWidth < 992 && 'opacity-0'}  transition-all`}
-                style={{ width: isSidebarOpen === false ? "100%" : '80%' }}
-              >
+          <AdminShell>
                 <Orders />
-              </div>
-            </div>
-          </section>
+          </AdminShell>
         </>
       ),
     },
@@ -301,23 +206,9 @@ function App() {
       exact: true,
       element: (
         <>
-          <section className="main">
-            <Header />
-            <div className="contentMain flex">
-              <div
-                className={`overflow-hidden sidebarWrapper ${isSidebarOpen === true ? windowWidth < 992 ? `w-[${sidebarWidth / 1.5}%]` : `w-[20%]` : "w-[0px] opacity-0 invisible"
-                  } transition-all`}
-              >
-                <Sidebar />
-              </div>
-              <div
-                className={`contentRight overflow-hidden py-4 px-5 ${isSidebarOpen === true && windowWidth < 992 && 'opacity-0'}  transition-all`}
-                style={{ width: isSidebarOpen === false ? "100%" : '80%' }}
-              >
+          <AdminShell>
                 <Profile />
-              </div>
-            </div>
-          </section>
+          </AdminShell>
         </>
       ),
     },
@@ -326,99 +217,32 @@ function App() {
       exact: true,
       element: (
         <>
-          <section className="main">
-            <Header />
-            <div className="contentMain flex">
-              <div
-                className={`overflow-hidden sidebarWrapper ${isSidebarOpen === true ? windowWidth < 992 ? `w-[${sidebarWidth / 1.5}%]` : `w-[20%]` : "w-[0px] opacity-0 invisible"
-                  } transition-all`}
-              >
-                <Sidebar />
-              </div>
-              <div
-                className={`contentRight overflow-hidden py-4 px-5 ${isSidebarOpen === true && windowWidth < 992 && 'opacity-0'}  transition-all`}
-                style={{ width: isSidebarOpen === false ? "100%" : '80%' }}
-              >
+          <AdminShell>
                 <ProductDetails />
-              </div>
-            </div>
-          </section>
+          </AdminShell>
         </>
       ),
     },
 
     {
-      path: "/product/addRams",
+      path: "/coupons",
       exact: true,
       element: (
         <>
-          <section className="main">
-            <Header />
-            <div className="contentMain flex">
-              <div
-                className={`overflow-hidden sidebarWrapper ${isSidebarOpen === true ? windowWidth < 992 ? `w-[${sidebarWidth / 1.5}%]` : `w-[20%]` : "w-[0px] opacity-0 invisible"
-                  } transition-all`}
-              >
-                <Sidebar />
-              </div>
-              <div
-                className={`contentRight overflow-hidden py-4 px-5 ${isSidebarOpen === true && windowWidth < 992 && 'opacity-0'}  transition-all`}
-                style={{ width: isSidebarOpen === false ? "100%" : '80%' }}
-              >
-                <AddRAMS />
-              </div>
-            </div>
-          </section>
+          <AdminShell>
+                <Coupons />
+          </AdminShell>
         </>
       ),
     },
     {
-      path: "/product/addWeight",
+      path: "/access-control",
       exact: true,
       element: (
         <>
-          <section className="main">
-            <Header />
-            <div className="contentMain flex">
-              <div
-                className={`overflow-hidden sidebarWrapper ${isSidebarOpen === true ? windowWidth < 992 ? `w-[${sidebarWidth / 1.5}%]` : `w-[20%]` : "w-[0px] opacity-0 invisible"
-                  } transition-all`}
-              >
-                <Sidebar />
-              </div>
-              <div
-                className={`contentRight overflow-hidden py-4 px-5 ${isSidebarOpen === true && windowWidth < 992 && 'opacity-0'}  transition-all`}
-                style={{ width: isSidebarOpen === false ? "100%" : '80%' }}
-              >
-                <AddWeight />
-              </div>
-            </div>
-          </section>
-        </>
-      ),
-    },
-    {
-      path: "/product/addSize",
-      exact: true,
-      element: (
-        <>
-          <section className="main">
-            <Header />
-            <div className="contentMain flex">
-              <div
-                className={`overflow-hidden sidebarWrapper ${isSidebarOpen === true ? windowWidth < 992 ? `w-[${sidebarWidth / 1.5}%]` : `w-[20%]` : "w-[0px] opacity-0 invisible"
-                  } transition-all`}
-              >
-                <Sidebar />
-              </div>
-              <div
-                className={`contentRight overflow-hidden py-4 px-5 ${isSidebarOpen === true && windowWidth < 992 && 'opacity-0'}  transition-all`}
-                style={{ width: isSidebarOpen === false ? "100%" : '80%' }}
-              >
-                <AddSize />
-              </div>
-            </div>
-          </section>
+          <AdminShell>
+                <AccessControl />
+          </AdminShell>
         </>
       ),
     },
@@ -427,23 +251,9 @@ function App() {
       exact: true,
       element: (
         <>
-          <section className="main">
-            <Header />
-            <div className="contentMain flex">
-              <div
-                className={`overflow-hidden sidebarWrapper ${isSidebarOpen === true ? windowWidth < 992 ? `w-[${sidebarWidth / 1.5}%]` : `w-[20%]` : "w-[0px] opacity-0 invisible"
-                  } transition-all`}
-              >
-                <Sidebar />
-              </div>
-              <div
-                className={`contentRight overflow-hidden py-4 px-5 ${isSidebarOpen === true && windowWidth < 992 && 'opacity-0'}  transition-all`}
-                style={{ width: isSidebarOpen === false ? "100%" : '80%' }}
-              >
+          <AdminShell>
                 <RightBannerList />
-              </div>
-            </div>
-          </section>
+          </AdminShell>
         </>
       ),
     },
@@ -452,23 +262,9 @@ function App() {
       exact: true,
       element: (
         <>
-          <section className="main">
-            <Header />
-            <div className="contentMain flex">
-              <div
-                className={`overflow-hidden sidebarWrapper ${isSidebarOpen === true ? windowWidth < 992 ? `w-[${sidebarWidth / 1.5}%]` : `w-[20%]` : "w-[0px] opacity-0 invisible"
-                  } transition-all`}
-              >
-                <Sidebar />
-              </div>
-              <div
-                className={`contentRight overflow-hidden py-4 px-5 ${isSidebarOpen === true && windowWidth < 992 && 'opacity-0'}  transition-all`}
-                style={{ width: isSidebarOpen === false ? "100%" : '80%' }}
-              >
+          <AdminShell>
                 <BlogList />
-              </div>
-            </div>
-          </section>
+          </AdminShell>
         </>
       ),
     },
@@ -477,27 +273,33 @@ function App() {
       exact: true,
       element: (
         <>
-          <section className="main">
-            <Header />
-            <div className="contentMain flex">
-              <div
-                className={`overflow-hidden sidebarWrapper ${isSidebarOpen === true ? windowWidth < 992 ? `w-[${sidebarWidth / 1.5}%]` : `w-[20%]` : "w-[0px] opacity-0 invisible"
-                  } transition-all`}
-              >
-                <Sidebar />
-              </div>
-              <div
-                className={`contentRight overflow-hidden py-4 px-5 ${isSidebarOpen === true && windowWidth < 992 && 'opacity-0'}  transition-all`}
-                style={{ width: isSidebarOpen === false ? "100%" : '80%' }}
-              >
+          <AdminShell>
                 <ManageLogo />
-              </div>
-            </div>
-          </section>
+          </AdminShell>
         </>
       ),
     },
   ]);
+
+  const showConfirmDelete = (title, message, onConfirm) => {
+    setConfirmDeleteBox({
+      open: true,
+      title: title || "Xác nhận xóa",
+      message: message || "Bạn có chắc chắn muốn xóa mục này?",
+      onConfirm,
+    });
+  };
+
+  const handleCloseConfirmDelete = () => {
+    setConfirmDeleteBox((prev) => ({ ...prev, open: false, onConfirm: null }));
+  };
+
+  const handleConfirmDelete = () => {
+    if (typeof confirmDeleteBox.onConfirm === "function") {
+      confirmDeleteBox.onConfirm();
+    }
+    handleCloseConfirmDelete();
+  };
 
   const alertBox = (type, msg) => {
     if (type === "success") {
@@ -577,7 +379,8 @@ function App() {
     setSidebarWidth,
     sidebarWidth,
     setProgress,
-    progress
+    progress,
+    showConfirmDelete,
   };
 
   return (
@@ -590,6 +393,13 @@ function App() {
           onLoaderFinished={() => setProgress(0)}
           className="topLoadingBar"
           height={3}
+        />
+        <ConfirmDeleteDialog
+          open={confirmDeleteBox.open}
+          title={confirmDeleteBox.title}
+          message={confirmDeleteBox.message}
+          onClose={handleCloseConfirmDelete}
+          onConfirm={handleConfirmDelete}
         />
         <Toaster />
       </MyContext.Provider>

@@ -20,24 +20,22 @@ export const SubCategoryList = () => {
 
     return (
         <>
+            <div className="card my-2 pt-5 pb-5 px-5 shadow-md sm:rounded-lg bg-white">
+                <div className="flex items-center w-full pb-4 justify-between flex-wrap gap-3">
+                    <div className="col">
+                        <h2 className="text-[18px] font-[600]">
+                            Danh sách danh mục con
+                        </h2>
+                    </div>
 
-            <div className="flex items-center flex-col md:flex-row justify-start  md:justify-between px-2 py-0 mt-3">
-                <h2 className="text-[18px] font-[600] w-full md:w-[50%] mb-1 md:mb-0">
-                    Sub Category List
-                </h2>
-
-                <div className="col mr-auto md:mr-0 md:ml-auto flex items-center justify-end gap-3">
-                    <Button className="btn-blue !text-white btn-sm" onClick={() => context.setIsOpenFullScreenPanel({
-                        open: true,
-                        model: 'Add New Sub Category'
-                    })}>Add New Sub Category</Button>
+                    <div className="col ml-auto flex items-center justify-end gap-3">
+                        <Button className="btn-blue !text-white btn-sm" onClick={() => context.setIsOpenFullScreenPanel({
+                            open: true,
+                            model: 'Add New Sub Category'
+                        })}>Thêm danh mục con</Button>
+                    </div>
                 </div>
 
-
-            </div>
-
-
-            <div className="card my-4 pt-5 pb-5 px-5 shadow-md sm:rounded-lg bg-white">
                 {
                     context?.catData?.length !== 0 &&
                     <ul className='w-full'>
@@ -52,9 +50,9 @@ export const SubCategoryList = () => {
 
                                             {
                                                 firstLavelCat?.children?.length !== 0 &&
-                                                <Button className="!min-w-[35px] !w-[35px] !h-[35px] !rounded-full !text-black  !ml-auto" onClick={() => expend(index)}>
+                                                <button className="min-w-[35px] w-[35px] h-[35px] rounded-full text-black ml-auto flex items-center justify-center hover:bg-[#e2e2e2] transition-all" onClick={() => expend(index)}>
                                                     <FaAngleDown />
-                                                </Button>
+                                                </button>
                                             }
 
                                         </div>

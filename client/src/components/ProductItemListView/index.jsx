@@ -8,8 +8,7 @@ import { IoGitCompareOutline } from "react-icons/io5";
 import { MdZoomOutMap } from "react-icons/md";
 import { MyContext } from "../../App";
 import { MdOutlineShoppingCart } from "react-icons/md";
-import { FaMinus } from "react-icons/fa6";
-import { FaPlus } from "react-icons/fa6";
+import { FaMinus, FaPlus } from "react-icons/fa";
 import { deleteData, editData, postData, API_URL } from "../../utils/api";
 import CircularProgress from '@mui/material/CircularProgress';
 import { MdClose } from "react-icons/md";
@@ -45,17 +44,14 @@ const ProductItem = (props) => {
         productId: product?._id,
         countInStock: product?.countInStock,
         brand: product?.brand,
-        size: props?.item?.size?.length !== 0 ? selectedTabName : '',
-        weight: props?.item?.productWeight?.length !== 0 ? selectedTabName : '',
-        ram: props?.item?.productRam?.length !== 0 ? selectedTabName : ''
+        size: props?.item?.size?.length > 0 ? selectedTabName : '',
   
       }
   
   
       setIsLoading(true);
   
-      if (props?.item?.size?.length !== 0 || props?.item?.productRam?.length !== 0 || props?.item?.productWeight
-        ?.length !== 0) {
+      if (props?.item?.size?.length > 0) {
         setIsShowTabs(true)
       } else {
         setIsAdded(true);
@@ -231,7 +227,7 @@ const ProductItem = (props) => {
             > <MdClose className=" text-black z-[90] text-[25px]" /></Button>
 
             {
-              props?.item?.size?.length !== 0 && props?.item?.size?.map((item, index) => {
+              props?.item?.size?.length > 0 && props?.item?.size?.map((item, index) => {
                 return (
                   <span key={index} className={`flex items-center justify-center p-1 px-2 bg-[rgba(255,555,255,0.8)] max-w-[35px] h-[25px]  
           rounded-sm cursor-pointer hover:bg-white 
@@ -243,7 +239,7 @@ const ProductItem = (props) => {
             }
 
             {
-              props?.item?.productRam?.length !== 0 && props?.item?.productRam?.map((item, index) => {
+              props?.item?.productRam?.length > 0 && props?.item?.productRam?.map((item, index) => {
                 return (
                   <span key={index} className={`flex items-center justify-center p-1 px-2 bg-[rgba(255,555,255,0.8)] max-w-[45px] h-[25px]  
           rounded-sm cursor-pointer hover:bg-white 
@@ -256,7 +252,7 @@ const ProductItem = (props) => {
 
 
             {
-              props?.item?.productWeight?.length !== 0 && props?.item?.productWeight?.map((item, index) => {
+              props?.item?.productWeight?.length > 0 && props?.item?.productWeight?.map((item, index) => {
                 return (
                   <span key={index} className={`flex items-center justify-center p-1 px-2 bg-[rgba(255,555,255,0.8)] max-w-[35px] h-[25px]  
           rounded-sm cursor-pointer hover:bg-white 
@@ -277,24 +273,24 @@ const ProductItem = (props) => {
 
         <div className="actions absolute top-[-20px] right-[5px] z-50 flex items-center gap-2 flex-col w-[50px] transition-all duration-300 group-hover:top-[15px] opacity-0 group-hover:opacity-100">
 
-          <Button className="!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-white  text-black hover:!bg-primary hover:text-white group" onClick={() => context.handleOpenProductDetailsModal(true, props?.item)}>
-            <MdZoomOutMap className="text-[18px] !text-black group-hover:text-white hover:!text-white" />
-          </Button>
+          <button className="flex items-center justify-center w-[35px] h-[35px] rounded-full bg-white shadow-md hover:bg-primary text-gray-800 hover:text-white group transition-colors" onClick={() => context.handleOpenProductDetailsModal(true, props?.item)}>
+            <MdZoomOutMap size={18} />
+          </button>
 
-          <Button className="!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-white  text-black hover:!bg-primary hover:text-white group">
-            <IoGitCompareOutline className="text-[18px] !text-black group-hover:text-white hover:!text-white" />
-          </Button>
+          <button className="flex items-center justify-center w-[35px] h-[35px] rounded-full bg-white shadow-md hover:bg-primary text-gray-800 hover:text-white group transition-colors">
+            <IoGitCompareOutline size={18} />
+          </button>
 
-          <Button className={`!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-white  text-black hover:!bg-primary hover:text-white group`}
+          <button className={`flex items-center justify-center w-[35px] h-[35px] rounded-full bg-white shadow-md hover:bg-primary text-gray-800 hover:text-white group transition-colors`}
             onClick={() => handleAddToMyList(props?.item)}
           >
             {
-              isAddedInMyList === true ? <IoMdHeart  className="text-[18px] !text-primary group-hover:text-white hover:!text-white"/> :
-                <FaRegHeart className="text-[18px] !text-black group-hover:text-white hover:!text-white" />
+              isAddedInMyList === true ? <IoMdHeart size={18} className="text-primary group-hover:text-white" /> :
+                <FaRegHeart size={18} />
 
             }
 
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -329,9 +325,9 @@ const ProductItem = (props) => {
          {
             isAdded === false ?
 
-              <Button className="btn-org btn-border flex w-full btn-sm gap-2 " size="small"
+              <Button className="btn-org btn-border flex w-full btn-sm gap-2 !h-[35px]" size="small"
                 onClick={() => addToCart(props?.item, context?.userData?._id, quantity)}>
-                <MdOutlineShoppingCart className="text-[18px]" /> Add to Cart
+                <MdOutlineShoppingCart className="text-[18px]" /> Thêm Vào Giỏ
               </Button>
 
               :
@@ -339,20 +335,22 @@ const ProductItem = (props) => {
               <>
                 {
                   isLoading === true ?
-                    <Button className="addtocart btn-org btn-border flex w-full btn-sm gap-2 " size="small">
-                      <CircularProgress />
+                    <Button className="addtocart btn-org btn-border flex w-full btn-sm gap-2 !h-[35px]" size="small">
+                      <CircularProgress size={20} />
                     </Button>
 
                     :
 
 
-                    <div className="flex items-center justify-between overflow-hidden rounded-full border border-[rgba(0,0,0,0.1)]">
-                      <Button className="!min-w-[35px] !w-[35px] !h-[30px] !bg-[#f1f1f1]  !rounded-none" onClick={minusQty}><FaMinus className="text-[rgba(0,0,0,0.7)]" /></Button>
-                      <span>{quantity}</span>
-                      <Button className="!min-w-[35px] !w-[35px] !h-[30px] !bg-primary !rounded-none"
-                        onClick={addQty}>
-                        <FaPlus className="text-white" /></Button>
-                    </div>
+                      <div className="flex items-center justify-between overflow-hidden rounded-full border border-[rgba(0,0,0,0.1)] h-[35px]">
+                        <button className="flex items-center justify-center w-[35px] h-full bg-[#f1f1f1]" onClick={minusQty}>
+                          <FaMinus size={12} color="rgba(0,0,0,0.7)" />
+                        </button>
+                        <span className="text-[14px] font-semibold">{quantity}</span>
+                        <button className="flex items-center justify-center w-[35px] h-full bg-gray-800" onClick={addQty}>
+                          <FaPlus size={12} color="#ffffff" />
+                        </button>
+                      </div>
 
                 }
               </>

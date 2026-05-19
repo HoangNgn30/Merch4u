@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  /* Font chữ chính */
-  --font-main: "Chiron GoRound TC", sans-serif;
+  /* Font chữ chính hỗ trợ Tiếng Việt tốt */
+  --font-main: "Inter", "Roboto", "Segoe UI", sans-serif;
 
   --primary: #FF4D00;           
   --btn-blue: #3872fa;          
@@ -42,6 +42,10 @@ body {
   transition: height 300ms;
 }
 
+.MuiPaper-root {
+  transition: all 0.3s ease-in-out !important;
+}
+
 /* --- Scrollbar --- */
 ::-webkit-scrollbar { width: 10px !important; height: 10px !important; }
 ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb) !important; }
@@ -60,17 +64,21 @@ th.MuiTableCell-root {
 }
 
 /* --- Buttons --- */
-.btn { padding: 8px 20px !important; }
+.btn { padding: 8px 20px !important; border-radius: 30px !important; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;}
 .btn svg { font-size: 20px; }
 
 .btn-blue {
   background: var(--btn-blue) !important;
   color: #fff !important;
-  padding: 8px 20px !important;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, .1), 0 1px 2px -1px rgba(0, 0, 0, .1);
+  padding: 8px 24px !important;
+  border-radius: 30px !important;
+  box-shadow: 0 4px 12px rgba(56, 114, 250, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 .btn-blue:hover {
   background: var(--btn-blue-hover) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(56, 114, 250, 0.3);
 }
 
 .btn-sm { padding: 6px 20px !important; font-size: 13px !important; }
@@ -179,6 +187,19 @@ button.btn-sml span.MuiCircularProgress-root { width: 20px !important; height: 2
 .sidebar ul { padding-right: 5px; }
 .sidebar ul::-webkit-scrollbar { width: 5px !important; }
 .uploadBox h4 { text-align: center; }
+
+/* Icon thao tác admin — luôn hiển thị */
+.admin-action-btn,
+.admin-action-btn svg,
+table button svg,
+.MuiIconButton-root svg {
+  color: rgba(0, 0, 0, 0.75) !important;
+  opacity: 1 !important;
+  flex-shrink: 0;
+}
+.MuiButton-root.MuiButton-text svg {
+  color: inherit !important;
+}
 
 
 
@@ -293,4 +314,63 @@ input[type=number]::-webkit-outer-spin-button {
 .sidebar ul::-webkit-scrollbar{width: 5px !important;}
 
 .contentRight {padding-left: 20px !important;}
-.uploadBox  h4{text-align: center;} */
+.uploadBox  h4{text-align: center;}
+
+/* Premium upgrades for Buttons, Inputs and Dropdown Selects */
+.MuiButton-root {
+  border-radius: 30px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+  padding: 8px 22px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.MuiButton-contained {
+  box-shadow: 0 4px 12px rgba(56, 114, 250, 0.15) !important;
+}
+
+.MuiButton-contained:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 8px 20px rgba(56, 114, 250, 0.25) !important;
+}
+
+.MuiOutlinedInput-root {
+  border-radius: 12px !important;
+  background-color: #ffffff !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(0, 0, 0, 0.35) !important;
+}
+
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--primary) !important;
+  border-width: 2px !important;
+}
+
+.MuiSelect-select {
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+  font-size: 14px !important;
+  background-color: #ffffff !important;
+  border-radius: 12px !important;
+}
+
+select {
+  border-radius: 12px !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  padding: 10px 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  outline: none !important;
+  background-color: #ffffff !important;
+  transition: all 0.2s ease-in-out !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+}
+
+select:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(255, 77, 0, 0.15) !important;
+}
+

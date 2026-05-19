@@ -29,13 +29,19 @@ const Address = () => {
 
 
     const removeAddress = (id) => {
-        deleteData(`/api/address/${id}`).then((res) => {
-            fetchDataFromApi(`/api/address/get?userId=${context?.userData?._id}`).then((res) => {
-                setAddress(res.data);
-                context?.getUserDetails();
+        context?.showConfirmBox(
+            "Xóa địa chỉ?",
+            "Địa chỉ này sẽ bị xóa khỏi tài khoản của bạn.",
+            () => {
+                deleteData(`/api/address/${id}`).then((res) => {
+                    fetchDataFromApi(`/api/address/get?userId=${context?.userData?._id}`).then((res) => {
+                        setAddress(res.data);
+                        context?.getUserDetails();
 
-            })
-        })
+                    })
+                })
+            }
+        )
     }
 
 
@@ -51,7 +57,7 @@ const Address = () => {
                     <div className="col2 w-full md:w-[70%] lg:w-[50%]">
                         <div className="card bg-white p-5 shadow-md rounded-md mb-5">
                             <div className="flex items-center pb-3">
-                                <h2 className="pb-0">Address</h2>
+                                <h2 className="pb-0">Địa Chỉ</h2>
                             </div>
                             <hr />
 
@@ -62,7 +68,7 @@ const Address = () => {
                                     context?.setAddressMode("add");
                                 }}
                             >
-                                <span className='text-[14px] font-[500]'>Add Address</span>
+                                <span className='text-[14px] font-[500]'>Thêm Địa Chỉ</span>
                             </div>
 
 

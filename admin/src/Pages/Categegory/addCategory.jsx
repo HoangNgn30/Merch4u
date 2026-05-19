@@ -49,18 +49,24 @@ const AddCategory = () => {
     }
 
     const removeImg = (image, index) => {
-        var imageArr = [];
-        imageArr = previews;
-        deleteImages(`/api/category/deteleImage?img=${image}`).then((res) => {
-            imageArr.splice(index, 1);
+        context?.showConfirmDelete(
+            "Xóa ảnh danh mục?",
+            "Bạn có chắc chắn muốn xóa ảnh danh mục này?",
+            () => {
+                var imageArr = [];
+                imageArr = previews;
+                deleteImages(`/api/category/deteleImage?img=${image}`).then((res) => {
+                    imageArr.splice(index, 1);
 
-            setPreviews([]);
-            setTimeout(() => {
-                setPreviews(imageArr);
-                formFields.images = imageArr
-            }, 100);
+                    setPreviews([]);
+                    setTimeout(() => {
+                        setPreviews(imageArr);
+                        formFields.images = imageArr
+                    }, 100);
 
-        })
+                })
+            }
+        )
     }
 
 
@@ -72,13 +78,13 @@ const AddCategory = () => {
         setIsLoading(true);
 
         if (formFields.name === "") {
-            context.alertBox("error", "Please enter category name");
+            context.alertBox("error", "Vui lòng nhập tên danh mục");
             setIsLoading(false);
             return false
         }
 
         if (previews?.length === 0) {
-            context.alertBox("error", "Please select category image");
+            context.alertBox("error", "Vui lòng chọn ảnh danh mục");
             setIsLoading(false);
             return false
         }
@@ -111,7 +117,7 @@ const AddCategory = () => {
 
                     <br />
 
-                    <h3 className='text-[14px] font-[500] mb-2 text-black'> Categegory Image</h3>
+                    <h3 className='text-[14px] font-[500] mb-2 text-black'>Ảnh danh mục</h3>
                  
                     <div className="grid grid-cols-2 md:grid-cols-7 gap-4">
                         {
@@ -146,7 +152,7 @@ const AddCategory = () => {
                                 :
                                 <>
                                     <FaCloudUploadAlt className='text-[25px] text-white' />
-                                    Publish and View
+                                    Lưu và xem
                                 </>
                         }
                     </Button>

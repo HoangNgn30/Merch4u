@@ -1,4 +1,5 @@
 import React from "react";
+import DOMPurify from 'dompurify';
 import { IoMdTime } from "react-icons/io";
 import { Link } from "react-router-dom";
 import { IoIosArrowForward } from "react-icons/io";
@@ -9,12 +10,13 @@ import "react-lazy-load-image-component/src/effects/blur.css";
 
 const BlogItem = (props) => {
   return (
-    <div className="blogItem group">
-      <div className="imgWrapper w-full overflow-hidden rounded-md cursor-pointer relative">
+    <div className="blogItem group h-full flex flex-col">
+      <div className="imgWrapper w-full aspect-[4/3] overflow-hidden rounded-md cursor-pointer relative bg-gray-100 flex items-center justify-center">
         <LazyLoadImage
           alt={"image"}
           effect="blur"
-          className="w-full transition-all group-hover:scale-105  group-hover:rotate-1"
+          wrapperClassName="w-full h-full !block"
+          className="w-full h-full object-cover transition-all group-hover:scale-105 group-hover:rotate-1"
           src={props?.item?.images[0]}
         />
 
@@ -24,17 +26,20 @@ const BlogItem = (props) => {
         </span>
       </div>
 
-      <div className="info py-4">
-        <h2 className="text-[15px] font-[600] text-black mb-1  lg:mb-3">
-          <Link to="/" className="link">{props?.item?.title}</Link>
+      <div className="info py-4 flex flex-col flex-1">
+        <h2 className="text-[15px] font-[600] text-black mb-1 lg:mb-3 line-clamp-2">
+          <Link to={`/blog/${props?.item?._id}`} className="link">{props?.item?.title}</Link>
         </h2>
 
-        <div className="mb-3 text-[14px] lg:text-[16px]" dangerouslySetInnerHTML={{ __html: props?.item?.description?.substr(0, 100) + '...' }} />
+        <p className="mb-3 text-[14px] lg:text-[16px] text-gray-500 line-clamp-3 flex-1">
+          {props?.item?.description?.replace(/<[^>]+>/g, '')?.replace(/&nbsp;/g, ' ')}
+        </p>
 
 
 
-        <Link className="link font-[500] text-[14px] flex items-center gap-1">Read More <IoIosArrowForward /></Link>
-
+        <div className="mt-auto">
+          <Link to={`/blog/${props?.item?._id}`} className="link font-[500] text-[14px] flex items-center gap-1">Đọc thêm <IoIosArrowForward /></Link>
+        </div>
       </div>
     </div>
   );

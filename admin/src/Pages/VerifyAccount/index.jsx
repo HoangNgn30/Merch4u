@@ -71,7 +71,7 @@ const VerifyAccount = () => {
       }
     }
     else {
-      context.alertBox("error", "Please enter OTP");
+      context.alertBox("error", "Vui lòng nhập mã OTP");
     }
 
   }
@@ -90,13 +90,13 @@ const VerifyAccount = () => {
         <div className="hidden sm:flex items-center gap-0">
           <NavLink to="/login" exact={true} activeClassName="isActive">
             <Button className="!rounded-full !text-[rgba(0,0,0,0.8)] !px-5 flex gap-1">
-              <CgLogIn className="text-[18px]" /> Login
+              <CgLogIn className="text-[18px]" /> Đăng nhập
             </Button>
           </NavLink>
 
           <NavLink to="/sign-up" exact={true} activeClassName="isActive">
             <Button className="!rounded-full !text-[rgba(0,0,0,0.8)] !px-5 flex gap-1">
-              <FaRegUser className="text-[15px]" /> Sign Up
+              <FaRegUser className="text-[15px]" /> Đăng ký
             </Button>
           </NavLink>
         </div>
@@ -109,13 +109,13 @@ const VerifyAccount = () => {
         </div>
 
         <h1 className="text-center text-[18px] sm:text-[35px] font-[800] mt-4">
-          Welcome Back!
+          Chào mừng trở lại!
           <br />
-          Please Verify your Email
+          Vui lòng xác thực email của bạn
         </h1>
 
         <br />
-        <p className="text-center text-[15px]">OTP send to  &nbsp;
+        <p className="text-center text-[15px]">Mã OTP đã được gửi đến&nbsp;
           <span className="text-primary font-bold text-[12px] sm:text-[14px]">{localStorage.getItem("userEmail")}</span></p>
 
         <br />
@@ -133,7 +133,7 @@ const VerifyAccount = () => {
               {
                 isLoading === true ? <CircularProgress color="inherit" />
                   :
-                  'Verify OTP'
+                  'Xác thực OTP'
               }
             </Button>
           </div>

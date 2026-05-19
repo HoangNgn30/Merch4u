@@ -6,26 +6,90 @@ import VerificationEmail from '../utils/verifyEmailTemplate.js';
 import generatedAccessToken from '../utils/generatedAccessToken.js';
 import genertedRefreshToken from '../utils/generatedRefreshToken.js';
 
-import { v2 as cloudinary } from 'cloudinary';
-import fs from 'fs';
-import ReviewModel from '../models/reviews.model.js.js';
+import { cloudinary, uploadFilesToCloudinary } from '../utils/cloudinaryUpload.js';
+import ReviewModel from '../models/reviews.model.js';
 
-cloudinary.config({
-    cloud_name: process.env.cloudinary_Config_Cloud_Name,
-    api_key: process.env.cloudinary_Config_api_key,
-    api_secret: process.env.cloudinary_Config_api_secret,
-    secure: true,
-});
+const ROLE_VALUES = ["USER", "ADMIN", "SUPERBOSS"];
+const ACCOUNT_STATUS_VALUES = ["pending", "active", "rejected"];
+
+const resolveSelfRegistrationRole = (role) => {
+    if (role === "SUPERBOSS") return null;
+    if (role === "ADMIN") return "ADMIN";
+    return "USER";
+}
+
+const getInitialAccountStatus = (role) => role === "ADMIN" ? "pending" : "active";
+const PHONE_REGEX = /^0\d{9}$/;
+const PHONE_MESSAGE = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng 0. Ví dụ: 0326851181";
+const normalizePhoneForProfile = (mobile) => {
+    const value = String(mobile || "").trim();
+    return PHONE_REGEX.test(value) ? value : "";
+};
+
+const buildPublicUserSelect = "-password -refresh_token -access_token -otp -otpExpires";
+
+const canDeleteTargetUser = (requester, targetUser) => {
+    if (!requester || !targetUser) return false;
+    if (String(requester._id) === String(targetUser._id)) return false;
+    if (targetUser.role === "SUPERBOSS") return false;
+    if (requester.role === "SUPERBOSS") return ["ADMIN", "USER"].includes(targetUser.role);
+    if (requester.role === "ADMIN") return targetUser.role === "USER";
+    return false;
+}
 
 
 export async function registerUserController(request, response) {
     try {
         let user;
 
-        const { name, email, password } = request.body;
+        const { name, email, password, role } = request.body;
         if (!name || !email || !password) {
             return response.status(400).json({
-                message: "provide email, name, password",
+                message: "Vui lòng nhập đầy đủ họ tên, email và mật khẩu",
+                error: true,
+                success: false
+            })
+        }
+
+        if (name.length < 3 || name.length > 30) {
+            return response.status(400).json({
+                message: "Họ và tên phải từ 3 đến 30 ký tự",
+                error: true,
+                success: false
+            });
+        }
+
+        if (email.length > 50) {
+            return response.status(400).json({
+                message: "Email không được vượt quá 50 ký tự",
+                error: true,
+                success: false
+            });
+        }
+
+        if (password.length < 6 || password.length > 20) {
+            return response.status(400).json({
+                message: "Mật khẩu phải từ 6 đến 20 ký tự",
+                error: true,
+                success: false
+            });
+        }
+
+
+        const requestedRole = resolveSelfRegistrationRole(role);
+
+        if (!requestedRole) {
+            return response.status(403).json({
+                message: "Không thể tạo tài khoản SUPERBOSS từ giao diện",
+                error: true,
+                success: false
+            })
+        }
+
+        const nameRegex = /^[a-zA-ZÀ-ỹ\s]+$/;
+        if (!nameRegex.test(name)) {
+            return response.status(400).json({
+                message: "Họ và tên chỉ được chứa chữ cái",
                 error: true,
                 success: false
             })
@@ -34,8 +98,8 @@ export async function registerUserController(request, response) {
         user = await UserModel.findOne({ email: email });
 
         if (user) {
-            return response.json({
-                message: "User already Registered with this email",
+            return response.status(409).json({
+                message: "Email này đã được đăng ký",
                 error: true,
                 success: false
             })
@@ -51,6 +115,8 @@ export async function registerUserController(request, response) {
             email: email,
             password: hashPassword,
             name: name,
+            role: requestedRole,
+            accountStatus: getInitialAccountStatus(requestedRole),
             otp: verifyCode,
             otpExpires: Date.now() + 600000,
 
@@ -70,14 +136,17 @@ export async function registerUserController(request, response) {
         // Create a JWT token for verification purposes
         const token = jwt.sign(
             { email: user.email, id: user._id },
-            process.env.JSON_WEB_TOKEN_SECRET_KEY
+            process.env.JSON_WEB_TOKEN_SECRET_KEY,
+            { expiresIn: '24h' }
         );
 
 
         return response.status(200).json({
             success: true,
             error: false,
-            message: "User registered successfully! ",
+            message: requestedRole === "ADMIN"
+                ? "Tài khoản quản trị đã được đăng ký. Vui lòng xác thực email và chờ SUPERBOSS phê duyệt."
+                : "Đăng ký người dùng thành công! ",
             token: token, // Optional: include this if needed for verification
         });
 
@@ -98,7 +167,7 @@ export async function verifyEmailController(request, response) {
 
         const user = await UserModel.findOne({ email: email });
         if (!user) {
-            return response.status(400).json({ error: true, success: false, message: "User not found" });
+            return response.status(400).json({ error: true, success: false, message: "Không tìm thấy người dùng" });
         }
 
         const isCodeValid = user.otp === otp;
@@ -109,11 +178,11 @@ export async function verifyEmailController(request, response) {
             user.otp = null;
             user.otpExpires = null;
             await user.save();
-            return response.status(200).json({ error: false, success: true, message: "Email verified successfully" });
+            return response.status(200).json({ error: false, success: true, message: "Xác thực email thành công" });
         } else if (!isCodeValid) {
-            return response.status(400).json({ error: true, success: false, message: "Invalid OTP" });
+            return response.status(400).json({ error: true, success: false, message: "Mã OTP không hợp lệ" });
         } else {
-            return response.status(400).json({ error: true, success: false, message: "OTP expired" });
+            return response.status(400).json({ error: true, success: false, message: "Mã OTP đã hết hạn" });
         }
 
     } catch (error) {
@@ -131,20 +200,39 @@ export async function authWithGoogle(request, response) {
 
     try {
         const existingUser = await UserModel.findOne({ email: email });
+        const requestedRole = resolveSelfRegistrationRole(role);
+
+        if (!requestedRole) {
+            return response.status(403).json({
+                message: "Không thể tạo tài khoản SUPERBOSS từ giao diện",
+                error: true,
+                success: false
+            })
+        }
 
         if (!existingUser) {
             const user = await UserModel.create({
                 name: name,
-                mobile: mobile,
+                mobile: normalizePhoneForProfile(mobile),
                 email: email,
-                password: "null",
+                password: null,
                 avatar: avatar,
-                role: role,
+                role: requestedRole,
+                accountStatus: getInitialAccountStatus(requestedRole),
                 verify_email: true,
                 signUpWithGoogle: true
             });
 
             await user.save();
+
+            if (user.accountStatus !== "active") {
+                return response.status(201).json({
+                    message: "Tài khoản quản trị đã được đăng ký. Vui lòng chờ SUPERBOSS phê duyệt.",
+                    error: false,
+                    success: true,
+                    requiresApproval: true
+                })
+            }
 
             const accesstoken = await generatedAccessToken(user._id);
             const refreshToken = await genertedRefreshToken(user._id);
@@ -164,7 +252,7 @@ export async function authWithGoogle(request, response) {
 
 
             return response.json({
-                message: "Login successfully",
+                message: "Đăng nhập thành công",
                 error: false,
                 success: true,
                 data: {
@@ -174,6 +262,24 @@ export async function authWithGoogle(request, response) {
             })
 
         } else {
+            if (existingUser.status !== "Active") {
+                return response.status(400).json({
+                    message: "Vui lòng liên hệ quản trị viên",
+                    error: true,
+                    success: false
+                })
+            }
+
+            if ((existingUser.accountStatus || "active") !== "active") {
+                return response.status(403).json({
+                    message: existingUser.accountStatus === "pending"
+                        ? "Tài khoản quản trị đang chờ SUPERBOSS phê duyệt"
+                        : "Tài khoản quản trị đã bị từ chối",
+                    error: true,
+                    success: false
+                })
+            }
+
             const accesstoken = await generatedAccessToken(existingUser._id);
             const refreshToken = await genertedRefreshToken(existingUser._id);
 
@@ -192,7 +298,7 @@ export async function authWithGoogle(request, response) {
 
 
             return response.json({
-                message: "Login successfully",
+                message: "Đăng nhập thành công",
                 error: false,
                 success: true,
                 data: {
@@ -222,7 +328,7 @@ export async function loginUserController(request, response) {
 
         if (!user) {
             return response.status(400).json({
-                message: "User not register",
+                message: "Người dùng chưa đăng ký",
                 error: true,
                 success: false
             })
@@ -230,7 +336,17 @@ export async function loginUserController(request, response) {
 
         if (user.status !== "Active") {
             return response.status(400).json({
-                message: "Contact to admin",
+                message: "Vui lòng liên hệ quản trị viên",
+                error: true,
+                success: false
+            })
+        }
+
+        if ((user.accountStatus || "active") !== "active") {
+            return response.status(403).json({
+                message: user.accountStatus === "pending"
+                    ? "Tài khoản quản trị đang chờ SUPERBOSS phê duyệt"
+                    : "Tài khoản quản trị đã bị từ chối",
                 error: true,
                 success: false
             })
@@ -238,7 +354,7 @@ export async function loginUserController(request, response) {
 
         if (user.verify_email !== true) {
             return response.status(400).json({
-                message: "Your Email is not verify yet please verify your email first",
+                message: "Email của bạn chưa được xác thực, vui lòng xác thực email trước",
                 error: true,
                 success: false
             })
@@ -248,7 +364,7 @@ export async function loginUserController(request, response) {
 
         if (!checkPassword) {
             return response.status(400).json({
-                message: "Check your password",
+                message: "Vui lòng kiểm tra lại mật khẩu",
                 error: true,
                 success: false
             })
@@ -273,7 +389,7 @@ export async function loginUserController(request, response) {
 
 
         return response.json({
-            message: "Login successfully",
+            message: "Đăng nhập thành công",
             error: false,
             success: true,
             data: {
@@ -312,7 +428,7 @@ export async function logoutController(request, response) {
         })
 
         return response.json({
-            message: "Logout successfully",
+            message: "Đăng xuất thành công",
             error: false,
             success: true
         })
@@ -326,16 +442,9 @@ export async function logoutController(request, response) {
 }
 
 
-//image upload
-var imagesArr = [];
 export async function userAvatarController(request, response) {
     try {
-        imagesArr = [];
-
-        const userId = request.userId;  //auth middleware
-        const image = request.files;
-
-
+        const userId = request.userId;
         const user = await UserModel.findOne({ _id: userId });
 
         if (!user) {
@@ -346,50 +455,30 @@ export async function userAvatarController(request, response) {
             })
         }
 
-
-
-
-        //first remove image from cloudinary
-        const imgUrl = user.avatar;
-
-        const urlArr = imgUrl.split("/");
-        const avatar_image = urlArr[urlArr.length - 1];
-
-        const imageName = avatar_image.split(".")[0];
-
-        if (imageName) {
-            const res = await cloudinary.uploader.destroy(
-                imageName,
-                (error, result) => {
-                    // console.log(error, res)
-                }
-            );
+        const uploaded = await uploadFilesToCloudinary(request.files);
+        if (!uploaded[0]) {
+            return response.status(400).json({
+                message: "Vui lòng chọn ảnh đại diện",
+                error: true,
+                success: false
+            });
         }
 
-        const options = {
-            use_filename: true,
-            unique_filename: false,
-            overwrite: false,
-        };
-
-        for (let i = 0; i < image?.length; i++) {
-
-            const img = await cloudinary.uploader.upload(
-                image[i].path,
-                options,
-                function (error, result) {
-                    imagesArr.push(result.secure_url);
-                    fs.unlinkSync(`uploads/${request.files[i].filename}`);
-                }
-            );
+        if (user.avatar) {
+            const urlArr = user.avatar.split("/");
+            const avatar_image = urlArr[urlArr.length - 1];
+            const imageName = avatar_image.split(".")[0];
+            if (imageName) {
+                await cloudinary.uploader.destroy(imageName).catch(() => {});
+            }
         }
 
-        user.avatar = imagesArr[0];
+        user.avatar = uploaded[0];
         await user.save();
 
         return response.status(200).json({
             _id: userId,
-            avtar: imagesArr[0]
+            avatar: uploaded[0]
         });
 
     } catch (error) {
@@ -402,26 +491,29 @@ export async function userAvatarController(request, response) {
 }
 
 export async function removeImageFromCloudinary(request, response) {
-    const imgUrl = request.query.img;
-
-    const urlArr = imgUrl.split("/");
-    const image = urlArr[urlArr.length - 1];
-
-    const imageName = image.split(".")[0];
-
-    if (imageName) {
-        const res = await cloudinary.uploader.destroy(
-            imageName,
-            (error, result) => {
-                // console.log(error, res)
-            }
-        );
-
-        if (res) {
-            response.status(200).send(res);
+    try {
+        const imgUrl = request.query.img;
+        if (!imgUrl) {
+            return response.status(400).json({ message: "Thiếu URL ảnh", error: true, success: false });
         }
-    }
 
+        const urlArr = imgUrl.split("/");
+        const image = urlArr[urlArr.length - 1];
+        const imageName = image.split(".")[0];
+
+        if (imageName) {
+            const res = await cloudinary.uploader.destroy(imageName);
+            return response.status(200).json(res);
+        }
+
+        return response.status(400).json({ message: "Không thể xác định tên ảnh", error: true, success: false });
+    } catch (error) {
+        return response.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        });
+    }
 }
 
 //update user details
@@ -434,14 +526,33 @@ export async function updateUserDetails(request, response) {
         if (!userExist)
             return response.status(400).send('Không thể cập nhật người dùng!');
 
+        const nameRegex = /^[a-zA-ZÀ-ỹ\s]+$/;
+        if (name && !nameRegex.test(name)) {
+            return response.status(400).json({
+                message: "Họ và tên chỉ được chứa chữ cái",
+                error: true,
+                success: false
+            })
+        }
+
+        const normalizedMobile = String(mobile || "").trim();
+        if (normalizedMobile && !PHONE_REGEX.test(normalizedMobile)) {
+            return response.status(400).json({
+                message: PHONE_MESSAGE,
+                error: true,
+                success: false
+            })
+        }
+
+        // Không cho phép đổi email qua endpoint này
+        const updateFields = { name: name };
+        if (normalizedMobile) {
+            updateFields.mobile = normalizedMobile;
+        }
 
         const updateUser = await UserModel.findByIdAndUpdate(
             userId,
-            {
-                name: name,
-                mobile: mobile,
-                email: email,
-            },
+            updateFields,
             { new: true }
         )
 
@@ -501,7 +612,7 @@ export async function forgotPasswordController(request, response) {
 
 
             return response.json({
-                message: "check your email",
+                message: "Vui lòng kiểm tra email",
                 error: false,
                 success: true
             })
@@ -524,21 +635,19 @@ export async function verifyForgotPasswordOtp(request, response) {
     try {
         const { email, otp } = request.body;
 
-        const user = await UserModel.findOne({ email: email })
-
-        console.log(user)
-
-        if (!user) {
+        if (!email || !otp) {
             return response.status(400).json({
-                message: "Email không đúng",
+                message: "Vui lòng điền đầy đủ thông tin vào trường bắt buộc: email, otp.",
                 error: true,
                 success: false
             })
         }
 
-        if (!email || !otp) {
+        const user = await UserModel.findOne({ email: email })
+
+        if (!user) {
             return response.status(400).json({
-                message: "Vui lòng điền đầy đủ thông tin vào trường bắt buộc: email, otp.",
+                message: "Email không đúng",
                 error: true,
                 success: false
             })
@@ -621,7 +730,7 @@ export async function resetpassword(request, response) {
 
         if (newPassword !== confirmPassword) {
             return response.status(400).json({
-                message: "Mật khẩu mới và Xác nhận mật khẩu phải gióng nhau.",
+                message: "Mật khẩu mới và Xác nhận mật khẩu phải giống nhau.",
                 error: true,
                 success: false,
             })
@@ -676,7 +785,7 @@ export async function changePasswordController(request, response) {
 
         if (newPassword !== confirmPassword) {
             return response.status(400).json({
-                message: "Mật khẩu mới và Xác nhận mật khẩu phải gióng nhau.",
+                message: "Mật khẩu mới và Xác nhận mật khẩu phải giống nhau.",
                 error: true,
                 success: false,
             })
@@ -729,7 +838,7 @@ export async function refreshToken(request, response) {
             })
         }
 
-        const userId = verifyToken?._id;
+        const userId = verifyToken?.id;
         const newAccessToken = await generatedAccessToken(userId)
 
         const cookiesOption = {
@@ -764,7 +873,7 @@ export async function userDetails(request, response) {
     try {
         const userId = request.userId
 
-        const user = await UserModel.findById(userId).select('-password -refresh_token').populate('address_details')
+        const user = await UserModel.findById(userId).select(buildPublicUserSelect).populate('address_details')
 
         return response.json({
             message: 'Chi tiết người dùng',
@@ -774,7 +883,7 @@ export async function userDetails(request, response) {
         })
     } catch (error) {
         return response.status(500).json({
-            message: "Something is wrong",
+            message: "Đã xảy ra lỗi",
             error: true,
             success: false
         })
@@ -808,7 +917,7 @@ export async function addReview(request, response) {
         
     } catch (error) {
         return response.status(500).json({
-            message: "Something is wrong",
+            message: "Đã xảy ra lỗi",
             error: true,
             success: false
         })
@@ -840,7 +949,7 @@ export async function getReviews(request, response) {
         
     } catch (error) {
         return response.status(500).json({
-            message: "Something is wrong",
+            message: "Đã xảy ra lỗi",
             error: true,
             success: false
         })
@@ -871,7 +980,7 @@ export async function getAllReviews(request, response) {
         
     } catch (error) {
         return response.status(500).json({
-            message: "Something is wrong",
+            message: "Đã xảy ra lỗi",
             error: true,
             success: false
         })
@@ -884,11 +993,15 @@ export async function getAllUsers(request, response) {
     try {
         const { page, limit } = request.query;
 
-        const totalUsers = await UserModel.find();
+        const total = await UserModel.countDocuments();
+        const pageNumber = Math.max(parseInt(page) || 1, 1);
+        const limitNumber = Math.max(parseInt(limit) || total || 1, 1);
 
-        const users = await UserModel.find().sort({ createdAt: -1 }).skip((page - 1) * limit).limit(parseInt(limit));
-
-        const total = await UserModel.countDocuments(users);
+        const users = await UserModel.find()
+            .select(buildPublicUserSelect)
+            .sort({ createdAt: -1 })
+            .skip((pageNumber - 1) * limitNumber)
+            .limit(limitNumber);
 
         if(!users){
             return response.status(400).json({
@@ -902,15 +1015,153 @@ export async function getAllUsers(request, response) {
             success: true,
             users:users,
             total: total,
-            page: parseInt(page),
-            totalPages: Math.ceil(total / limit),
-            totalUsersCount:totalUsers?.length,
-            totalUsers:totalUsers
+            page: pageNumber,
+            totalPages: Math.ceil(total / limitNumber),
+            totalUsersCount: total
         })
         
     } catch (error) {
         return response.status(500).json({
-            message: "Something is wrong",
+            message: "Đã xảy ra lỗi",
+            error: true,
+            success: false
+        })
+    }
+}
+
+
+export async function approveAdminAccount(request, response) {
+    try {
+        const user = await UserModel.findById(request.params.id);
+
+        if (!user) {
+            return response.status(404).json({
+                message: "Không tìm thấy người dùng",
+                error: true,
+                success: false
+            })
+        }
+
+        if (user.role === "SUPERBOSS") {
+            return response.status(400).json({
+                message: "Không thể phê duyệt tài khoản SUPERBOSS",
+                error: true,
+                success: false
+            })
+        }
+
+        user.role = "ADMIN";
+        user.accountStatus = "active";
+        user.status = "Active";
+        await user.save();
+
+        return response.status(200).json({
+            message: "Đã phê duyệt tài khoản quản trị",
+            error: false,
+            success: true,
+            user: await UserModel.findById(user._id).select(buildPublicUserSelect)
+        })
+    } catch (error) {
+        return response.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        })
+    }
+}
+
+
+export async function rejectAdminAccount(request, response) {
+    try {
+        const user = await UserModel.findById(request.params.id);
+
+        if (!user) {
+            return response.status(404).json({
+                message: "Không tìm thấy người dùng",
+                error: true,
+                success: false
+            })
+        }
+
+        if (user.role === "SUPERBOSS") {
+            return response.status(400).json({
+                message: "Không thể từ chối tài khoản SUPERBOSS",
+                error: true,
+                success: false
+            })
+        }
+
+        user.role = user.role === "ADMIN" ? "ADMIN" : "USER";
+        user.accountStatus = "rejected";
+        await user.save();
+
+        return response.status(200).json({
+            message: "Đã từ chối tài khoản quản trị",
+            error: false,
+            success: true,
+            user: await UserModel.findById(user._id).select(buildPublicUserSelect)
+        })
+    } catch (error) {
+        return response.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        })
+    }
+}
+
+
+export async function changeUserRole(request, response) {
+    try {
+        const { role, accountStatus } = request.body;
+
+        if (!ROLE_VALUES.includes(role) || role === "SUPERBOSS") {
+            return response.status(400).json({
+                message: "Vai trò không hợp lệ",
+                error: true,
+                success: false
+            })
+        }
+
+        if (accountStatus && !ACCOUNT_STATUS_VALUES.includes(accountStatus)) {
+            return response.status(400).json({
+                message: "Trạng thái tài khoản không hợp lệ",
+                error: true,
+                success: false
+            })
+        }
+
+        const user = await UserModel.findById(request.params.id);
+
+        if (!user) {
+            return response.status(404).json({
+                message: "Không tìm thấy người dùng",
+                error: true,
+                success: false
+            })
+        }
+
+        if (user.role === "SUPERBOSS") {
+            return response.status(403).json({
+                message: "Chỉ có thể thay đổi SUPERBOSS trực tiếp trong cơ sở dữ liệu",
+                error: true,
+                success: false
+            })
+        }
+
+        user.role = role;
+        user.accountStatus = accountStatus || "active";
+        await user.save();
+
+        return response.status(200).json({
+            message: "Đã cập nhật vai trò người dùng",
+            error: false,
+            success: true,
+            user: await UserModel.findById(user._id).select(buildPublicUserSelect)
+        })
+    } catch (error) {
+        return response.status(500).json({
+            message: error.message || error,
             error: true,
             success: false
         })
@@ -920,32 +1171,47 @@ export async function getAllUsers(request, response) {
 
 
 export async function deleteUser(request, response) {
-    const user = await UserModel.findById(request.params.id);
+    try {
+        const user = await UserModel.findById(request.params.id);
 
-    if (!user) {
-        return response.status(404).json({
-            message: "Không tìm thấy người dùng",
+        if (!user) {
+            return response.status(404).json({
+                message: "Không tìm thấy người dùng",
+                error: true,
+                success: false
+            })
+        }
+
+        if (!canDeleteTargetUser(request.user, user)) {
+            return response.status(403).json({
+                message: "Bạn không có quyền xóa tài khoản này",
+                error: true,
+                success: false
+            })
+        }
+
+        const deletedUser = await UserModel.findByIdAndDelete(request.params.id);
+
+        if (!deletedUser) {
+            return response.status(404).json({
+                message: "Không thể xóa người dùng!",
+                success: false,
+                error: true
+            });
+        }
+
+        return response.status(200).json({
+            success: true,
+            error: false,
+            message: "Đã xóa người dùng!",
+        });
+    } catch (error) {
+        return response.status(500).json({
+            message: error.message || error,
             error: true,
             success: false
         })
     }
-
-
-    const deletedUser = await UserModel.findByIdAndDelete(request.params.id);
-
-    if (!deletedUser) {
-        response.status(404).json({
-            message: "Không thể xóa người dùng!",
-            success: false,
-            error: true
-        });
-    }
-
-    return response.status(200).json({
-        success: true,
-        error: false,
-        message: "Đã xóa người dùng!",
-    });
 }
 
 
@@ -954,11 +1220,31 @@ export async function deleteMultiple(request, response) {
     const { ids } = request.body;
 
     if (!ids || !Array.isArray(ids)) {
-        return response.status(400).json({ error: true, success: false, message: 'Invalid input' });
+        return response.status(400).json({ error: true, success: false, message: 'Dữ liệu không hợp lệ' });
     }
 
 
     try {
+        const users = await UserModel.find({ _id: { $in: ids } }).select("_id role");
+
+        if (users.length !== ids.length) {
+            return response.status(404).json({
+                message: "Một hoặc nhiều tài khoản không tồn tại",
+                error: true,
+                success: false
+            })
+        }
+
+        const hasForbiddenTarget = users.some((user) => !canDeleteTargetUser(request.user, user));
+
+        if (hasForbiddenTarget) {
+            return response.status(403).json({
+                message: "Bạn không có quyền xóa một hoặc nhiều tài khoản đã chọn",
+                error: true,
+                success: false
+            })
+        }
+
         await UserModel.deleteMany({ _id: { $in: ids } });
         return response.status(200).json({
             message: "Đã xóa người dùng thành công",

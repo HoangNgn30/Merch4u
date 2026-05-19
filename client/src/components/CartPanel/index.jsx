@@ -10,10 +10,16 @@ const CartPanel = (props) => {
   const context = useContext(MyContext);
 
   const removeItem = (id) => {
-    deleteData(`/api/cart/delete-cart-item/${id}`).then((res) => {
-      context.alertBox("success", "Item Removed ");
-      context?.getCartItems();
-    })
+    context?.showConfirmBox(
+      "Xóa sản phẩm khỏi giỏ hàng?",
+      "Sản phẩm này sẽ được xóa khỏi giỏ hàng của bạn.",
+      () => {
+        deleteData(`/api/cart/delete-cart-item/${id}`).then((res) => {
+          context.alertBox("success", "Đã xóa sản phẩm khỏi giỏ hàng");
+          context?.getCartItems();
+        })
+      }
+    )
   }
 
 
@@ -43,7 +49,7 @@ const CartPanel = (props) => {
                   </h4>
                   <p className="flex items-center gap-5 mt-2 mb-2">
                     <span className="text-[13px] sm:text-[14px]">
-                      Qty : <span>{item?.quantity}</span>
+                      Số lượng: <span>{item?.quantity}</span>
                     </span>
                     <span className="text-primary font-bold">{item?.price?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</span>
                   </p>
@@ -66,7 +72,7 @@ const CartPanel = (props) => {
       <div className="bottomSec absolute bottom-[10px] left-[10px] w-full overflow-hidden pr-5">
         <div className="bottomInfo py-3 px-4 w-full border-t border-[rgba(0,0,0,0.1)] flex items-center justify-between flex-col">
           <div className="flex items-center justify-between w-full">
-            <span className="text-[14px] font-[600]">{context?.cartData?.length} item</span>
+            <span className="text-[14px] font-[600]">{context?.cartData?.length} sản phẩm</span>
             <span className="text-primary font-bold">
               {
                 (context.cartData?.length !== 0 ?
@@ -82,7 +88,7 @@ const CartPanel = (props) => {
 
         <div className="bottomInfo py-3 px-4 w-full border-t border-[rgba(0,0,0,0.1)] flex items-center justify-between flex-col">
           <div className="flex items-center justify-between w-full">
-            <span className="text-[14px] font-[600]">Total (tax excl.)</span>
+            <span className="text-[14px] font-[600]">Tổng tiền</span>
             <span className="text-primary font-bold">
               {
                 (context.cartData?.length !== 0 ?
@@ -97,10 +103,10 @@ const CartPanel = (props) => {
 
           <div className="flex items-center justify-between w-full gap-5">
             <Link to="/cart" className=" w-[50%] d-block" onClick={context.toggleCartPanel(false)}>
-              <Button className="btn-org btn-lg w-full">View Cart</Button>
+              <Button className="btn-org btn-lg w-full">Xem giỏ hàng</Button>
             </Link>
             <Link to="/checkout" className=" w-[50%] d-block"  onClick={context.toggleCartPanel(false)}>
-              <Button className="btn-org btn-border btn-lg w-full">Checkout</Button>
+              <Button className="btn-org btn-border btn-lg w-full">Thanh toán</Button>
             </Link>
           </div>
         </div>

@@ -23,9 +23,9 @@ import "react-lazy-load-image-component/src/effects/blur.css";
 const label = { inputProps: { "aria-label": "Checkbox demo" } };
 
 const columns = [
-    { id: "image", label: "IMAGE", minWidth: 150 },
-    { id: "catName", label: "CATEGORY NAME", minWidth: 150 },
-    { id: "action", label: "Action", minWidth: 100 },
+    { id: "image", label: "HÌNH ẢNH", minWidth: 150, align: "center" },
+    { id: "catName", label: "Tên danh mục", minWidth: 150, align: "center" },
+    { id: "action", label: "Thao Tác", minWidth: 100, align: "center" },
 ];
 
 export const CategoryList = () => {
@@ -57,12 +57,17 @@ export const CategoryList = () => {
     };
 
     const deleteCat = (id) => {
-        if (context?.userData?.role === "ADMIN") {
-            deleteData(`/api/category/${id}`).then((res) => {
-                fetchDataFromApi("/api/category").then((res) => {
-                    context?.setCatData(res?.data)
+        if (["ADMIN", "SUPERBOSS"].includes(context?.userData?.role)) {
+            context?.showConfirmDelete(
+                "Xóa danh mục?",
+                "Bạn có chắc chắn muốn xóa danh mục này?",
+                () => {
+                    deleteData(`/api/category/${id}`).then((res) => {
+                        fetchDataFromApi("/api/category").then((res) => {
+                            context?.setCatData(res?.data)
+                        })
+                    })
                 })
-            })
         } else {
             context.alertBox("error", "Only admin can delete data");
         }
@@ -70,25 +75,22 @@ export const CategoryList = () => {
 
     return (
         <>
+            <div className="card my-2 pt-5 shadow-md sm:rounded-lg bg-white">
+                <div className="flex items-center w-full px-5 pb-4 justify-between">
+                    <div className="col">
+                        <h2 className="text-[18px] font-[600]">
+                            Danh sách danh mục
+                        </h2>
+                    </div>
 
-            <div className="flex items-center justify-between px-2 py-0 mt-1">
-                <h2 className="text-[18px] font-[600]">
-                    Category List
-                </h2>
-
-                <div className="col w-[40%] ml-auto flex items-center justify-end gap-3">
-
-                    <Button className="btn-blue btn !text-white btn-sm" onClick={() => context.setIsOpenFullScreenPanel({
-                        open: true,
-                        model: 'Add New Category'
-                    })}>Add Category</Button>
+                    <div className="col ml-auto flex items-center justify-end gap-3">
+                        <Button className="btn-blue btn !text-white btn-sm" onClick={() => context.setIsOpenFullScreenPanel({
+                            open: true,
+                            model: 'Add New Category'
+                        })}>Thêm danh mục</Button>
+                    </div>
                 </div>
 
-
-            </div>
-
-
-            <div className="card my-4 pt-5 shadow-md sm:rounded-lg bg-white">
 
                 <TableContainer sx={{ maxHeight: 440 }}>
                     <Table stickyHeader aria-label="sticky table">
@@ -113,8 +115,8 @@ export const CategoryList = () => {
                                     return (
                                         <TableRow key={index}>
 
-                                            <TableCell width={100}>
-                                                <div className="flex items-center gap-4 w-[50px]">
+                                            <TableCell width={100} align="center">
+                                                <div className="flex items-center justify-center gap-4 w-[50px] mx-auto">
                                                     <div className="img w-full rounded-md overflow-hidden group">
                                                         <Link to="/product/45745" data-discover="true">
                                                             <LazyLoadImage
@@ -130,13 +132,13 @@ export const CategoryList = () => {
                                                 </div>
                                             </TableCell>
 
-                                            <TableCell width={100}>
+                                            <TableCell width={100} align="center">
                                                 {item?.name}
                                             </TableCell>
 
-                                            <TableCell width={100}>
-                                                <div className="flex items-center gap-1">
-                                                    <Button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:!bg-[#f1f1f1] !min-w-[35px]"
+                                            <TableCell width={100} align="center">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:bg-[#e2e2e2] flex items-center justify-center transition-all"
                                                         onClick={() => context.setIsOpenFullScreenPanel({
                                                             open: true,
                                                             model: 'Edit Category',
@@ -144,13 +146,13 @@ export const CategoryList = () => {
                                                         })}
                                                     >
                                                         <AiOutlineEdit className="text-[rgba(0,0,0,0.7)] text-[20px] " />
-                                                    </Button>
+                                                    </button>
 
 
-                                                    <Button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:!bg-[#f1f1f1] !min-w-[35px]"
+                                                    <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:bg-[#e2e2e2] flex items-center justify-center transition-all"
                                                         onClick={() => deleteCat(item?._id)}>
                                                         <GoTrash className="text-[rgba(0,0,0,0.7)] text-[18px] " />
-                                                    </Button>
+                                                    </button>
                                                 </div>
                                             </TableCell>
 
@@ -166,6 +168,7 @@ export const CategoryList = () => {
                     </Table>
                 </TableContainer>
                 <TablePagination
+                    labelRowsPerPage="Số hàng mỗi trang:"
                     rowsPerPageOptions={[10, 25, 100]}
                     component="div"
                     count={10}

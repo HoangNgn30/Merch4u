@@ -54,7 +54,7 @@ const Navigation = (props) => {
               onClick={openCategoryPanel}
             >
               <RiMenu2Fill className="text-[16px]" />
-              Categories
+              Danh Mục
               <LiaAngleDownSolid className="text-[12px] ml-1" />
             </Button>
           </div>
@@ -64,14 +64,21 @@ const Navigation = (props) => {
             <li className="list-none">
               <Link to="/">
                 <Button className="link !font-[500] !text-[rgba(0,0,0,0.8)] hover:!text-[#ff5252] !normal-case !text-[14px]">
-                  Home
+                  Trang Chủ
                 </Button>
               </Link>
             </li>
             <li className="list-none">
               <Link to="/products">
                 <Button className="link !font-[500] !text-[rgba(0,0,0,0.8)] hover:!text-[#ff5252] !normal-case !text-[14px]">
-                  Products
+                  Sản Phẩm
+                </Button>
+              </Link>
+            </li>
+            <li className="list-none">
+              <Link to="/coupon-game">
+                <Button className="link !font-[500] !text-[rgba(0,0,0,0.8)] hover:!text-[#ff5252] !normal-case !text-[14px]">
+                  Mã Giảm Giá
                 </Button>
               </Link>
             </li>

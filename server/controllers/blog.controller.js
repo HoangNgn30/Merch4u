@@ -1,48 +1,10 @@
 import BlogModel from '../models/blog.model.js';
+import { cloudinary, uploadFilesToCloudinary } from '../utils/cloudinaryUpload.js';
 
-import { v2 as cloudinary } from 'cloudinary';
-import fs from 'fs';
-
-
-cloudinary.config({
-    cloud_name: process.env.cloudinary_Config_Cloud_Name,
-    api_key: process.env.cloudinary_Config_api_key,
-    api_secret: process.env.cloudinary_Config_api_secret,
-    secure: true,
-});
-
-
-//image upload
-var imagesArr = [];
 export async function uploadImages(request, response) {
     try {
-        imagesArr = [];
-
-        const image = request.files;
-
-
-        const options = {
-            use_filename: true,
-            unique_filename: false,
-            overwrite: false,
-        };
-
-        for (let i = 0; i < image?.length; i++) {
-
-            const img = await cloudinary.uploader.upload(
-                image[i].path,
-                options,
-                function (error, result) {
-                    imagesArr.push(result.secure_url);
-                    fs.unlinkSync(`uploads/${request.files[i].filename}`);
-                }
-            );
-        }
-
-        return response.status(200).json({
-            images: imagesArr
-        });
-
+        const images = await uploadFilesToCloudinary(request.files);
+        return response.status(200).json({ images });
     } catch (error) {
         return response.status(500).json({
             message: error.message || error,
@@ -59,13 +21,17 @@ export async function addBlog(request, response) {
     try {
         let blog = new BlogModel({
             title: request.body.title,
-            images: imagesArr,
+            images: request.body.images || [],
             description: request.body.description,
+            author: request.body.author,
+            tags: request.body.tags,
+            category: request.body.category,
+            isPublished: request.body.isPublished !== undefined ? request.body.isPublished : true,
         });
 
         if (!blog) {
             return response.status(500).json({
-                message: "blog not created",
+                message: "Không thể tạo bài viết",
                 error: true,
                 success: false
             })
@@ -73,10 +39,8 @@ export async function addBlog(request, response) {
 
         blog = await blog.save();
 
-        imagesArr = [];
-
         return response.status(200).json({
-            message: "blog created",
+            message: "Đã tạo bài viết",
             error: false,
             success: true,
             blog: blog
@@ -106,7 +70,7 @@ export async function getBlogs(request, response) {
         if (page > totalPages) {
             return response.status(404).json(
                 {
-                    message: "Page not found",
+                    message: "Không tìm thấy trang",
                     success: false,
                     error: true
                 }
@@ -120,7 +84,7 @@ export async function getBlogs(request, response) {
             .exec();
 
         if (!blogs) {
-            response.status(500).json({
+            return response.status(500).json({
                 error: true,
                 success: false
             })
@@ -151,10 +115,10 @@ export async function getBlog(request, response) {
 
 
         if (!blog) {
-            response.status(500)
+            return response.status(500)
                 .json(
                     {
-                        message: "The blog with the given ID was not found.",
+                        message: "Không tìm thấy bài viết với mã đã cung cấp.",
                         error: true,
                         success: false
                     }
@@ -179,68 +143,92 @@ export async function getBlog(request, response) {
 
 
 export async function deleteBlog(request, response) {
-    const blog = await BlogModel.findById(request.params.id);
-    const images = blog.images;
-    let img = "";
-    for (img of images) {
-        const imgUrl = img;
-        const urlArr = imgUrl.split("/");
-        const image = urlArr[urlArr.length - 1];
-
-        const imageName = image.split(".")[0];
-
-        if (imageName) {
-            cloudinary.uploader.destroy(imageName, (error, result) => {
-                // console.log(error, result);
+    try {
+        const blog = await BlogModel.findById(request.params.id);
+        if (!blog) {
+            return response.status(404).json({
+                message: "Không tìm thấy bài viết!",
+                success: false,
+                error: true
             });
         }
 
-    }
-    const deletedBlog = await BlogModel.findByIdAndDelete(request.params.id);
-    if (!deletedBlog) {
-        response.status(404).json({
-            message: "blog not found!",
-            success: false,
-            error: true
-        });
-    }
+        const images = blog.images;
+        let img = "";
+        for (img of images) {
+            const imgUrl = img;
+            const urlArr = imgUrl.split("/");
+            const image = urlArr[urlArr.length - 1];
 
-    response.status(200).json({
-        success: true,
-        error: false,
-        message: "blog Deleted!",
-    });
+            const imageName = image.split(".")[0];
+
+            if (imageName) {
+                cloudinary.uploader.destroy(imageName, (error, result) => {
+                    // console.log(error, result);
+                });
+            }
+
+        }
+        const deletedBlog = await BlogModel.findByIdAndDelete(request.params.id);
+        if (!deletedBlog) {
+            return response.status(404).json({
+                message: "Không tìm thấy bài viết!",
+                success: false,
+                error: true
+            });
+        }
+
+        return response.status(200).json({
+            success: true,
+            error: false,
+            message: "Đã xóa bài viết!",
+        });
+    } catch (error) {
+        return response.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        })
+    }
 }
 
 
 
 export async function updateBlog(request, response) {
-    const blog = await BlogModel.findByIdAndUpdate(
-        request.params.id,
-        {
-            title: request.body.title,
-            description: request.body.description,
-            images: imagesArr.length > 0 ? imagesArr[0] : request.body.images,
-        },
-        { new: true }
-    );
+    try {
+        const blog = await BlogModel.findByIdAndUpdate(
+            request.params.id,
+            {
+                title: request.body.title,
+                description: request.body.description,
+                images: request.body.images,
+                author: request.body.author,
+                tags: request.body.tags,
+                category: request.body.category,
+                isPublished: request.body.isPublished !== undefined ? request.body.isPublished : true,
+            },
+            { new: true }
+        );
 
-    if (!blog) {
+        if (!blog) {
+            return response.status(500).json({
+                message: "Không thể cập nhật bài viết!",
+                success: false,
+                error: true
+            });
+        }
+
+        response.status(200).json({
+            error: false,
+            success: true,
+            blog: blog,
+            message: "Đã cập nhật bài viết"
+        })
+    } catch (error) {
         return response.status(500).json({
-            message: "Category cannot be updated!",
-            success: false,
-            error: true
-        });
+            message: error.message || error,
+            error: true,
+            success: false
+        })
     }
-
-
-    imagesArr = [];
-
-    response.status(200).json({
-        error: false,
-        success: true,
-        blog: blog,
-        message: "blog updated successfully"
-    })
-
 }

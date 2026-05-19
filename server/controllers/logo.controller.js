@@ -1,48 +1,10 @@
 import LogoModel from '../models/logo.model.js';
+import { cloudinary, uploadFilesToCloudinary } from '../utils/cloudinaryUpload.js';
 
-import { v2 as cloudinary } from 'cloudinary';
-import fs from 'fs';
-
-
-cloudinary.config({
-    cloud_name: process.env.cloudinary_Config_Cloud_Name,
-    api_key: process.env.cloudinary_Config_api_key,
-    api_secret: process.env.cloudinary_Config_api_secret,
-    secure: true,
-});
-
-
-//image upload
-var imagesArr = [];
 export async function uploadImages(request, response) {
     try {
-        imagesArr = [];
-
-        const image = request.files;
-
-
-        const options = {
-            use_filename: true,
-            unique_filename: false,
-            overwrite: false,
-        };
-
-        for (let i = 0; i < image?.length; i++) {
-
-            const img = await cloudinary.uploader.upload(
-                image[i].path,
-                options,
-                function (error, result) {
-                    imagesArr.push(result.secure_url);
-                    fs.unlinkSync(`uploads/${request.files[i].filename}`);
-                }
-            );
-        }
-
-        return response.status(200).json({
-            images: imagesArr
-        });
-
+        const images = await uploadFilesToCloudinary(request.files);
+        return response.status(200).json({ images });
     } catch (error) {
         return response.status(500).json({
             message: error.message || error,
@@ -57,13 +19,22 @@ export async function uploadImages(request, response) {
 //add logo
 export async function addLogo(request, response) {
     try {
+        const logoUrl = request.body?.logo || request.body?.images?.[0];
+        if (!logoUrl) {
+            return response.status(400).json({
+                message: "Vui lòng tải logo",
+                error: true,
+                success: false
+            });
+        }
+
         let logoItem = new LogoModel({
-            logo: imagesArr[0],
+            logo: logoUrl,
         });
 
         if (!logoItem) {
             return response.status(500).json({
-                message: "Logo not added",
+                message: "Không thể thêm logo",
                 error: true,
                 success: false
             })
@@ -71,10 +42,8 @@ export async function addLogo(request, response) {
 
         logoItem = await logoItem.save();
 
-        imagesArr = [];
-
         return response.status(200).json({
-            message: "logo added",
+            message: "Đã thêm logo",
             error: false,
             success: true,
             logo: logoItem
@@ -99,7 +68,7 @@ export async function getLogo(request, response) {
         const logo = await LogoModel.find();
 
         if (!logo) {
-            response.status(500).json({
+            return response.status(500).json({
                 error: true,
                 success: false
             })
@@ -127,10 +96,10 @@ export async function getLogoById(request, response) {
 
 
         if (!logo) {
-            response.status(500)
+            return response.status(500)
                 .json(
                     {
-                        message: "The logo with the given ID was not found.",
+                        message: "Không tìm thấy logo với mã đã cung cấp.",
                         error: true,
                         success: false
                     }
@@ -158,27 +127,25 @@ export async function updatedLogo(request, response) {
     const logo = await LogoModel.findByIdAndUpdate(
         request.params.id,
         {
-            logo: imagesArr.length > 0 ? imagesArr[0] : request.body.logo,
+            logo: request.body.logo,
         },
         { new: true }
     );
 
     if (!logo) {
         return response.status(500).json({
-            message: "logo cannot be updated!",
+            message: "Không thể cập nhật logo!",
             success: false,
             error: true
         });
     }
 
 
-    imagesArr = [];
-
     response.status(200).json({
         error: false,
         success: true,
         logo: logo,
-        message: "logo updated successfully"
+        message: "Đã cập nhật logo"
     })
 
 }

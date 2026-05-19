@@ -38,7 +38,7 @@ const UploadBox = (props) => {
 
 
                 } else {
-                    context.alertBox("error", "Please select a valid JPG , PNG or webp image file.");
+                    context.alertBox("error", "Vui lòng chọn tệp ảnh JPG, PNG hoặc WebP hợp lệ.");
                     setUploading(false);
                     return false;
                 }
@@ -63,11 +63,11 @@ const UploadBox = (props) => {
             {
                 uploading === true ? <>
                 <CircularProgress />
-                <h4 className="text-center">Uploading...</h4>
+                <h4 className="text-center">Đang tải lên...</h4>
                 </> :
                     <>
                         <FaRegImages className='text-[40px] opacity-35 pointer-events-none' />
-                        <h4 className='text-[14px] pointer-events-none'>Image Upload</h4>
+                        <h4 className='text-[14px] pointer-events-none'>Tải ảnh lên</h4>
 
                         <input type="file" accept='image/*' multiple={props.multiple !== undefined ? props.multiple : false} className='absolute top-0 left-0 w-full h-full z-50 opacity-0'
                             onChange={(e) =>

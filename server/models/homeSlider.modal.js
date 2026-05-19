@@ -7,6 +7,10 @@ const homeSliderSchema = mongoose.Schema({
             required: true,
         }
     ],
+    isVisible: {
+        type: Boolean,
+        default: true,
+    },
     dateCreated: {
         type: Date,
         default: Date.now,

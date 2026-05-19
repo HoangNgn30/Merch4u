@@ -52,20 +52,20 @@ const ChangePassword = () => {
     setIsLoading(true);
 
     if (formFields.newPassword === "") {
-      context.alertBox("error", "Please enter new password");
+      context.alertBox("error", "Vui lòng nhập mật khẩu mới");
       setIsLoading(false);
       return false
     }
 
 
     if (formFields.confirmPassword === "") {
-      context.alertBox("error", "Please enter confirm password");
+      context.alertBox("error", "Vui lòng nhập lại mật khẩu");
       setIsLoading(false);
       return false
     }
 
     if (formFields.confirmPassword !== formFields.newPassword) {
-      context.alertBox("error", "Password and confirm password not match");
+      context.alertBox("error", "Mật khẩu xác nhận không khớp");
       setIsLoading(false);
       return false
     }
@@ -102,13 +102,13 @@ const ChangePassword = () => {
         <div className="hidden sm:flex items-center gap-0">
           <NavLink to="/login" exact={true} activeClassName="isActive">
             <Button className="!rounded-full !text-[rgba(0,0,0,0.8)] !px-5 flex gap-1">
-              <CgLogIn className="text-[18px]" /> Login
+              <CgLogIn className="text-[18px]" /> Đăng nhập
             </Button>
           </NavLink>
 
           <NavLink to="/sign-up" exact={true} activeClassName="isActive">
             <Button className="!rounded-full !text-[rgba(0,0,0,0.8)] !px-5 flex gap-1">
-              <FaRegUser className="text-[15px]" /> Sign Up
+              <FaRegUser className="text-[15px]" /> Đăng ký
             </Button>
           </NavLink>
         </div>
@@ -121,9 +121,9 @@ const ChangePassword = () => {
         </div>
 
         <h1 className="text-center text-[18px] sm:text-[35px] font-[800] mt-4">
-          Welcome Back!
+          Chào mừng trở lại!
           <br />
-          You can change your password from here
+          Bạn có thể đổi mật khẩu tại đây
         </h1>
 
 
@@ -134,7 +134,7 @@ const ChangePassword = () => {
         <form className="w-full px-3 sm:px-3 mt-3" onSubmit={handleSubmit}>
 
           <div className="form-group mb-4 w-full">
-            <h4 className="text-[14px] font-[500] mb-1">New Password</h4>
+            <h4 className="text-[14px] font-[500] mb-1">Mật khẩu mới</h4>
             <div className="relative w-full">
               <input
                 type={isPasswordShow === false ? 'password' : 'text'}
@@ -156,7 +156,7 @@ const ChangePassword = () => {
 
 
           <div className="form-group mb-4 w-full">
-            <h4 className="text-[14px] font-[500] mb-1">Confirm Password</h4>
+            <h4 className="text-[14px] font-[500] mb-1">Nhập lại mật khẩu</h4>
             <div className="relative w-full">
               <input
                 type={isPasswordShow2 === false ? 'password' : 'text'}
@@ -180,7 +180,7 @@ const ChangePassword = () => {
             {
               isLoading === true ? <CircularProgress color="inherit" />
                 :
-                'Change Password'
+                'Đổi mật khẩu'
             }
           </Button>
         </form>

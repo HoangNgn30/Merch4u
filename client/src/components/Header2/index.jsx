@@ -18,9 +18,10 @@ import { IoMdHeartEmpty } from "react-icons/io";
 import { IoIosLogOut } from "react-icons/io";
 import { fetchDataFromApi } from "../../utils/api";
 import { LuMapPin } from "react-icons/lu";
+import { RiCoupon2Line } from "react-icons/ri";
 import { useEffect } from "react";
 import { HiOutlineMenu } from "react-icons/hi";
-import { IoSearch } from "react-icons/io5";
+import { IoClose, IoSearch } from "react-icons/io5";
 
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
@@ -114,8 +115,8 @@ const Header2 = () => {
 
     return (
         <>
-        <header className="fixed lg:sticky z-[1000] top-0 left-0 w-full bg-white lg:bg-white/20 lg:backdrop-blur-md border-b border-white/10">
-            <div className="flex items-center justify-between px-4 lg:px-8 py-3 gap-2">
+        <header className="fixed lg:sticky z-[1000] top-0 left-0 w-full bg-white/95 backdrop-blur-md border-b border-[rgba(0,0,0,0.08)]">
+            <div className="container flex items-center justify-between py-3 gap-2">
 
                 <div className="flex items-center lg:hidden">
                     <Button
@@ -130,7 +131,7 @@ const Header2 = () => {
                     <Link to={"/"}>
                         <img
                             src={localStorage.getItem('logo')}
-                            className="h-[40px] rounded-md lg:h-[50px] w-auto object-contain"
+                            className="max-w-[110px] lg:max-w-[150px]"
                             alt="Logo"
                         />
                     </Link>
@@ -140,7 +141,7 @@ const Header2 = () => {
                     <Navigation isOpenCatPanel={isOpenCatPanel} setIsOpenCatPanel={setIsOpenCatPanel} />
                 </div>
 
-                <div className="hidden lg:flex flex-1 max-w-[360px]">
+                <div className="hidden lg:flex flex-1 max-w-[420px]">
                     <Search />
                 </div>
 
@@ -160,9 +161,9 @@ const Header2 = () => {
 
                     {context.isLogin === false ? (
                         <div className="hidden lg:flex items-center gap-2 text-[14px] font-[500]">
-                            <Link to="/login" className="link transition hover:text-[#ff5252]">Login</Link>
+                            <Link to="/login" className="link transition hover:text-[#ff5252]">Đăng nhập</Link>
                             <span className="text-gray-300">|</span>
-                            <Link to="/register" className="link transition hover:text-[#ff5252]">Register</Link>
+                            <Link to="/register" className="link transition hover:text-[#ff5252]">Đăng ký</Link>
                         </div>
                     ) : (
                         <div className="hidden lg:flex items-center">
@@ -217,38 +218,43 @@ const Header2 = () => {
                                 <Link to="/my-account" className="w-full block">
                                     <MenuItem onClick={handleClose} className="flex gap-2 !py-2">
                                         <FaRegUser className="text-[16px]" />
-                                        <span className="text-[14px]">My Account</span>
+                                        <span className="text-[14px]">Tài khoản</span>
                                     </MenuItem>
                                 </Link>
                                 <Link to="/address" className="w-full block">
                                     <MenuItem onClick={handleClose} className="flex gap-2 !py-2">
                                         <LuMapPin className="text-[16px]" />
-                                        <span className="text-[14px]">Address</span>
+                                        <span className="text-[14px]">Địa chỉ</span>
                                     </MenuItem>
                                 </Link>
                                 <Link to="/my-orders" className="w-full block">
                                     <MenuItem onClick={handleClose} className="flex gap-2 !py-2">
                                         <IoBagCheckOutline className="text-[16px]" />
-                                        <span className="text-[14px]">Orders</span>
+                                        <span className="text-[14px]">Đơn hàng</span>
                                     </MenuItem>
                                 </Link>
                                 <Link to="/my-list" className="w-full block">
                                     <MenuItem onClick={handleClose} className="flex gap-2 !py-2">
                                         <IoMdHeartEmpty className="text-[16px]" />
-                                        <span className="text-[14px]">My List</span>
+                                        <span className="text-[14px]">Yêu thích</span>
+                                    </MenuItem>
+                                </Link>
+                                <Link to="/my-coupons" className="w-full block">
+                                    <MenuItem onClick={handleClose} className="flex gap-2 !py-2">
+                                        <RiCoupon2Line className="text-[16px]" />
+                                        <span className="text-[14px]">Kho Coupon</span>
                                     </MenuItem>
                                 </Link>
                                 <MenuItem onClick={logout} className="flex gap-2 !py-2">
                                     <IoIosLogOut className="text-[16px]" />
-                                    <span className="text-[14px]">Logout</span>
+                                    <span className="text-[14px]">Đăng xuất</span>
                                 </MenuItem>
                             </Menu>
                         </div>
                     )}
 
-                    {/* Wishlist - desktop only */}
                     <div className="hidden lg:flex">
-                        <Tooltip title="Wishlist">
+                        <Tooltip title="Yêu thích">
                             <IconButton component={Link} to="/my-list" aria-label="wishlist" size="small">
                                 <StyledBadge
                                     badgeContent={context?.myListData?.length > 0 ? context?.myListData?.length : 0}
@@ -260,8 +266,7 @@ const Header2 = () => {
                         </Tooltip>
                     </div>
 
-                    {/* Cart - always visible */}
-                    <Tooltip title="Cart">
+                    <Tooltip title="Giỏ hàng">
                         <IconButton
                             aria-label="cart"
                             onClick={() => context.setOpenCartPanel(true)}
@@ -281,6 +286,12 @@ const Header2 = () => {
             {/* Mobile: Search panel overlay */}
             {context?.openSearchPanel === true && context?.windowWidth < 992 && (
                 <div className="fixed top-0 left-0 w-full h-full bg-white z-[200] p-3">
+                    <div className="mb-3 flex items-center justify-between">
+                        <span className="text-[15px] font-[700]">Tim kiem</span>
+                        <IconButton size="small" onClick={() => context?.setOpenSearchPanel(false)}>
+                            <IoClose />
+                        </IconButton>
+                    </div>
                     <Search />
                 </div>
             )}

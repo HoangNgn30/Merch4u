@@ -39,11 +39,11 @@ const Login = () => {
   const forgotPassword =()=>{
   
           if(formFields.email===""){
-            context.alertBox("error", "Please enter email id");
+            context.alertBox("error", "Vui lòng nhập email");
             return false;
           }
           else{
-            context.alertBox("success", `OTP send to ${formFields.email}`);
+            context.alertBox("success", `Mã OTP đã được gửi đến ${formFields.email}`);
             localStorage.setItem("userEmail", formFields.email);
             localStorage.setItem("actionType", 'forgot-password');
 
@@ -82,13 +82,15 @@ const Login = () => {
       setIsLoading(true);
   
       if (formFields.email === "") {
-        context.alertBox("error", "Please enter email id");
+        context.alertBox("error", "Vui lòng nhập email");
+        setIsLoading(false);
         return false
       }
   
   
       if (formFields.password === "") {
-        context.alertBox("error", "Please enter password");
+        context.alertBox("error", "Vui lòng nhập mật khẩu");
+        setIsLoading(false);
         return false
       }
   
@@ -184,7 +186,7 @@ const Login = () => {
       <div className="container">
         <div className="card shadow-md w-full sm:w-[400px] m-auto rounded-md bg-white p-5 px-10">
           <h3 className="text-center text-[18px] text-black">
-            Login to your account
+            Đăng nhập tài khoản
           </h3>
 
           <form className="w-full mt-5"  onSubmit={handleSubmit}>
@@ -195,7 +197,7 @@ const Login = () => {
                 name="email"
                 value={formFields.email}
                 disabled={isLoading === true ? true : false}
-                label="Email Id"
+                label="Email"
                 variant="outlined"
                 className="w-full"
                 onChange={onChangeInput}
@@ -206,7 +208,7 @@ const Login = () => {
               <TextField
                 type={isPasswordShow===false ? 'password' : 'text'}
                 id="password"
-                label="Password"
+                label="Mật khẩu"
                 variant="outlined"
                 className="w-full"
                 name="password"
@@ -225,27 +227,27 @@ const Login = () => {
             </div>
 
 
-            <a className="link cursor-pointer text-[14px] font-[600]" onClick={forgotPassword}>Forgot Password?</a>
+            <a className="link cursor-pointer text-[14px] font-[600]" onClick={forgotPassword}>Quên mật khẩu?</a>
 
             <div className="flex items-center w-full mt-3 mb-3">
             <Button type="submit" disabled={!valideValue} className="btn-org btn-lg w-full flex gap-3">
               {
                 isLoading === true ? <CircularProgress color="inherit" />
                   :
-                  'Login'
+                  'Đăng nhập'
               }
 
             </Button>
           </div>
 
-            <p className="text-center">Not Registered? <Link className="link text-[14px] font-[600] text-primary" to="/register"> Sign Up</Link></p>
+            <p className="text-center">Chưa có tài khoản? <Link className="link text-[14px] font-[600] text-primary" to="/register"> Đăng ký</Link></p>
 
 
-            <p className="text-center font-[500]">Or continue with social account</p>
+            <p className="text-center font-[500]">Hoặc tiếp tục bằng tài khoản mạng xã hội</p>
 
             <Button className="flex gap-3 w-full !bg-[#f1f1f1] btn-lg !text-black"
             onClick={authWithGoogle}>
-            <FcGoogle className="text-[20px]"/> Login with Google</Button>
+            <FcGoogle className="text-[20px]"/> Đăng nhập bằng Google</Button>
 
           </form>
         </div>

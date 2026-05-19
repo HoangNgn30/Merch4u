@@ -1,46 +1,65 @@
 import React, { useState } from "react";
-import Button from "@mui/material/Button";
-import { FaAngleUp } from "react-icons/fa6";
-import { FaAngleDown } from "react-icons/fa6";
+import { FaMinus, FaPlus } from "react-icons/fa";
 
-export const QtyBox = (props) => {
+/**
+ * QtyBox — Bộ chọn số lượng kiểu +/- với nhập tay
+ * Props:
+ *   handleSelecteQty(qty) — callback khi qty thay đổi
+ *   maxQty (number) — giới hạn tối đa (countInStock), mặc định 999
+ *   initialQty (number) — giá trị khởi tạo, mặc định 1
+ */
+export const QtyBox = ({ handleSelecteQty, maxQty = 999, initialQty = 1 }) => {
 
-const [qtyVal, setQtyVal] = useState(1);
+  const [qtyVal, setQtyVal] = useState(initialQty);
 
-const plusQty=()=>{
-    setQtyVal(qtyVal+1);
-    props.handleSelecteQty(qtyVal+1)
-}
+  const plusQty = () => {
+    if (qtyVal >= maxQty) return;
+    const newQty = qtyVal + 1;
+    setQtyVal(newQty);
+    handleSelecteQty(newQty);
+  }
 
-const minusQty=()=>{
-    if(qtyVal===1){
-        setQtyVal(1)
-        props.handleSelecteQty(1)
-    }else{
-        setQtyVal(qtyVal-1)
-        props.handleSelecteQty(qtyVal-1)
-    }
-   
-}
+  const minusQty = () => {
+    if (qtyVal <= 1) return;
+    const newQty = qtyVal - 1;
+    setQtyVal(newQty);
+    handleSelecteQty(newQty);
+  }
+
+  const handleInputChange = (e) => {
+    let val = parseInt(e.target.value, 10);
+    if (isNaN(val) || val < 1) val = 1;
+    if (val > maxQty) val = maxQty;
+    setQtyVal(val);
+    handleSelecteQty(val);
+  }
 
   return (
-    <div className="qtyBox flex items-center relative">
+    <div className="qtyBox flex items-center justify-between w-full h-full border border-gray-200 rounded-full bg-white overflow-hidden">
+      <button
+        className="flex items-center justify-center w-[35px] h-full text-gray-700 bg-gray-50 hover:bg-gray-100 border-r border-gray-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        onClick={minusQty}
+        disabled={qtyVal <= 1}
+      >
+        <FaMinus size={12} />
+      </button>
+
       <input
         type="number"
-        className="w-full h-[40px] p-2 pl-5 text-[15px] focus:outline-none  border border-[rgba(0,0,0,0.2)] rounded-md"
+        className="flex-1 w-[40px] text-center text-[15px] font-semibold text-gray-800 bg-transparent focus:outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         value={qtyVal}
-        readOnly
+        onChange={handleInputChange}
+        min={1}
+        max={maxQty}
       />
 
-      <div className="flex items-center flex-col justify-between h-[40px] absolute top-0 right-0 z-50">
-        <Button className="!min-w-[25px] !w-[25px] !h-[20px] !text-[#000] !rounded-none hover:!bg-[#f1f1f1]" onClick={plusQty}>
-          <FaAngleUp className="text-[12px] opacity-55" />
-        </Button>
-        <Button className="!min-w-[25px] !w-[25px] !h-[20px] !text-[#000] !rounded-none hover:!bg-[#f1f1f1]" onClick={minusQty}>
-          <FaAngleDown  className="text-[12px] opacity-55"/>
-        </Button>
-      </div>
-
+      <button
+        className="flex items-center justify-center w-[35px] h-full text-gray-700 bg-gray-50 hover:bg-gray-100 border-l border-gray-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        onClick={plusQty}
+        disabled={qtyVal >= maxQty}
+      >
+        <FaPlus size={12} />
+      </button>
     </div>
   );
 };

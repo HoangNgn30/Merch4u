@@ -43,20 +43,20 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     if (formFields.newPassword === "") {
-      context.alertBox("error", "Please enter new password");
+      context.alertBox("error", "Vui lòng nhập mật khẩu mới");
       setIsLoading(false);
       return false
     }
 
 
     if (formFields.confirmPassword === "") {
-      context.alertBox("error", "Please enter confirm password");
+      context.alertBox("error", "Vui lòng nhập lại mật khẩu");
       setIsLoading(false);
       return false
     }
 
     if (formFields.confirmPassword !== formFields.newPassword) {
-      context.alertBox("error", "Password and confirm password not match");
+      context.alertBox("error", "Mật khẩu xác nhận không khớp");
       setIsLoading(false);
       return false
     }
@@ -85,7 +85,7 @@ const ForgotPassword = () => {
       <div className="container">
         <div className="card shadow-md w-full sm:w-[400px] m-auto rounded-md bg-white p-5 px-10">
           <h3 className="text-center text-[18px] text-black">
-            Forgot Password
+            Quên mật khẩu
           </h3>
 
           <form className="w-full mt-5" onSubmit={handleSubmit}>
@@ -93,7 +93,7 @@ const ForgotPassword = () => {
               <TextField
                 type={isPasswordShow === false ? "password" : "text"}
                 id="password"
-                label="New Password"
+                label="Mật khẩu mới"
                 variant="outlined"
                 className="w-full"
                 name="newPassword"
@@ -122,7 +122,7 @@ const ForgotPassword = () => {
               <TextField
                 type={isPasswordShow2 === false ? "password" : "text"}
                 id="confirm_password"
-                label="Confirm Password"
+                label="Nhập lại mật khẩu"
                 variant="outlined"
                 className="w-full"
                 name="confirmPassword"
@@ -150,7 +150,7 @@ const ForgotPassword = () => {
                 {
                   isLoading === true ? <CircularProgress color="inherit" />
                     :
-                    'Change Password'
+                    'Đổi mật khẩu'
                 }
 
               </Button>

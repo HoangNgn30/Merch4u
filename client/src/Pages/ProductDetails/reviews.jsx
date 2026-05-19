@@ -85,7 +85,7 @@ export const Reviews = (props) => {
 
     return (
         <div className="w-full productReviewsContainer">
-            <h2 className="text-[16px] lg:text-[18px]">Customer questions & answers</h2>
+            <h2 className="text-[16px] lg:text-[18px]">Đánh giá và câu hỏi của khách hàng</h2>
 
             {
                 reviewsData?.length !== 0 &&
@@ -135,12 +135,12 @@ export const Reviews = (props) => {
             <br />
 
             <div className="reviewForm bg-[#fafafa] p-4 rounded-md">
-                <h2 className="text-[18px]">Add a review</h2>
+                <h2 className="text-[18px]">Thêm đánh giá</h2>
 
                 <form className="w-full mt-5" onSubmit={addReview}>
                     <TextField
                         id="outlined-multiline-flexible"
-                        label="Write a review..."
+                        label="Viết đánh giá..."
                         className="w-full"
                         onChange={onChangeInput}
                         name="review"
@@ -166,7 +166,7 @@ export const Reviews = (props) => {
                             {
                                 loading === true && <CircularProgress size={15}/> 
                             }
-                            Submit Review</Button>
+                            Gửi đánh giá</Button>
                     </div>
                 </form>
             </div>
