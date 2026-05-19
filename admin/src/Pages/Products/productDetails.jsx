@@ -55,7 +55,7 @@ const ProductDetails = () => {
         <>
             <div className="flex items-center justify-between px-2 py-0 mt-3">
                 <h2 className="text-[18px] font-[600]">
-                    Product Details
+                    Chi tiết sản phẩm
                 </h2>
             </div>
 
@@ -136,37 +136,15 @@ const ProductDetails = () => {
 
                                 <div className="flex items-center py-1">
                                     <span className="w-[20%] font-[500] flex items-center gap-2 text-[14px]">
-                                        <MdBrandingWatermark className="opacity-65" /> Brand : </span>
+                                        <MdBrandingWatermark className="opacity-65" /> Thương hiệu: </span>
                                     <span className=" text-[14px]">{product?.brand}</span>
                                 </div>
 
                                 <div className="flex items-center py-1">
                                     <span className="w-[20%] font-[500] flex items-center gap-2  text-[14px]">
-                                        <BiSolidCategoryAlt className="opacity-65" /> Category : </span>
+                                        <BiSolidCategoryAlt className="opacity-65" /> Danh mục: </span>
                                     <span className=" text-[14px]">{product?.catName}</span>
                                 </div>
-
-
-                                {
-                                    product?.productRam?.length !== 0 &&
-                                    <div className="flex items-center py-1">
-                                        <span className="w-[20%] font-[500] flex items-center gap-2  text-[14px]">
-                                            <MdFilterVintage className="opacity-65" /> RAM : </span>
-
-                                        <div className="flex items-center gap-2">
-                                            {
-                                                product?.productRam?.map((ram, index) => {
-                                                    return (
-                                                        <span className="inline-block p-1 shadow-sm bg-[#fff] text-[12px] font-[500]" key={index}>{ram}</span>
-                                                    )
-                                                })
-                                            }
-
-                                        </div>
-
-
-                                    </div>
-                                }
 
 
 
@@ -174,7 +152,7 @@ const ProductDetails = () => {
                                     product?.size?.length !== 0 &&
                                     <div className="flex items-center py-1">
                                         <span className="w-[20%] font-[500] flex items-center gap-2  text-[14px]">
-                                            <MdFilterVintage className="opacity-65" /> SIZE : </span>
+                                            <MdFilterVintage className="opacity-65" /> Kích cỡ: </span>
 
                                         <div className="flex items-center gap-2">
                                             {
@@ -191,48 +169,23 @@ const ProductDetails = () => {
                                     </div>
                                 }
 
-
-
-                                {
-                                    product?.productWeight?.length !== 0 &&
-                                    <div className="flex items-center py-1">
-                                        <span className="w-[20%] font-[500] flex items-center gap-2  text-[14px]">
-                                            <MdFilterVintage className="opacity-65" /> Weight : </span>
-
-                                        <div className="flex items-center gap-2">
-                                            {
-                                                product?.productWeight?.map((weight, index) => {
-                                                    return (
-                                                        <span className="inline-block p-1 shadow-sm bg-[#fff] text-[12px] font-[500]" key={index}>{weight}</span>
-                                                    )
-                                                })
-                                            }
-
-                                        </div>
-
-
-                                    </div>
-                                }
-
-
-
                                 <div className="flex items-center py-1">
                                     <span className="w-[20%] font-[500] flex items-center gap-2  text-[14px]">
-                                        <MdRateReview className="opacity-65" /> Review : </span>
-                                    <span className=" text-[14px]">({reviewsData?.length > 0 ? reviewsData?.length : 0}) Review</span>
+                                        <MdRateReview className="opacity-65" /> Đánh giá: </span>
+                                    <span className=" text-[14px]">({reviewsData?.length > 0 ? reviewsData?.length : 0}) đánh giá</span>
                                 </div>
 
 
 
                                 <div className="flex items-center py-1">
                                     <span className="w-[20%] font-[500] flex items-center gap-2  text-[14px]">
-                                        <BsPatchCheckFill className="opacity-65" /> Published : </span>
+                                        <BsPatchCheckFill className="opacity-65" /> Ngày đăng: </span>
                                     <span className=" text-[14px]">{product?.createdAt?.split("T")[0]}</span>
                                 </div>
 
                                 <br />
 
-                                <h2 className="text-[20px] font-[500] mb-3">Product Description</h2>
+                                <h2 className="text-[20px] font-[500] mb-3">Mô tả sản phẩm</h2>
                                 {
                                     product?.description && <p className="text-[14px] ">{product?.description}</p>
                                 }
@@ -244,7 +197,7 @@ const ProductDetails = () => {
                         <br />
                         {
                             reviewsData?.length !== 0 &&
-                            <h2 className="text-[18px] font-[500]">Customer Reviews</h2>
+                            <h2 className="text-[18px] font-[500]">Đánh giá của khách hàng</h2>
                         }
 
 

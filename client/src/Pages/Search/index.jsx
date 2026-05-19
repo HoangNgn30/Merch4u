@@ -24,7 +24,7 @@ const SearchPage = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const [selectedSortVal, setSelectedSortVal] = useState("Name, A to Z");
+  const [selectedSortVal, setSelectedSortVal] = useState("Tên, A đến Z");
 
   const context = useContext(MyContext);
 
@@ -98,13 +98,13 @@ const SearchPage = () => {
                 </Button>
 
                 <span className="text-[14px] hidden sm:block md:block lg:block font-[500] pl-3 text-[rgba(0,0,0,0.7)]">
-                  There are {productsData?.products?.length !== 0 ? productsData?.products?.length : 0}  products.
+                  Có {productsData?.products?.length !== 0 ? productsData?.products?.length : 0} sản phẩm.
                 </span>
               </div>
 
               <div className="col2 ml-auto flex items-center justify-end gap-3 pr-4">
                 <span className="text-[14px] font-[500] pl-3 text-[rgba(0,0,0,0.7)]">
-                  Sort By
+                  Sắp xếp
                 </span>
 
                 <Button
@@ -129,34 +129,34 @@ const SearchPage = () => {
                   }}
                 >
                   <MenuItem
-                    onClick={() => handleSortBy('name', 'asc', productsData, 'Name, A to Z')}
+                    onClick={() => handleSortBy('name', 'asc', productsData, 'Tên, A đến Z')}
                     className="!text-[13px] !text-[#000] !capitalize"
                   >
-                    Name, A to Z
+                    Tên, A đến Z
                   </MenuItem>
 
 
                   <MenuItem
-                    onClick={() => handleSortBy('name', 'desc', productsData, 'Name, Z to A')}
+                    onClick={() => handleSortBy('name', 'desc', productsData, 'Tên, Z đến A')}
                     className="!text-[13px] !text-[#000] !capitalize"
                   >
-                    Name, Z to A
+                    Tên, Z đến A
                   </MenuItem>
 
 
                   <MenuItem
-                    onClick={() => handleSortBy('price', 'asc', productsData, 'Price, low to high')}
+                    onClick={() => handleSortBy('price', 'asc', productsData, 'Giá tăng dần')}
                     className="!text-[13px] !text-[#000] !capitalize"
                   >
-                    Price, low to high
+                    Giá tăng dần
                   </MenuItem>
 
 
                   <MenuItem
-                    onClick={() => handleSortBy('price', 'desc', productsData, ' Price, high to low')}
+                    onClick={() => handleSortBy('price', 'desc', productsData, 'Giá giảm dần')}
                     className="!text-[13px] !text-[#000] !capitalize"
                   >
-                    Price, high to low
+                    Giá giảm dần
                   </MenuItem>
 
                 </Menu>

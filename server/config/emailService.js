@@ -1,4 +1,4 @@
-import http from 'http';
+// emailService.js
 import nodemailer from 'nodemailer';
 
 // Configure the SMTP transporter

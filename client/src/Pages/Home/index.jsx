@@ -25,6 +25,7 @@ import { Link } from "react-router-dom";
 import HeroBannerScroll from "../../components/HeroBannerScroll";
 import RightBanner from "../../components/RightBanner";
 import AIRecommendations from "../../components/AIRecommendations";
+import RecentlyViewed from "../../components/RecentlyViewed";
 
 const Home = () => {
   const [value, setValue] = useState(0);
@@ -46,17 +47,19 @@ const Home = () => {
     window.scrollTo(0, 0);
 
     fetchDataFromApi("/api/homeSlides").then((res) => {
-      setHomeSlidesData(res?.data)
+      const activeSlides = res?.data?.filter(item => item.isVisible !== false) || [];
+      setHomeSlidesData(activeSlides)
     })
     fetchDataFromApi("/api/product/getAllProducts?page=1&limit=12").then((res) => {
       setAllProductsData(res?.products)
     })
 
-    fetchDataFromApi("/api/product/getAllProducts").then((res) => {
+    // 1.9: Fetch specific banner products instead of ALL products
+    fetchDataFromApi("/api/product/getAllProductsBanners").then((res) => {
       setProductsBanners(res?.products)
     })
 
-    
+
     fetchDataFromApi("/api/product/getAllFeaturedProducts").then((res) => {
       setFeaturedProducts(res?.products)
     })
@@ -142,6 +145,11 @@ const Home = () => {
       {
         homeSlidesData?.length === 0 && <BannerLoading />
       }
+      
+      {
+        homeSlidesData?.length !== 0 && <HomeSlider data={homeSlidesData} />
+      }
+
       {/* <div className="heroBanner relative">
         <HeroBannerScroll/>
       </div> */}
@@ -152,9 +160,9 @@ const Home = () => {
           <div className="container">
             <div className="flex items-center justify-between flex-col lg:flex-row">
               <div className="leftSec w-full lg:w-[40%]">
-                <h2 className="text-[14px] sm:text-[14px] md:text-[16px] lg:text-[20px] font-[600] ">Popular Products</h2>
+                <h2 className="text-[14px] sm:text-[14px] md:text-[16px] lg:text-[20px] font-[600] ">Sản Phẩm Phổ Biến</h2>
                 <p className="text-[12px] sm:text-[14px] md:text-[13px] lg:text-[14px] font-[400] mt-0 mb-0">
-                  Do not miss the current offers until the end of March.
+                  Đừng bỏ lỡ các ưu đãi hiện tại cho đến cuối tháng này.
                 </p>
               </div>
 
@@ -196,11 +204,13 @@ const Home = () => {
         {/* AI Gợi ý cá nhân hóa */}
         <AIRecommendations />
 
+        <RecentlyViewed />
+
 
         <section className="py-6 pt-0 bg-white">
-          <div className="container flex flex-col lg:flex-row gap-5 items-stretch "> 
+          <div className="container flex flex-col lg:flex-row gap-5 items-stretch ">
             <div className="part1 w-full lg:w-[70%] ">
-              {productsBanners?.length > 0 && <HomeBannerV2 data={productsBanners}/>}
+              {productsBanners?.length > 0 && <HomeBannerV2 data={productsBanners} />}
             </div>
 
             <div className="part2 w-full lg:w-[30%] flex">
@@ -219,17 +229,17 @@ const Home = () => {
               <div className="col1 flex items-center gap-4">
                 <LiaShippingFastSolid className="text-[30px] lg:text-[50px]" />
                 <span className="text-[16px] lg:text-[20px] font-[600] uppercase">
-                  Free Shipping{" "}
+                  Miễn Phí Vận Chuyển{" "}
                 </span>
               </div>
 
               <div className="col2">
-                <p className="mb-0 mt-0 font-[500] text-center">
-                  Free Delivery Now On Your First Order and over $200
+                <p className="mb-0 mt-0 font-[500] text-center text-[14px] lg:text-[18px]">
+                  Miễn phí giao hàng cho đơn hàng đầu tiên và trên 1 triệu đồng
                 </p>
               </div>
 
-              <p className="font-bold text-[20px] lg:text-[25px]">- Only $200*</p>
+              <p className="font-bold text-[18px] lg:text-[22px]">- Chỉ từ 1Tr*</p>
             </div>
           </div>
         </section>
@@ -237,9 +247,9 @@ const Home = () => {
         <section className="py-3 lg:py-2 pt-0 bg-white">
           <div className="container">
             <div className="flex items-center justify-between">
-              <h2 className="text-[20px] font-[600]">Latest Products</h2>
+              <h2 className="text-[20px] font-[600]">Sản Phẩm Mới Nhất</h2>
               <Link to="/products">
-                <Button className="!bg-gray-100 hover:!bg-gray-200 !text-gray-800 !capitalize !px-3 !border !border-[rgba(0,0,0,0.4)]" size="small" >View All <MdArrowRightAlt size={25} /></Button>
+                <Button className="!bg-gray-100 hover:!bg-gray-200 !text-gray-800 !capitalize !px-3 !border !border-[rgba(0,0,0,0.4)]" size="small" >Xem Tất Cả <MdArrowRightAlt size={25} /></Button>
               </Link>
             </div>
 
@@ -251,20 +261,13 @@ const Home = () => {
               productsData?.length !== 0 && <ProductsSlider items={6} data={productsData} />
             }
 
-
-            
-            {
-              homeSlidesData?.length !== 0 && <HomeSlider data={homeSlidesData} />
-            }
-
-
           </div>
 
-            
+
         </section>
         <section className="py-2 lg:py-0 pt-0 bg-white">
           <div className="container">
-            <h2 className="text-[20px] font-[600]">Featured Products</h2>
+            <h2 className="text-[20px] font-[600]">Sản Phẩm Nổi Bật</h2>
 
             {
               featuredProducts?.length === 0 && <ProductLoading />
@@ -294,7 +297,7 @@ const Home = () => {
                       {
                         productRow?.data?.length > 6 &&
                         <Link to={`products?catId=${productRow?.data[0]?.catId}`}>
-                          <Button className="!bg-gray-100 hover:!bg-gray-200 !text-gray-800 !capitalize !px-3 !border !border-[rgba(0,0,0,0.4)]" size="small" >View All <MdArrowRightAlt size={25} /></Button>
+                          <Button className="!bg-gray-100 hover:!bg-gray-200 !text-gray-800 !capitalize !px-3 !border !border-[rgba(0,0,0,0.4)]" size="small" >Xem Tất Cả <MdArrowRightAlt size={25} /></Button>
                         </Link>
                       }
 
@@ -322,41 +325,42 @@ const Home = () => {
           blogData?.length !== 0 &&
           <section className="py-5 pb-8 pt-0 bg-white blogSection">
             <div className="container">
-              <h2 className="text-[20px] font-[600] mb-4">From The Blog</h2>
-              <Swiper
-                slidesPerView={4}
-                spaceBetween={30}
-                navigation={context?.windowWidth < 992 ? false : true}
-                modules={[Navigation, FreeMode]}
-                freeMode={true}
-                breakpoints={{
-                  250: {
-                    slidesPerView: 1,
-                    spaceBetween: 10,
-                  },
-                  330: {
-                    slidesPerView: 1,
-                    spaceBetween: 10,
-                  },
-                  500: {
-                    slidesPerView: 2,
-                    spaceBetween: 20,
-                  },
-                  700: {
-                    slidesPerView: 3,
-                    spaceBetween: 20,
-                  },
-                  1100: {
-                    slidesPerView: 4,
-                    spaceBetween: 30,
-                  },
-                }}
-                className="blogSlider"
-              >
+              <h2 className="text-[20px] font-[600] mb-4">Từ Blog</h2>
+              <div className="blogSliderWrapper overflow-hidden pt-1 lg:pt-3 pb-0">
+                <Swiper
+                  slidesPerView={4}
+                  spaceBetween={30}
+                  navigation={context?.windowWidth < 992 ? false : true}
+                  modules={[Navigation, FreeMode]}
+                  freeMode={true}
+                  breakpoints={{
+                    250: {
+                      slidesPerView: 1,
+                      spaceBetween: 10,
+                    },
+                    330: {
+                      slidesPerView: 1,
+                      spaceBetween: 10,
+                    },
+                    500: {
+                      slidesPerView: 2,
+                      spaceBetween: 20,
+                    },
+                    700: {
+                      slidesPerView: 3,
+                      spaceBetween: 20,
+                    },
+                    1100: {
+                      slidesPerView: 4,
+                      spaceBetween: 30,
+                    },
+                  }}
+                  className="blogSlider"
+                >
                 {
                   blogData?.slice()?.reverse()?.map((item, index) => {
                     return (
-                      <SwiperSlide key={index}>
+                      <SwiperSlide key={index} className="!h-auto">
                         <BlogItem item={item} />
                       </SwiperSlide>
                     )
@@ -365,7 +369,8 @@ const Home = () => {
 
 
 
-              </Swiper>
+                </Swiper>
+              </div>
             </div>
           </section>
         }

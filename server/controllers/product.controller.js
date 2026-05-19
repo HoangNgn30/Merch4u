@@ -1,21 +1,19 @@
 import ProductModel from '../models/product.modal.js';
-import ProductRAMSModel from '../models/productRAMS.js';
-import ProductWEIGHTModel from '../models/productWEIGHT.js';
-import ProductSIZEModel from '../models/productSIZE.js';
+import ProductVariantModel from '../models/productVariant.model.js';
 
-import { v2 as cloudinary } from 'cloudinary';
-import fs from 'fs';
-import { request } from 'http';
+import { cloudinary, uploadFilesToCloudinary } from '../utils/cloudinaryUpload.js';
+// removed unused 'http' import
 import { GoogleGenAI } from '@google/genai';
 
 // ─── Gemini Embedding Helper ──────────────────────────────────────────────────
-const _genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const _genAI = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
 
 /**
  * Tạo vector embedding và lưu vào product.embedding
  * Gọi bất đồng bộ sau khi lưu product — không block response
  */
 async function generateAndSaveEmbedding(productId, text) {
+    if (!_genAI) return;
     try {
         const result = await _genAI.models.embedContent({
             model: 'gemini-embedding-001',
@@ -31,44 +29,10 @@ async function generateAndSaveEmbedding(productId, text) {
 }
 
 
-cloudinary.config({
-    cloud_name: process.env.cloudinary_Config_Cloud_Name,
-    api_key: process.env.cloudinary_Config_api_key,
-    api_secret: process.env.cloudinary_Config_api_secret,
-    secure: true,
-});
-
-
-//image upload
-var imagesArr = [];
 export async function uploadImages(request, response) {
     try {
-        imagesArr = [];
-
-        const image = request.files;
-
-        const options = {
-            use_filename: true,
-            unique_filename: false,
-            overwrite: false,
-        };
-
-        for (let i = 0; i < image?.length; i++) {
-
-            const img = await cloudinary.uploader.upload(
-                image[i].path,
-                options,
-                function (error, result) {
-                    imagesArr.push(result.secure_url);
-                    fs.unlinkSync(`uploads/${request.files[i].filename}`);
-                }
-            );
-        }
-
-        return response.status(200).json({
-            images: imagesArr
-        });
-
+        const images = await uploadFilesToCloudinary(request.files);
+        return response.status(200).json({ images });
     } catch (error) {
         return response.status(500).json({
             message: error.message || error,
@@ -78,35 +42,10 @@ export async function uploadImages(request, response) {
     }
 }
 
-var bannerImage = [];
 export async function uploadBannerImages(request, response) {
     try {
-        bannerImage = [];
-
-        const image = request.files;
-
-        const options = {
-            use_filename: true,
-            unique_filename: false,
-            overwrite: false,
-        };
-
-        for (let i = 0; i < image?.length; i++) {
-
-            const img = await cloudinary.uploader.upload(
-                image[i].path,
-                options,
-                function (error, result) {
-                    bannerImage.push(result.secure_url);
-                    fs.unlinkSync(`uploads/${request.files[i].filename}`);
-                }
-            );
-        }
-
-        return response.status(200).json({
-            images: bannerImage
-        });
-
+        const images = await uploadFilesToCloudinary(request.files);
+        return response.status(200).json({ images });
     } catch (error) {
         return response.status(500).json({
             message: error.message || error,
@@ -124,8 +63,8 @@ export async function createProduct(request, response) {
         let product = new ProductModel({
             name: request.body.name,
             description: request.body.description,
-            images: imagesArr,
-            bannerimages: bannerImage,
+            images: request.body.images || [],
+            bannerimages: request.body.bannerimages || [],
             bannerTitleName: request.body.bannerTitleName,
             isDisplayOnHomeBanner: request.body.isDisplayOnHomeBanner,
             brand: request.body.brand,
@@ -141,11 +80,10 @@ export async function createProduct(request, response) {
             countInStock: request.body.countInStock,
             rating: request.body.rating,
             isFeatured: request.body.isFeatured,
+            status: request.body.status,
+            isNew: request.body.isNew,
             discount: request.body.discount,
-            productRam: request.body.productRam,
             size: request.body.size,
-            productWeight: request.body.productWeight,
-
         });
 
         product = await product.save();
@@ -153,10 +91,10 @@ export async function createProduct(request, response) {
         console.log(product)
 
         if (!product) {
-            response.status(500).json({
+            return response.status(500).json({
                 error: true,
                 success: false,
-                message: "Product Not created"
+                message: "Không thể tạo sản phẩm"
             });
         }
 
@@ -164,10 +102,8 @@ export async function createProduct(request, response) {
         const embeddingText = `${product.name}. ${product.description}. Danh mục: ${product.catName}. Brand: ${product.brand}`;
         generateAndSaveEmbedding(product._id, embeddingText);
 
-        imagesArr = [];
-
         return response.status(200).json({
-            message: "Product Created successfully",
+            message: "Đã tạo sản phẩm",
             error: false,
             success: true,
             product: product
@@ -190,11 +126,9 @@ export async function getAllProducts(request, response) {
     try {
 
         const { page, limit } = request.query;
-        const totalProducts = await ProductModel.find().populate("category");
+        const total = await ProductModel.countDocuments();
 
         const products = await ProductModel.find().sort({ createdAt: -1 }).populate("category").skip((page - 1) * limit).limit(parseInt(limit));
-
-        const total = await ProductModel.countDocuments(products);
 
         if (!products) {
             return response.status(400).json({
@@ -210,8 +144,7 @@ export async function getAllProducts(request, response) {
             total: total,
             page: parseInt(page),
             totalPages: Math.ceil(total / limit),
-            totalCount: totalProducts?.length,
-            totalProducts: totalProducts
+            totalCount: total
         })
 
 
@@ -233,13 +166,14 @@ export async function getAllProductsByCatId(request, response) {
         const perPage = parseInt(request.query.perPage) || 10000;
 
 
-        const totalPosts = await ProductModel.countDocuments();
+        const filter = { catId: request.params.id };
+        const totalPosts = await ProductModel.countDocuments(filter);
         const totalPages = Math.ceil(totalPosts / perPage);
 
-        if (page > totalPages) {
+        if (page > totalPages && totalPages > 0) {
             return response.status(404).json(
                 {
-                    message: "Page not found",
+                    message: "Không tìm thấy trang",
                     success: false,
                     error: true
                 }
@@ -254,7 +188,7 @@ export async function getAllProductsByCatId(request, response) {
             .exec();
 
         if (!products) {
-            response.status(500).json({
+            return response.status(500).json({
                 error: true,
                 success: false
             })
@@ -286,13 +220,14 @@ export async function getAllProductsByCatName(request, response) {
         const perPage = parseInt(request.query.perPage) || 10000;
 
 
-        const totalPosts = await ProductModel.countDocuments();
+        const filter = { catName: request.query.catName };
+        const totalPosts = await ProductModel.countDocuments(filter);
         const totalPages = Math.ceil(totalPosts / perPage);
 
-        if (page > totalPages) {
+        if (page > totalPages && totalPages > 0) {
             return response.status(404).json(
                 {
-                    message: "Page not found",
+                    message: "Không tìm thấy trang",
                     success: false,
                     error: true
                 }
@@ -308,7 +243,7 @@ export async function getAllProductsByCatName(request, response) {
             .exec();
 
         if (!products) {
-            response.status(500).json({
+            return response.status(500).json({
                 error: true,
                 success: false
             })
@@ -341,13 +276,14 @@ export async function getAllProductsBySubCatId(request, response) {
         const perPage = parseInt(request.query.perPage) || 10000;
 
 
-        const totalPosts = await ProductModel.countDocuments();
+        const filter = { subCatId: request.params.id };
+        const totalPosts = await ProductModel.countDocuments(filter);
         const totalPages = Math.ceil(totalPosts / perPage);
 
-        if (page > totalPages) {
+        if (page > totalPages && totalPages > 0) {
             return response.status(404).json(
                 {
-                    message: "Page not found",
+                    message: "Không tìm thấy trang",
                     success: false,
                     error: true
                 }
@@ -362,7 +298,7 @@ export async function getAllProductsBySubCatId(request, response) {
             .exec();
 
         if (!products) {
-            response.status(500).json({
+            return response.status(500).json({
                 error: true,
                 success: false
             })
@@ -394,13 +330,14 @@ export async function getAllProductsBySubCatName(request, response) {
         const perPage = parseInt(request.query.perPage) || 10000;
 
 
-        const totalPosts = await ProductModel.countDocuments();
+        const filter = { subCat: request.query.subCat };
+        const totalPosts = await ProductModel.countDocuments(filter);
         const totalPages = Math.ceil(totalPosts / perPage);
 
-        if (page > totalPages) {
+        if (page > totalPages && totalPages > 0) {
             return response.status(404).json(
                 {
-                    message: "Page not found",
+                    message: "Không tìm thấy trang",
                     success: false,
                     error: true
                 }
@@ -416,7 +353,7 @@ export async function getAllProductsBySubCatName(request, response) {
             .exec();
 
         if (!products) {
-            response.status(500).json({
+            return response.status(500).json({
                 error: true,
                 success: false
             })
@@ -450,13 +387,14 @@ export async function getAllProductsByThirdLavelCatId(request, response) {
         const perPage = parseInt(request.query.perPage) || 10000;
 
 
-        const totalPosts = await ProductModel.countDocuments();
+        const filter = { thirdsubCatId: request.params.id };
+        const totalPosts = await ProductModel.countDocuments(filter);
         const totalPages = Math.ceil(totalPosts / perPage);
 
-        if (page > totalPages) {
+        if (page > totalPages && totalPages > 0) {
             return response.status(404).json(
                 {
-                    message: "Page not found",
+                    message: "Không tìm thấy trang",
                     success: false,
                     error: true
                 }
@@ -471,7 +409,7 @@ export async function getAllProductsByThirdLavelCatId(request, response) {
             .exec();
 
         if (!products) {
-            response.status(500).json({
+            return response.status(500).json({
                 error: true,
                 success: false
             })
@@ -503,13 +441,14 @@ export async function getAllProductsByThirdLavelCatName(request, response) {
         const perPage = parseInt(request.query.perPage) || 10000;
 
 
-        const totalPosts = await ProductModel.countDocuments();
+        const filter = { thirdsubCat: request.query.thirdsubCat };
+        const totalPosts = await ProductModel.countDocuments(filter);
         const totalPages = Math.ceil(totalPosts / perPage);
 
-        if (page > totalPages) {
+        if (page > totalPages && totalPages > 0) {
             return response.status(404).json(
                 {
-                    message: "Page not found",
+                    message: "Không tìm thấy trang",
                     success: false,
                     error: true
                 }
@@ -525,7 +464,7 @@ export async function getAllProductsByThirdLavelCatName(request, response) {
             .exec();
 
         if (!products) {
-            response.status(500).json({
+            return response.status(500).json({
                 error: true,
                 success: false
             })
@@ -552,53 +491,60 @@ export async function getAllProductsByThirdLavelCatName(request, response) {
 //get all products by price
 
 export async function getAllProductsByPrice(request, response) {
-    let productList = [];
+    try {
+        let productList = [];
 
-    if (request.query.catId !== "" && request.query.catId !== undefined) {
-        const productListArr = await ProductModel.find({
-            catId: request.query.catId,
-        }).populate("category");
+        if (request.query.catId !== "" && request.query.catId !== undefined) {
+            const productListArr = await ProductModel.find({
+                catId: request.query.catId,
+            }).populate("category");
 
-        productList = productListArr;
-    }
-
-    if (request.query.subCatId !== "" && request.query.subCatId !== undefined) {
-        const productListArr = await ProductModel.find({
-            subCatId: request.query.subCatId,
-        }).populate("category");
-
-        productList = productListArr;
-    }
-
-
-    if (request.query.thirdsubCatId !== "" && request.query.thirdsubCatId !== undefined) {
-        const productListArr = await ProductModel.find({
-            thirdsubCatId: request.query.thirdsubCatId,
-        }).populate("category");
-
-        productList = productListArr;
-    }
-
-
-
-    const filteredProducts = productList.filter((product) => {
-        if (request.query.minPrice && product.price < parseInt(+request.query.minPrice)) {
-            return false;
+            productList = productListArr;
         }
-        if (request.query.maxPrice && product.price > parseInt(+request.query.maxPrice)) {
-            return false;
+
+        if (request.query.subCatId !== "" && request.query.subCatId !== undefined) {
+            const productListArr = await ProductModel.find({
+                subCatId: request.query.subCatId,
+            }).populate("category");
+
+            productList = productListArr;
         }
-        return true;
-    });
 
-    return response.status(200).json({
-        error: false,
-        success: true,
-        products: filteredProducts,
-        totalPages: 0,
-        page: 0,
-    });
 
+        if (request.query.thirdsubCatId !== "" && request.query.thirdsubCatId !== undefined) {
+            const productListArr = await ProductModel.find({
+                thirdsubCatId: request.query.thirdsubCatId,
+            }).populate("category");
+
+            productList = productListArr;
+        }
+
+
+
+        const filteredProducts = productList.filter((product) => {
+            if (request.query.minPrice && product.price < parseInt(+request.query.minPrice)) {
+                return false;
+            }
+            if (request.query.maxPrice && product.price > parseInt(+request.query.maxPrice)) {
+                return false;
+            }
+            return true;
+        });
+
+        return response.status(200).json({
+            error: false,
+            success: true,
+            products: filteredProducts,
+            totalPages: 0,
+            page: 0,
+        });
+    } catch (error) {
+        return response.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        })
+    }
 }
 
 
@@ -617,7 +563,7 @@ export async function getAllProductsByRating(request, response) {
         if (page > totalPages) {
             return response.status(404).json(
                 {
-                    message: "Page not found",
+                    message: "Không tìm thấy trang",
                     success: false,
                     error: true
                 }
@@ -667,7 +613,7 @@ export async function getAllProductsByRating(request, response) {
 
 
         if (!products) {
-            response.status(500).json({
+            return response.status(500).json({
                 error: true,
                 success: false
             })
@@ -698,7 +644,7 @@ export async function getProductsCount(request, response) {
         const productsCount = await ProductModel.countDocuments();
 
         if (!productsCount) {
-            response.status(500).json({
+            return response.status(500).json({
                 error: true,
                 success: false
             })
@@ -730,7 +676,7 @@ export async function getAllFeaturedProducts(request, response) {
         }).populate("category");
 
         if (!products) {
-            response.status(500).json({
+            return response.status(500).json({
                 error: true,
                 success: false
             })
@@ -761,7 +707,7 @@ export async function getAllProductsBanners(request, response) {
         }).populate("category");
 
         if (!products) {
-            response.status(500).json({
+            return response.status(500).json({
                 error: true,
                 success: false
             })
@@ -785,91 +731,84 @@ export async function getAllProductsBanners(request, response) {
 
 //delete product
 export async function deleteProduct(request, response) {
+    try {
+        const product = await ProductModel.findById(request.params.id).populate("category");
 
-    const product = await ProductModel.findById(request.params.id).populate("category");
+        if (!product) {
+            return response.status(404).json({
+                message: "Không tìm thấy sản phẩm",
+                error: true,
+                success: false
+            })
+        }
 
-    if (!product) {
-        return response.status(404).json({
-            message: "Product Not found",
+        // Xóa ảnh trên Cloudinary
+        for (const img of product.images || []) {
+            try {
+                const urlArr = img.split("/");
+                const imageName = urlArr[urlArr.length - 1]?.split(".")[0];
+                if (imageName) {
+                    await cloudinary.uploader.destroy(imageName);
+                }
+            } catch (err) {
+                console.error("Cloudinary delete error:", err.message);
+            }
+        }
+
+        const deletedProduct = await ProductModel.findByIdAndDelete(request.params.id);
+
+        if (!deletedProduct) {
+            return response.status(404).json({
+                message: "Không thể xóa sản phẩm!",
+                success: false,
+                error: true
+            });
+        }
+
+        return response.status(200).json({
+            success: true,
+            error: false,
+            message: "Đã xóa sản phẩm!",
+        });
+    } catch (error) {
+        return response.status(500).json({
+            message: error.message || error,
             error: true,
             success: false
         })
     }
-
-    const images = product.images;
-
-    let img = "";
-    for (img of images) {
-        const imgUrl = img;
-        const urlArr = imgUrl.split("/");
-        const image = urlArr[urlArr.length - 1];
-
-        const imageName = image.split(".")[0];
-
-        if (imageName) {
-            cloudinary.uploader.destroy(imageName, (error, result) => {
-                // console.log(error, result);
-            });
-        }
-
-
-    }
-
-    const deletedProduct = await ProductModel.findByIdAndDelete(request.params.id);
-
-    if (!deletedProduct) {
-        response.status(404).json({
-            message: "Product not deleted!",
-            success: false,
-            error: true
-        });
-    }
-
-    return response.status(200).json({
-        success: true,
-        error: false,
-        message: "Product Deleted!",
-    });
 }
 
 
 //delete multiple products
 export async function deleteMultipleProduct(request, response) {
-    const { ids } = request.body;
+    try {
+        const { ids } = request.body;
 
-    if (!ids || !Array.isArray(ids)) {
-        return response.status(400).json({ error: true, success: false, message: 'Invalid input' });
-    }
-
-
-    for (let i = 0; i < ids?.length; i++) {
-        const product = await ProductModel.findById(ids[i]);
-
-        const images = product.images;
-
-        let img = "";
-        for (img of images) {
-            const imgUrl = img;
-            const urlArr = imgUrl.split("/");
-            const image = urlArr[urlArr.length - 1];
-
-            const imageName = image.split(".")[0];
-
-            if (imageName) {
-                cloudinary.uploader.destroy(imageName, (error, result) => {
-                    // console.log(error, result);
-                });
-            }
-
-
+        if (!ids || !Array.isArray(ids)) {
+            return response.status(400).json({ error: true, success: false, message: 'Dữ liệu không hợp lệ' });
         }
 
-    }
+        for (const id of ids) {
+            const product = await ProductModel.findById(id);
+            if (!product) continue;
 
-    try {
+            for (const img of product.images || []) {
+                try {
+                    const urlArr = img.split("/");
+                    const imageName = urlArr[urlArr.length - 1]?.split(".")[0];
+                    if (imageName) {
+                        await cloudinary.uploader.destroy(imageName);
+                    }
+                } catch (err) {
+                    console.error("Cloudinary delete error:", err.message);
+                }
+            }
+        }
+
         await ProductModel.deleteMany({ _id: { $in: ids } });
         return response.status(200).json({
-            message: "Product delete successfully",
+            message: "Đã xóa sản phẩm",
             error: false,
             success: true
         })
@@ -881,7 +820,6 @@ export async function deleteMultipleProduct(request, response) {
             success: false
         })
     }
-
 }
 
 //get single product 
@@ -891,7 +829,7 @@ export async function getProduct(request, response) {
 
         if (!product) {
             return response.status(404).json({
-                message: "The product is not found",
+                message: "Không tìm thấy sản phẩm",
                 error: true,
                 success: false
             })
@@ -914,27 +852,28 @@ export async function getProduct(request, response) {
 
 //delete images
 export async function removeImageFromCloudinary(request, response) {
-
-    const imgUrl = request.query.img;
-
-
-    const urlArr = imgUrl.split("/");
-    const image = urlArr[urlArr.length - 1];
-
-    const imageName = image.split(".")[0];
-
-
-    if (imageName) {
-        const res = await cloudinary.uploader.destroy(
-            imageName,
-            (error, result) => {
-                // console.log(error, res)
-            }
-        );
-
-        if (res) {
-            response.status(200).send(res);
+    try {
+        const imgUrl = request.query.img;
+        if (!imgUrl) {
+            return response.status(400).json({ message: "Thiếu URL ảnh", error: true, success: false });
         }
+
+        const urlArr = imgUrl.split("/");
+        const image = urlArr[urlArr.length - 1];
+        const imageName = image.split(".")[0];
+
+        if (imageName) {
+            const res = await cloudinary.uploader.destroy(imageName);
+            return response.status(200).json(res);
+        }
+
+        return response.status(400).json({ message: "Không thể xác định tên ảnh", error: true, success: false });
+    } catch (error) {
+        return response.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        });
     }
 }
 
@@ -946,13 +885,11 @@ export async function updateProduct(request, response) {
             request.params.id,
             {
                 name: request.body.name,
-                subCat: request.body.subCat,
                 description: request.body.description,
                 bannerimages: request.body.bannerimages,
                 bannerTitleName: request.body.bannerTitleName,
                 isDisplayOnHomeBanner: request.body.isDisplayOnHomeBanner,
                 images: request.body.images,
-                bannerTitleName: request.body.bannerTitleName,
                 brand: request.body.brand,
                 price: request.body.price,
                 oldPrice: request.body.oldPrice,
@@ -967,9 +904,9 @@ export async function updateProduct(request, response) {
                 countInStock: request.body.countInStock,
                 rating: request.body.rating,
                 isFeatured: request.body.isFeatured,
-                productRam: request.body.productRam,
+                status: request.body.status,
+                isNew: request.body.isNew,
                 size: request.body.size,
-                productWeight: request.body.productWeight,
             },
             { new: true }
         );
@@ -977,7 +914,7 @@ export async function updateProduct(request, response) {
 
         if (!product) {
             return response.status(404).json({
-                message: "the product can not be updated!",
+                message: "Không thể cập nhật sản phẩm!",
                 status: false,
             });
         }
@@ -988,10 +925,8 @@ export async function updateProduct(request, response) {
             generateAndSaveEmbedding(product._id, embeddingText);
         }
 
-        imagesArr = [];
-
         return response.status(200).json({
-            message: "The product is updated",
+            message: "Đã cập nhật sản phẩm",
             error: false,
             success: true
         })
@@ -1008,27 +943,32 @@ export async function updateProduct(request, response) {
 
 
 
-export async function createProductRAMS(request, response) {
+
+
+
+
+export async function createProductVariant(request, response) {
     try {
-        let productRAMS = new ProductRAMSModel({
-            name: request.body.name
+        let productVariant = new ProductVariantModel({
+            name: request.body.name,
+            type: request.body.type || 'Size'
         })
 
-        productRAMS = await productRAMS.save();
+        productVariant = await productVariant.save();
 
-        if (!productRAMS) {
-            response.status(500).json({
+        if (!productVariant) {
+            return response.status(500).json({
                 error: true,
                 success: false,
-                message: "Product RAMS Not created"
+                message: "Không thể tạo biến thể sản phẩm"
             });
         }
 
         return response.status(200).json({
-            message: "Product RAMS Created successfully",
+            message: "Đã tạo biến thể sản phẩm",
             error: false,
             success: true,
-            product: productRAMS
+            product: productVariant
         })
 
     } catch (error) {
@@ -1042,56 +982,66 @@ export async function createProductRAMS(request, response) {
 
 
 
-export async function deleteProductRAMS(request, response) {
-    const productRams = await ProductRAMSModel.findById(request.params.id);
+export async function deleteProductVariant(request, response) {
+    try {
+        const productVariant = await ProductVariantModel.findById(request.params.id);
 
-    if (!productRams) {
-        return response.status(404).json({
-            message: "Item Not found",
+        if (!productVariant) {
+            return response.status(404).json({
+                message: "Không tìm thấy mục",
+                error: true,
+                success: false
+            })
+        }
+
+        const deletedProductVariant = await ProductVariantModel.findByIdAndDelete(request.params.id);
+
+        if (!deletedProductVariant) {
+            return response.status(404).json({
+                message: "Không thể xóa mục!",
+                success: false,
+                error: true
+            });
+        }
+
+        return response.status(200).json({
+            success: true,
+            error: false,
+            message: "Đã xóa biến thể sản phẩm!",
+        });
+    } catch (error) {
+        return response.status(500).json({
+            message: error.message || error,
             error: true,
             success: false
         })
     }
-
-    const deletedProductRams = await ProductRAMSModel.findByIdAndDelete(request.params.id);
-
-    if (!deletedProductRams) {
-        response.status(404).json({
-            message: "Item not deleted!",
-            success: false,
-            error: true
-        });
-    }
-
-    return response.status(200).json({
-        success: true,
-        error: false,
-        message: "Product Ram Deleted!",
-    });
 }
 
-export async function updateProductRam(request, response) {
+
+export async function updateProductVariant(request, response) {
 
     try {
 
-        const productRam = await ProductRAMSModel.findByIdAndUpdate(
+        const productVariant = await ProductVariantModel.findByIdAndUpdate(
             request.params.id,
             {
                 name: request.body.name,
+                type: request.body.type || 'Size'
             },
             { new: true }
         );
 
 
-        if (!productRam) {
+        if (!productVariant) {
             return response.status(404).json({
-                message: "the product Ram can not be updated!",
+                message: "Không thể cập nhật biến thể sản phẩm!",
                 status: false,
             });
         }
 
         return response.status(200).json({
-            message: "The product Ram is updated",
+            message: "Đã cập nhật biến thể sản phẩm",
             error: false,
             success: true
         })
@@ -1107,13 +1057,13 @@ export async function updateProductRam(request, response) {
 }
 
 
-export async function getProductRams(request, response) {
+export async function getProductVariant(request, response) {
 
     try {
 
-        const productRam = await ProductRAMSModel.find();
+        const productVariant = await ProductVariantModel.find();
 
-        if (!productRam) {
+        if (!productVariant) {
             return response.status(500).json({
                 error: true,
                 success: false
@@ -1123,7 +1073,7 @@ export async function getProductRams(request, response) {
         return response.status(200).json({
             error: false,
             success: true,
-            data: productRam
+            data: productVariant
         })
 
 
@@ -1137,13 +1087,13 @@ export async function getProductRams(request, response) {
 }
 
 
-export async function getProductRamsById(request, response) {
+export async function getProductVariantById(request, response) {
 
     try {
 
-        const productRam = await ProductRAMSModel.findById(request.params.id);
+        const productVariant = await ProductVariantModel.findById(request.params.id);
 
-        if (!productRam) {
+        if (!productVariant) {
             return response.status(500).json({
                 error: true,
                 success: false
@@ -1153,329 +1103,7 @@ export async function getProductRamsById(request, response) {
         return response.status(200).json({
             error: false,
             success: true,
-            data: productRam
-        })
-
-
-    } catch (error) {
-        return response.status(500).json({
-            message: error.message || error,
-            error: true,
-            success: false
-        })
-    }
-}
-
-
-
-export async function createProductWEIGHT(request, response) {
-    try {
-        let productWeight = new ProductWEIGHTModel({
-            name: request.body.name
-        })
-
-        productWeight = await productWeight.save();
-
-        if (!productWeight) {
-            response.status(500).json({
-                error: true,
-                success: false,
-                message: "Product WEIGHT Not created"
-            });
-        }
-
-        return response.status(200).json({
-            message: "Product WEIGHT Created successfully",
-            error: false,
-            success: true,
-            product: productWeight
-        })
-
-    } catch (error) {
-        return response.status(500).json({
-            message: error.message || error,
-            error: true,
-            success: false
-        })
-    }
-}
-
-
-
-export async function deleteProductWEIGHT(request, response) {
-    const productWeight = await ProductWEIGHTModel.findById(request.params.id);
-
-    if (!productWeight) {
-        return response.status(404).json({
-            message: "Item Not found",
-            error: true,
-            success: false
-        })
-    }
-
-    const deletedProductWeight = await ProductWEIGHTModel.findByIdAndDelete(request.params.id);
-
-    if (!deletedProductWeight) {
-        response.status(404).json({
-            message: "Item not deleted!",
-            success: false,
-            error: true
-        });
-    }
-
-    return response.status(200).json({
-        success: true,
-        error: false,
-        message: "Product Weight Deleted!",
-    });
-}
-
-
-export async function updateProductWeight(request, response) {
-
-    try {
-
-        const productWeight = await ProductWEIGHTModel.findByIdAndUpdate(
-            request.params.id,
-            {
-                name: request.body.name,
-            },
-            { new: true }
-        );
-
-
-        if (!productWeight) {
-            return response.status(404).json({
-                message: "the product weight can not be updated!",
-                status: false,
-            });
-        }
-
-        return response.status(200).json({
-            message: "The product weight is updated",
-            error: false,
-            success: true
-        })
-
-    } catch (error) {
-        return response.status(500).json({
-            message: error.message || error,
-            error: true,
-            success: false
-        })
-    }
-
-}
-
-
-export async function getProductWeight(request, response) {
-
-    try {
-
-        const productWeight = await ProductWEIGHTModel.find();
-
-        if (!productWeight) {
-            return response.status(500).json({
-                error: true,
-                success: false
-            })
-        }
-
-        return response.status(200).json({
-            error: false,
-            success: true,
-            data: productWeight
-        })
-
-
-    } catch (error) {
-        return response.status(500).json({
-            message: error.message || error,
-            error: true,
-            success: false
-        })
-    }
-}
-
-
-export async function getProductWeightById(request, response) {
-
-    try {
-
-        const productWeight = await ProductWEIGHTModel.findById(request.params.id);
-
-        if (!productWeight) {
-            return response.status(500).json({
-                error: true,
-                success: false
-            })
-        }
-
-        return response.status(200).json({
-            error: false,
-            success: true,
-            data: productWeight
-        })
-
-
-    } catch (error) {
-        return response.status(500).json({
-            message: error.message || error,
-            error: true,
-            success: false
-        })
-    }
-}
-
-
-
-export async function createProductSize(request, response) {
-    try {
-        let productSize = new ProductSIZEModel({
-            name: request.body.name
-        })
-
-        productSize = await productSize.save();
-
-        if (!productSize) {
-            response.status(500).json({
-                error: true,
-                success: false,
-                message: "Product size Not created"
-            });
-        }
-
-        return response.status(200).json({
-            message: "Product size Created successfully",
-            error: false,
-            success: true,
-            product: productSize
-        })
-
-    } catch (error) {
-        return response.status(500).json({
-            message: error.message || error,
-            error: true,
-            success: false
-        })
-    }
-}
-
-
-
-export async function deleteProductSize(request, response) {
-    const productSize = await ProductSIZEModel.findById(request.params.id);
-
-    if (!productSize) {
-        return response.status(404).json({
-            message: "Item Not found",
-            error: true,
-            success: false
-        })
-    }
-
-    const deletedProductSize = await ProductSIZEModel.findByIdAndDelete(request.params.id);
-
-    if (!deletedProductSize) {
-        response.status(404).json({
-            message: "Item not deleted!",
-            success: false,
-            error: true
-        });
-    }
-
-    return response.status(200).json({
-        success: true,
-        error: false,
-        message: "Product size Deleted!",
-    });
-}
-
-
-export async function updateProductSize(request, response) {
-
-    try {
-
-        const productSize = await ProductSIZEModel.findByIdAndUpdate(
-            request.params.id,
-            {
-                name: request.body.name,
-            },
-            { new: true }
-        );
-
-
-        if (!productSize) {
-            return response.status(404).json({
-                message: "the product size can not be updated!",
-                status: false,
-            });
-        }
-
-        return response.status(200).json({
-            message: "The product size is updated",
-            error: false,
-            success: true
-        })
-
-    } catch (error) {
-        return response.status(500).json({
-            message: error.message || error,
-            error: true,
-            success: false
-        })
-    }
-
-}
-
-
-export async function getProductSize(request, response) {
-
-    try {
-
-        const productSize = await ProductSIZEModel.find();
-
-        if (!productSize) {
-            return response.status(500).json({
-                error: true,
-                success: false
-            })
-        }
-
-        return response.status(200).json({
-            error: false,
-            success: true,
-            data: productSize
-        })
-
-
-    } catch (error) {
-        return response.status(500).json({
-            message: error.message || error,
-            error: true,
-            success: false
-        })
-    }
-}
-
-
-export async function getProductSizeById(request, response) {
-
-    try {
-
-        const productSize = await ProductSIZEModel.findById(request.params.id);
-
-        if (!productSize) {
-            return response.status(500).json({
-                error: true,
-                success: false
-            })
-        }
-
-        return response.status(200).json({
-            error: false,
-            success: true,
-            data: productSize
+            data: productVariant
         })
 
 
@@ -1582,12 +1210,15 @@ export async function searchProductController(request, response) {
             return response.status(400).json({
                 error: true,
                 success: false,
-                message: "Query is required"
+                message: "Vui lòng nhập từ khóa tìm kiếm"
             });
         }
 
 
-        const products = await ProductModel.find({
+        const pageNum = parseInt(page) || 1;
+        const limitNum = parseInt(limit) || 10;
+
+        const searchQuery = {
             $or: [
                 { name: { $regex: query, $options: "i" } },
                 { brand: { $regex: query, $options: "i" } },
@@ -1595,17 +1226,22 @@ export async function searchProductController(request, response) {
                 { subCat: { $regex: query, $options: "i" } },
                 { thirdsubCat: { $regex: query, $options: "i" } },
             ],
-        }).populate("category")
+        };
 
-        const total = await products?.length
+        const total = await ProductModel.countDocuments(searchQuery);
+
+        const products = await ProductModel.find(searchQuery)
+            .populate("category")
+            .skip((pageNum - 1) * limitNum)
+            .limit(limitNum);
 
         return response.status(200).json({
             error: false,
             success: true,
             products: products,
-            total: 1,
-            page: parseInt(page),
-            totalPages: 1
+            total: total,
+            page: pageNum,
+            totalPages: Math.ceil(total / limitNum)
         })
 
 

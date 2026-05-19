@@ -152,7 +152,7 @@ export const Sidebar = (props) => {
       <div className=" max-h-[60vh]  lg:overflow-visible overflow-auto  w-full">
         <div className="box">
           <h3 className="w-full mb-3 text-[16px] font-[600] flex items-center pr-5">
-            Shop by Category
+            Mua theo danh mục
             <Button
               className="!w-[30px] !h-[30px] !min-w-[30px] !rounded-full !ml-auto !text-[#000]"
               onClick={() => setIsOpenCategoryFilter(!isOpenCategoryFilter)}
@@ -186,7 +186,7 @@ export const Sidebar = (props) => {
 
         <div className="box mt-4">
           <h3 className="w-full mb-3 text-[16px] font-[600] flex items-center pr-5">
-            Filter By Price
+            Lọc theo giá
           </h3>
 
           <RangeSlider
@@ -198,17 +198,17 @@ export const Sidebar = (props) => {
           />
           <div className="flex pt-4 pb-2 priceRange">
             <span className="text-[13px]">
-              From: <strong className="text-dark">{price[0].toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</strong>
+              Từ: <strong className="text-dark">{price[0].toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</strong>
             </span>
             <span className="ml-auto text-[13px]">
-              To: <strong className="text-dark">{price[1].toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</strong>
+              Đến: <strong className="text-dark">{price[1].toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</strong>
             </span>
           </div>
         </div>
 
         <div className="box mt-4">
           <h3 className="w-full mb-3 text-[16px] font-[600] flex items-center pr-5">
-            Filter By Rating
+            Lọc theo đánh giá
           </h3>
 
           <div className="flex items-center pl-2 lg:pl-1">

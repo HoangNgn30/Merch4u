@@ -135,16 +135,16 @@ export const EditSubCatBox = (props) => {
         <>
           <span className="font-[500] text-[14px]">{props?.name}</span>
           <div className="flex items-center ml-auto gap-2">
-            <Button className="!min-w-[35px] !w-[35px] !h-[35px] !rounded-full !text-black"
+            <button className="!min-w-[35px] !w-[35px] !h-[35px] !rounded-full !text-black flex items-center justify-center hover:bg-[#e2e2e2] transition-all"
               onClick={() => {
                 setEditMode(true);
               }}
             >
               <MdOutlineModeEdit />
-            </Button>
-            <Button className="!min-w-[35px] !w-[35px] !h-[35px] !rounded-full !text-black"
+            </button>
+            <button className="!min-w-[35px] !w-[35px] !h-[35px] !rounded-full !text-black flex items-center justify-center hover:bg-[#e2e2e2] transition-all"
               onClick={() => deleteCat(props?.id)}
-            ><FaRegTrashAlt /></Button>
+            ><FaRegTrashAlt /></button>
           </div>
         </>
       }

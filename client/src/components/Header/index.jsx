@@ -134,7 +134,7 @@ const logout = () => {
                       to="/help-center"
                       className="text-[11px] lg:text-[13px] link font-[500] transition"
                     >
-                      Help Center{" "}
+                      Trung Tâm Trợ Giúp{" "}
                     </Link>
                   </li>
                   <li className="list-none">
@@ -142,7 +142,7 @@ const logout = () => {
                       to="/order-tracking"
                       className="text-[11px] lg:text-[13px] link font-[500] transition"
                     >
-                      Order Tracking
+                      Theo Dõi Đơn Hàng
                     </Link>
                   </li>
                 </ul>
@@ -160,7 +160,7 @@ const logout = () => {
 
             <div className="col1 w-[40%] lg:w-[25%]">
               <Link to={"/"}>
-                <img src={localStorage.getItem('logo')} className="max-w-[140px] lg:max-w-[200px]" />
+                <img src={localStorage.getItem('logo')} className="max-w-[110px] lg:max-w-[150px]" />
               </Link>
             </div>
 
@@ -283,7 +283,7 @@ const logout = () => {
                               className="flex gap-2 ! !py-2"
                             >
                               <IoMdHeartEmpty className="text-[18px]" />{" "}
-                              <span className="text-[14px]">My List</span>
+                              <span className="text-[14px]">Danh Sách Yêu Thích</span>
                             </MenuItem>
                           </Link>
 
@@ -305,7 +305,7 @@ const logout = () => {
                 {
                   context?.windowWidth > 992 &&
                   <li>
-                    <Tooltip title="Wishlist">
+                    <Tooltip title="Danh Sách Yêu Thích">
                         {/* Hợp thể Link và IconButton bằng prop component */}
                         <IconButton 
                           component={Link} 
@@ -326,7 +326,7 @@ const logout = () => {
 
 
                 <li>
-                  <Tooltip title="Cart">
+                  <Tooltip title="Giỏ Hàng">
                     <IconButton
                       aria-label="cart"
                       onClick={() => context.setOpenCartPanel(true)}

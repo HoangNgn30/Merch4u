@@ -86,6 +86,8 @@ export const editData = async (url, updatedData ) => {
     await axios.put(apiUrl + url,updatedData, params).then((res)=>{
         response=res;
         
+    }).catch((error) => {
+        response = error?.response;
     })
     return response;
    

@@ -122,50 +122,47 @@ export const ProductDetails = () => {
                 </div>
               </div>
 
-              <div className="container pt-10">
-                <div className="flex items-center gap-8 mb-5">
-                  <span
-                    className={`link text-[17px] cursor-pointer font-[500] ${activeTab === 0 && "text-primary"
-                      }`}
+              <div className="container pt-12">
+                {/* Modern Tabs */}
+                <div className="flex items-center gap-6 mb-8 border-b border-gray-100">
+                  <button
+                    className={`pb-3 px-2 text-[16px] font-[600] transition-all duration-300 relative ${activeTab === 0 ? "text-primary" : "text-gray-500 hover:text-gray-800"}`}
                     onClick={() => setActiveTab(0)}
                   >
-                    Description
-                  </span>
+                    Mô tả sản phẩm
+                    {activeTab === 0 && <span className="absolute bottom-[-1px] left-0 w-full h-[3px] bg-primary rounded-t-full"></span>}
+                  </button>
 
-
-                  <span
-                    className={`link text-[17px] cursor-pointer font-[500] ${activeTab === 1 && "text-primary"
-                      }`}
+                  <button
+                    className={`pb-3 px-2 text-[16px] font-[600] transition-all duration-300 relative ${activeTab === 1 ? "text-primary" : "text-gray-500 hover:text-gray-800"}`}
                     onClick={() => setActiveTab(1)}
                     ref={reviewSec}
                   >
-                    Reviews ({reviewsCount})
-                  </span>
+                    Đánh giá ({reviewsCount})
+                    {activeTab === 1 && <span className="absolute bottom-[-1px] left-0 w-full h-[3px] bg-primary rounded-t-full"></span>}
+                  </button>
                 </div>
 
-                {activeTab === 0 && (
-                  <div className="shadow-md w-full py-5 px-8 rounded-md text-[14px]">
-                    {
-                      productData?.description
-                    }
-                  </div>
-                )}
+                {/* Tab Content Box */}
+                <div className="bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-gray-50 w-full py-8 px-6 lg:px-10 rounded-[24px]">
+                  {activeTab === 0 && (
+                    <div className="text-[15px] text-gray-700 leading-relaxed font-medium" style={{ whiteSpace: "pre-wrap" }}>
+                      {productData?.description}
+                    </div>
+                  )}
 
-
-                {activeTab === 1 && (
-                  <div className="shadow-none lg:shadow-md w-full sm:w-[80%] py-0  lg:py-5 px-0 lg:px-8 rounded-md">
-                    {
-                      productData?.length !== 0 && <Reviews productId={productData?._id} setReviewsCount={setReviewsCount} />
-                    }
-
-                  </div>
-                )}
+                  {activeTab === 1 && (
+                    <div className="w-full">
+                      {productData?.length !== 0 && <Reviews productId={productData?._id} setReviewsCount={setReviewsCount} />}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {
                 relatedProductData?.length !== 0 &&
-                <div className="container pt-8">
-                  <h2 className="text-[20px] font-[600] pb-0">Related Products</h2>
+                <div className="container pt-14">
+                  <h2 className="text-[24px] font-[800] pb-2 text-gray-800">Sản Phẩm Liên Quan</h2>
                   <ProductsSlider items={6} data={relatedProductData}/>
                 </div>
               }

@@ -41,7 +41,7 @@ const Navigation = (props) => {
                 onClick={openCategoryPanel}
               >
                 <RiMenu2Fill className="text-[18px]" />
-                Shop By Categories
+                Danh Mục Sản Phẩm
                 <LiaAngleDownSolid className="text-[13px] ml-auto font-bold" />
               </Button>
             </div>
@@ -53,7 +53,7 @@ const Navigation = (props) => {
               <li className="list-none">
                 <Link to="/" className="link transition text-[14px] font-[500]">
                   <Button className="link transition !font-[500] !text-[rgba(0,0,0,0.8)] hover:!text-[#ff5252] !py-4">
-                    Home
+                    Trang Chủ
                   </Button>
                 </Link>
               </li>
@@ -130,7 +130,7 @@ const Navigation = (props) => {
           <div className="col_3 w-[20%] hidden lg:block">
             <p className="text-[14px] font-[500] flex items-center gap-3 mb-0 mt-0">
               <GoRocket className="text-[18px]" />
-              Free International Delivery
+              Miễn Phí Giao Hàng Toàn Quốc
             </p>
           </div>
         </div>

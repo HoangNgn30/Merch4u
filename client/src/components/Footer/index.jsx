@@ -26,6 +26,7 @@ import { ProductZoom } from "../ProductZoom";
 import { IoCloseSharp } from "react-icons/io5";
 import { ProductDetailsComponent } from "../ProductDetails";
 import AddAddress from "../../Pages/MyAccount/addAddress";
+import EmptyState from "../EmptyState";
 
 
 const Footer = () => {
@@ -38,32 +39,32 @@ const Footer = () => {
           <div className="flex items-center justify-center gap-2 py-3 lg:py-8 pb-0 lg:pb-8 px-0 lg:px-5 scrollableBox footerBoxWrap">
             <div className="col flex items-center justify-center flex-col group w-[15%]">
               <LiaShippingFastSolid className="text-[40px] transition-all duration-300 group-hover:text-primary group-hover:-translate-y-1" />
-              <h3 className="text-[16px] font-[600] mt-3">Free Shipping</h3>
-              <p className="text-[12px] font-[500]">For all Orders Over $100</p>
+              <h3 className="text-[16px] font-[600] mt-3">Miễn Phí Giao Hàng</h3>
+              <p className="text-[12px] font-[500]">Đơn hàng trên 1 triệu</p>
             </div>
 
             <div className="col flex items-center justify-center flex-col group w-[15%]">
               <PiKeyReturnLight className="text-[40px] transition-all duration-300 group-hover:text-primary group-hover:-translate-y-1" />
-              <h3 className="text-[16px] font-[600] mt-3">30 Days Returns</h3>
-              <p className="text-[12px] font-[500]">For an Exchange Product</p>
+              <h3 className="text-[16px] font-[600] mt-3">Đổi Trả 30 Ngày</h3>
+              <p className="text-[12px] font-[500]">Cho sản phẩm lỗi</p>
             </div>
 
             <div className="col flex items-center justify-center flex-col group w-[15%]">
               <BsWallet2 className="text-[40px] transition-all duration-300 group-hover:text-primary group-hover:-translate-y-1" />
-              <h3 className="text-[16px] font-[600] mt-3">Secured Payment</h3>
-              <p className="text-[12px] font-[500]">Payment Cards Accepted</p>
+              <h3 className="text-[16px] font-[600] mt-3">Bảo Mật Thanh Toán</h3>
+              <p className="text-[12px] font-[500]">Hỗ trợ đa phương thức</p>
             </div>
 
             <div className="col flex items-center justify-center flex-col group w-[15%]">
               <LiaGiftSolid className="text-[40px] transition-all duration-300 group-hover:text-primary group-hover:-translate-y-1" />
-              <h3 className="text-[16px] font-[600] mt-3">Special Gifts</h3>
-              <p className="text-[12px] font-[500]">Our First Product Order</p>
+              <h3 className="text-[16px] font-[600] mt-3">Quà Tặng Đặc Biệt</h3>
+              <p className="text-[12px] font-[500]">Cho đơn hàng đầu tiên</p>
             </div>
 
             <div className="col flex items-center justify-center flex-col group w-[15%]">
               <BiSupport className="text-[40px] transition-all duration-300 group-hover:text-primary group-hover:-translate-y-1" />
-              <h3 className="text-[16px] font-[600] mt-3">Support 24/7</h3>
-              <p className="text-[12px] font-[500]">Contact us Anytime</p>
+              <h3 className="text-[16px] font-[600] mt-3">Hỗ Trợ 24/7</h3>
+              <p className="text-[12px] font-[500]">Liên hệ bất cứ lúc nào</p>
             </div>
           </div>
           <br />
@@ -72,104 +73,104 @@ const Footer = () => {
 
           <div className="footer flex px-3 lg:px-0 flex-col lg:flex-row py-8">
             <div className="part1 w-full lg:w-[25%] border-r border-[rgba(0,0,0,0.1)]">
-              <h2 className="text-[18px] font-[600] mb-4">Contact us</h2>
+              <h2 className="text-[18px] font-[600] mb-4">Liên Hệ</h2>
               <p className="text-[13px] font-[400] pb-4">
-                Classyshop - Mega Super Store
+                Merch4u - KPOP Store
                 <br />
-                507-Union Trade Centre France
+                Học Viện Công Nghệ Bưu Chính Viễn Thông, Việt Nam
               </p>
 
               <Link
                 className="link text-[13px]"
-                to="mailto:someone@example.com"
+                to="mailto:contact@merch4u.com"
               >
-                sales@yourcompany.com
+                contact@merch4u.com
               </Link>
 
               <span className="text-[22px] font-[600] block w-full mt-3 mb-5 text-primary">
-                (+91) 9876-543-210
+                0326851181
               </span>
 
               <div className="flex items-center gap-2">
                 <IoChatboxOutline className="text-[40px] text-primary" />
                 <span className="text-[16px] font-[600]">
-                  Online Chat
+                  Chat Trực Tuyến
                   <br />
-                  Get Expert Help
+                  Hỗ Trợ Tư Vấn
                 </span>
               </div>
             </div>
 
             <div className="part2  w-full lg:w-[40%] flex pl-0 lg:pl-8 mt-5 lg:mt-0">
               <div className="part2_col1 w-[50%]">
-                <h2 className="text-[18px] font-[600] mb-4">Products</h2>
+                <h2 className="text-[18px] font-[600] mb-4">Sản Phẩm</h2>
 
                 <ul className="list">
                   <li className="list-none text-[14px] w-full mb-2">
                     <Link to="/" className="link">
-                      Prices drop
+                      Đang Giảm Giá
                     </Link>
                   </li>
                   <li className="list-none text-[14px] w-full mb-2">
                     <Link to="/" className="link">
-                      New products
+                      Sản Phẩm Mới
                     </Link>
                   </li>
                   <li className="list-none text-[14px] w-full mb-2">
                     <Link to="/" className="link">
-                      Best sales
+                      Bán Chạy Nhất
                     </Link>
                   </li>
                   <li className="list-none text-[14px] w-full mb-2">
                     <Link to="/" className="link">
-                      Contact us
+                      Liên Hệ
                     </Link>
                   </li>
                   <li className="list-none text-[14px] w-full mb-2">
                     <Link to="/" className="link">
-                      Sitemap
+                      Sơ Đồ Web
                     </Link>
                   </li>
                   <li className="list-none text-[14px] w-full mb-2">
                     <Link to="/" className="link">
-                      Stores
+                      Cửa Hàng
                     </Link>
                   </li>
                 </ul>
               </div>
 
               <div className="part2_col2 w-[50%]">
-                <h2 className="text-[18px] font-[600] mb-4">Our company</h2>
+                <h2 className="text-[18px] font-[600] mb-4">Về Chúng Tôi</h2>
 
                 <ul className="list">
                   <li className="list-none text-[14px] w-full mb-2">
                     <Link to="/" className="link">
-                      Delivery
+                      Vận Chuyển
                     </Link>
                   </li>
                   <li className="list-none text-[14px] w-full mb-2">
                     <Link to="/" className="link">
-                      Legal Notice
+                      Thông Báo Pháp Lý
                     </Link>
                   </li>
                   <li className="list-none text-[14px] w-full mb-2">
                     <Link to="/" className="link">
-                      Terms and conditions of use
+                      Điều Khoản Sử Dụng
                     </Link>
                   </li>
                   <li className="list-none text-[14px] w-full mb-2">
                     <Link to="/" className="link">
-                      About us
+                      Giới Thiệu
                     </Link>
                   </li>
                   <li className="list-none text-[14px] w-full mb-2">
                     <Link to="/" className="link">
-                      Secure payment
+                      Thanh Toán An Toàn
                     </Link>
                   </li>
                   <li className="list-none text-[14px] w-full mb-2">
                     <Link to="/" className="link">
-                      Login
+                      Đăng Nhập
                     </Link>
                   </li>
                 </ul>
@@ -178,26 +179,25 @@ const Footer = () => {
 
             <div className="part2  w-full lg:w-[35%] flex pl-0 lg:pl-8 flex-col pr-8 mt-5 lg:mt-0">
               <h2 className="text-[18px] font-[600] mb-2 lg:mb-4">
-                Subscribe to newsletter
+                Đăng Ký Nhận Bản Tin
               </h2>
               <p className="text-[13px]">
-                Subscribe to our latest newsletter to get news about special
-                discounts.
+                Đăng ký để nhận thông tin về các chương trình ưu đãi và giảm giá đặc biệt.
               </p>
 
               <form className="mt-5">
                 <input
                   type="text"
                   className="w-full h-[45px] border outline-none pl-4 pr-4 rounded-sm mb-4 focus:border-[rgba(0,0,0,0.3)]"
-                  placeholder="Your Email Address"
+                  placeholder="Địa Chỉ Email Của Bạn"
                 />
 
-                <Button className="btn-org">SUBSCRIBE</Button>
+                <Button className="btn-org">ĐĂNG KÝ</Button>
 
                 <FormControlLabel
                   className="mt-3 lg:mt-0 block w-full"
                   control={<Checkbox />}
-                  label=" I agree to the terms and conditions and the privacy policy"
+                  label=" Tôi đồng ý với các điều khoản và chính sách bảo mật"
                 />
               </form>
             </div>
@@ -250,7 +250,7 @@ const Footer = () => {
           </ul>
 
           <p className="text-[13px] text-center mb-0">
-            © 2026 - Day la shop cua tao
+            © {new Date().getFullYear()} - Merch4u. Bản quyền đã được bảo lưu.
           </p>
 
 
@@ -277,9 +277,10 @@ const Footer = () => {
         onClose={context.toggleCartPanel(false)}
         anchor={"right"}
         className="cartPanel"
+        sx={{ zIndex: 2147483647 }}
       >
         <div className="flex items-center justify-between py-3 px-4 gap-3 border-b border-[rgba(0,0,0,0.1)] overflow-hidden">
-          <h4>Shopping Cart ({context?.cartData?.length})</h4>
+          <h4>Giỏ Hàng Của Bạn ({context?.cartData?.length})</h4>
           <IoCloseSharp className="text-[20px] cursor-pointer" onClick={context.toggleCartPanel(false)} />
         </div>
 
@@ -287,13 +288,13 @@ const Footer = () => {
         {
 
           context?.cartData?.length !== 0 ? <CartPanel data={context?.cartData} /> :
-            <>
-              <div className="flex items-center justify-center flex-col pt-[100px] gap-5">
-                <img src="/empty-cart.png" className="w-[150px]" />
-                <h4>Your Cart is currently empty</h4>
-                <Button className="btn-org btn-sm" onClick={context.toggleCartPanel(false)}>Continue Shopping</Button>
-              </div>
-            </>
+            <EmptyState
+              type="cart"
+              title="Giỏ hàng đang trống"
+              message="Thêm album, lightstick hoặc photocard bạn thích vào giỏ để thanh toán nhanh hơn."
+              actionLabel="Tiếp tục mua sắm"
+              onAction={context.toggleCartPanel(false)}
+            />
 
         }
 
@@ -315,9 +316,10 @@ const Footer = () => {
         onClose={context.toggleAddressPanel(false)}
         anchor={"right"}
         className="addressPanel"
+        sx={{ zIndex: 2147483647 }}
       >
         <div className="flex items-center justify-between py-3 px-4 gap-3 border-b border-[rgba(0,0,0,0.1)] overflow-hidden">
-          <h4>{context?.addressMode === "add" ? 'Add' : 'Edit'} Delivery Address </h4>
+          <h4>{context?.addressMode === "add" ? 'Thêm' : 'Sửa'} Địa Chỉ Giao Hàng </h4>
           <IoCloseSharp className="text-[20px] cursor-pointer" onClick={context.toggleAddressPanel(false)} />
         </div>
 

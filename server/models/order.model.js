@@ -27,6 +27,22 @@ const orderSchema = new mongoose.Schema({
             }
         }
     ],
+    subTotal: {
+        type: Number,
+        default: 0
+    },
+    shippingFee: {
+        type: Number,
+        default: 0
+    },
+    couponCode: {
+        type: String,
+        default: ""
+    },
+    couponDiscount: {
+        type: Number,
+        default: 0
+    },
     paymentId: {
         type: String,
         default: ""
@@ -38,6 +54,14 @@ const orderSchema = new mongoose.Schema({
     order_status : {
         type : String,
         default : "pending"
+    },
+    cancelledAt: {
+        type: Date,
+        default: null
+    },
+    stockRestoredOnCancel: {
+        type: Boolean,
+        default: false
     },
     delivery_address: {
         type: mongoose.Schema.ObjectId,

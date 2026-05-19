@@ -103,6 +103,8 @@ export const editData = async (url, updatedData ) => {
     await axios.put(apiUrl + url,updatedData, params).then((res)=>{
         response=res;
         
+    }).catch((error) => {
+        response = error?.response;
     })
     return response;
    
@@ -112,39 +114,38 @@ export const editData = async (url, updatedData ) => {
 
 
 
-export const deleteImages = async (url,image ) => {
-    const params={
+export const deleteImages = async (url) => {
+    const params = {
         headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, // Include your API key in the Authorization header
-            'Content-Type': 'application/json', // Adjust the content type as needed
-          },
-    
-    } 
-    const { res } = await axios.delete(apiUrl + url, params);
-    return res;
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+            'Content-Type': 'application/json',
+        },
+    };
+    const response = await axios.delete(apiUrl + url, params);
+    return response?.data;
 }
 
 
 export const deleteData = async (url ) => {
     const params={
         headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, // Include your API key in the Authorization header
-            'Content-Type': 'application/json', // Adjust the content type as needed
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+            'Content-Type': 'application/json',
           },
     
     } 
-    const { res } = await axios.delete(apiUrl + url,params)
-    return res;
+    const { data } = await axios.delete(apiUrl + url, params)
+    return data;
 }
 
-export const deleteMultipleData = async (url,data ) => {
-    const params={
+export const deleteMultipleData = async (url, body) => {
+    const config = {
         headers: {
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, // Include your API key in the Authorization header
-            'Content-Type': 'application/json', // Adjust the content type as needed
-          },
-    
-    } 
-    const { res } = await axios.delete(apiUrl + url,data,params)
-    return res;
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+            'Content-Type': 'application/json',
+        },
+        data: body
+    }
+    const { data } = await axios.delete(apiUrl + url, config)
+    return data;
 }

@@ -5,7 +5,7 @@ import { AiOutlineEdit } from "react-icons/ai";
 import { GoTrash } from "react-icons/go";
 
 import { MyContext } from '../../App';
-import { fetchDataFromApi, postData, deleteData, editData, deleteImages } from '../../utils/api';
+import { fetchDataFromApi, postData, editData, deleteImages } from '../../utils/api';
 import CircularProgress from '@mui/material/CircularProgress';
 import UploadBox from '../../Components/UploadBox';
 import { IoMdClose } from "react-icons/io";
@@ -65,19 +65,25 @@ const ManageLogo = () => {
 
 
     const removeImg = (image, index) => {
-        if (context?.userData?.role === "ADMIN") {
-            var imageArr = [];
-            imageArr = previews;
-            deleteImages(`/api/logo/deteleImage?img=${image}`).then((res) => {
-                imageArr.splice(index, 1);
+        if (["ADMIN", "SUPERBOSS"].includes(context?.userData?.role)) {
+            context?.showConfirmDelete(
+                "Xóa logo?",
+                "Bạn có chắc chắn muốn xóa logo này?",
+                () => {
+                    var imageArr = [];
+                    imageArr = previews;
+                    deleteImages(`/api/logo/deteleImage?img=${image}`).then((res) => {
+                        imageArr.splice(index, 1);
 
-                setPreviews([]);
-                setTimeout(() => {
-                    setPreviews(imageArr);
-                    formFields.logo = imageArr[0]
-                }, 100);
+                        setPreviews([]);
+                        setTimeout(() => {
+                            setPreviews(imageArr);
+                            formFields.logo = imageArr[0]
+                        }, 100);
 
-            })
+                    })
+                }
+            )
         } else {
             context.alertBox("error", "Only admin can delete data");
         }
@@ -88,7 +94,7 @@ const ManageLogo = () => {
         e.preventDefault();
 
         if (previews?.length === 0) {
-            context.alertBox("error", "Please select logo");
+            context.alertBox("error", "Vui lòng chọn logo");
             setIsLoading(false);
             return false
         }
@@ -118,44 +124,40 @@ const ManageLogo = () => {
 
     return (
         <>
-            <div className="flex items-center justify-between px-2 py-0 mt-3">
-                <h2 className="text-[18px] font-[600]">
-                    Manage Logo
-                </h2>
-            </div>
-
-            <form className='form py-1  md:p-3 md:py-1' onSubmit={addLogo}>
-                <div className="card my-4 pt-5 pb-5 shadow-md sm:rounded-lg bg-white w-[100%] sm:w-[100%] lg:w-[65%] p-5">
-
-
-                    {
-                        previews?.length !== 0 && previews?.map((image, index) => {
-                            return (
-                                <div className="uploadBoxWrapper w-[150px] mr-3 relative" key={index}>
-
-                                    <span className='absolute w-[20px] h-[20px] rounded-full  overflow-hidden bg-red-700 -top-[5px] -right-[5px] flex items-center justify-center z-50 cursor-pointer' onClick={() => removeImg(image, index)}><IoMdClose className='text-white text-[17px]' /></span>
-
-
-                                    <div className='uploadBox p-0 rounded-md overflow-hidden border border-dashed border-[rgba(0,0,0,0.3)] h-[150px] w-[100%] bg-gray-100 cursor-pointer hover:bg-gray-200 flex items-center justify-center flex-col relative'>
-
-                                        <img src={image} className='w-100' />
-                                    </div>
-                                </div>
-                            )
-                        })
-                    }
-
-
-                    {
-                        previews?.length === 0 &&
-                        <div className='w-[150px]'>
-                            <UploadBox multiple={false} name="images" url="/api/logo/uploadImages" setPreviewsFun={setPreviewsFun} />
+            <form className='form py-1 md:p-3 md:py-1' onSubmit={addLogo}>
+                <div className="card my-2 pt-5 pb-5 shadow-md sm:rounded-lg bg-white w-[100%] sm:w-[100%] lg:w-[65%] p-5">
+                    <div className="flex items-center w-full pb-4 justify-between">
+                        <div className="col">
+                            <h2 className="text-[18px] font-[600]">
+                                Quản lý logo
+                            </h2>
                         </div>
-                    }
+                    </div>
 
+                    <div className="flex flex-wrap gap-3 mb-4">
+                        {
+                            previews?.length !== 0 && previews?.map((image, index) => {
+                                return (
+                                    <div className="uploadBoxWrapper w-[150px] mr-3 relative" key={index}>
+                                        <span className='absolute w-[20px] h-[20px] rounded-full overflow-hidden bg-red-700 -top-[5px] -right-[5px] flex items-center justify-center z-50 cursor-pointer' onClick={() => removeImg(image, index)}>
+                                            <IoMdClose className='text-white text-[17px]' />
+                                        </span>
 
+                                        <div className='uploadBox p-0 rounded-md overflow-hidden border border-dashed border-[rgba(0,0,0,0.3)] h-[150px] w-[100%] bg-gray-100 cursor-pointer hover:bg-gray-200 flex items-center justify-center flex-col relative'>
+                                            <img src={image} className='w-full object-contain h-full' />
+                                        </div>
+                                    </div>
+                                )
+                            })
+                        }
 
-
+                        {
+                            previews?.length === 0 &&
+                            <div className='w-[150px]'>
+                                <UploadBox multiple={false} name="images" url="/api/logo/uploadImages" setPreviewsFun={setPreviewsFun} />
+                            </div>
+                        }
+                    </div>
 
                     <br />
 
@@ -165,15 +167,13 @@ const ManageLogo = () => {
                                 :
                                 <>
                                     <FaCloudUploadAlt className='text-[25px] text-white' />
-                                    Publish and View
+                                    Lưu và xem
                                 </>
                         }
                     </Button>
 
-
                 </div>
             </form>
-
         </>
     )
 }

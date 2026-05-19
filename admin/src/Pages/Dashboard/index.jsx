@@ -314,40 +314,40 @@ const Dashboard = () => {
           <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
               <tr>
-                <th scope="col" className="px-6 py-3">
+                <th scope="col" className="px-6 py-3 w-[50px]">
                   &nbsp;
                 </th>
-                <th scope="col" className="px-6 py-3 whitespace-nowrap">
+                <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
                   Mã đơn hàng
                 </th>
-                <th scope="col" className="px-6 py-3 whitespace-nowrap">
+                <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
                   Mã thanh toán
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap">
                   Tên
                 </th>
-                <th scope="col" className="px-6 py-3 whitespace-nowrap">
+                <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
                   SĐT
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap">
                   Địa chỉ
                 </th>
-                <th scope="col" className="px-6 py-3 whitespace-nowrap">
+                <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
                   Mã bưu điện
                 </th>
-                <th scope="col" className="px-6 py-3 whitespace-nowrap">
+                <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
                   Tổng số tiền
                 </th>
-                <th scope="col" className="px-6 py-3 whitespace-nowrap">
+                <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
                   Email
                 </th>
-                <th scope="col" className="px-6 py-3 whitespace-nowrap">
+                <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
                   ID người dùng
                 </th>
-                <th scope="col" className="px-6 py-3 whitespace-nowrap">
+                <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
                   Trạng thái đơn hàng
                 </th>
-                <th scope="col" className="px-6 py-3 whitespace-nowrap">
+                <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
                   Ngày
                 </th>
               </tr>
@@ -357,73 +357,80 @@ const Dashboard = () => {
               {
                 ordersData?.length !== 0 && ordersData?.map((order, index) => {
                   return (
-                    <>
+                    <React.Fragment key={order?._id || index}>
                       <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                        <td className="px-6 py-4 font-[500]">
-                          <Button
-                            className="!w-[35px] !h-[35px] !min-w-[35px] !rounded-full !bg-[#f1f1f1]"
-                            onClick={() => isShowOrderdProduct(index)}
-                          >
-                            {
-                              isOpenOrderdProduct === index ? <FaAngleUp className="text-[16px] text-[rgba(0,0,0,0.7)]" /> : <FaAngleDown className="text-[16px] text-[rgba(0,0,0,0.7)]" />
-                            }
+                        <td className="px-6 py-4 font-[500] w-[50px]">
+                        <button
+                          type="button"
+                          onClick={() => isShowOrderdProduct(index)}
+                          className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 border border-gray-300 flex items-center justify-center transition-colors focus:outline-none"
+                        >
+                          {isOpenOrderdProduct === index ? (
+                            <FaAngleUp className="text-[15px] text-gray-700" />
+                          ) : (
+                            <FaAngleDown className="text-[15px] text-gray-700" />
+                          )}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4 font-[500] text-center">
+                        <span className="text-primary font-[500]">
+                          {order?._id}
+                        </span>
+                      </td>
 
-                          </Button>
-                        </td>
-                        <td className="px-6 py-4 font-[500]">
-                          <span className="text-primary">
-                            {order?._id}
-                          </span>
-                        </td>
+                      <td className="px-6 py-4 font-[500] text-center">
+                        <span className="text-primary whitespace-nowrap text-[13px]">{order?.paymentId ? order?.paymentId : 'Thanh toán khi nhận hàng'}</span>
+                      </td>
 
-                        <td className="px-6 py-4 font-[500]">
-                          <span className="text-primary whitespace-nowrap text-[13px]">{order?.paymentId ? order?.paymentId : 'CASH ON DELIVERY'}</span>
-                        </td>
+                      <td className="px-6 py-4 font-[500] whitespace-nowrap">
+                        {order?.userId?.name}
+                      </td>
 
-                        <td className="px-6 py-4 font-[500] whitespace-nowrap">
-                          {order?.userId?.name}
-                        </td>
+                      <td className="px-6 py-4 font-[500] text-center">{order?.delivery_address?.mobile}</td>
 
-                        <td className="px-6 py-4 font-[500]">{order?.delivery_address?.mobile}</td>
+                      <td className="px-6 py-4 font-[500]">
+                        <span className='inline-block text-[13px] font-[500] px-2.5 py-0.5 bg-[#f1f1f1] rounded-full mb-1 whitespace-nowrap text-gray-600 border border-gray-200'>
+                          {order?.delivery_address?.addressType}
+                        </span>
+                        <span className="block w-[300px] text-[13px] leading-snug text-gray-800 font-[600]">
+                          {order?.delivery_address?.address_line1 + " " +
+                           order?.delivery_address?.city + " " +
+                           order?.delivery_address?.landmark + " " +
+                           order?.delivery_address?.state + " " +
+                           order?.delivery_address?.country}
+                        </span>
+                        <span className="block text-[13px] text-gray-500 font-[600] mt-0.5">
+                          {order?.delivery_address?.mobile}
+                        </span>
+                      </td>
 
-                        <td className="px-6 py-4 font-[500]">
-                          <span className='inline-block text-[13px] font-[500] p-1 bg-[#f1f1f1] rounded-md'>{order?.delivery_address?.addressType}</span>
-                          <span className="block w-[400px]">
-                            {order?.delivery_address?.
-                              address_line1 + " " +
-                              order?.delivery_address?.city + " " +
-                              order?.delivery_address?.landmark + " " +
-                              order?.delivery_address?.state + " " +
-                              order?.delivery_address?.country + ' ' + order?.delivery_address?.mobile
-                            }
-                          </span>
-                        </td>
+                        <td className="px-6 py-4 font-[500] text-center">{order?.delivery_address?.pincode}</td>
 
-                        <td className="px-6 py-4 font-[500]">{order?.delivery_address?.pincode}</td>
+                        <td className="px-6 py-4 font-[500] text-center">{order?.totalAmt?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</td>
 
-                        <td className="px-6 py-4 font-[500]">{order?.totalAmt?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</td>
-
-                        <td className="px-6 py-4 font-[500]">
+                        <td className="px-6 py-4 font-[500] text-center">
                           {order?.userId?.email}
                         </td>
 
-                        <td className="px-6 py-4 font-[500]">
+                        <td className="px-6 py-4 font-[500] text-center">
                           <span className="text-primary">
                             {order?.userId?._id}
                           </span>
                         </td>
 
-                        <td className="px-6 py-4 font-[500]">
-                          <Badge status={order?.order_status} />
+                        <td className="px-6 py-4 font-[500] text-center">
+                          <div className="flex justify-center">
+                            <Badge status={order?.order_status} />
+                          </div>
                         </td>
-                        <td className="px-6 py-4 font-[500] whitespace-nowrap">
+                        <td className="px-6 py-4 font-[500] whitespace-nowrap text-center">
                           {order?.createdAt?.split("T")[0]}
                         </td>
                       </tr>
 
                       {isOpenOrderdProduct === index && (
                         <tr>
-                          <td className="pl-20" colSpan="6">
+                          <td className="pl-20" colSpan="12">
                             <div className="relative overflow-x-auto">
                               <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                                 <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
@@ -462,7 +469,7 @@ const Dashboard = () => {
                                       scope="col"
                                       className="px-6 py-3 whitespace-nowrap"
                                     >
-                                      Sub Total
+                                      Tạm tính
                                     </th>
                                   </tr>
                                 </thead>
@@ -514,7 +521,7 @@ const Dashboard = () => {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </React.Fragment>
                   )
                 })
 

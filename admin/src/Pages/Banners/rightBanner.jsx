@@ -32,18 +32,24 @@ export const AddRightBanner = () => {
 
 
     const removeImg = (image, index) => {
-        var imageArr = [];
-        imageArr = previews;
-        deleteImages(`/api/category/deteleImage?img=${image}`).then((res) => {
-            imageArr.splice(index, 1);
+        context?.showConfirmDelete(
+            "Xóa ảnh banner?",
+            "Bạn có chắc chắn muốn xóa ảnh banner này?",
+            () => {
+                var imageArr = [];
+                imageArr = previews;
+                deleteImages(`/api/rightBanner/deteleImage?img=${image}`).then((res) => {
+                    imageArr.splice(index, 1);
 
-            setPreviews([]);
-            setTimeout(() => {
-                setPreviews(imageArr);
-                formFields.images = imageArr
-            }, 100);
+                    setPreviews([]);
+                    setTimeout(() => {
+                        setPreviews(imageArr);
+                        formFields.images = imageArr
+                    }, 100);
 
-        })
+                })
+            }
+        )
     }
 
 
@@ -56,7 +62,7 @@ export const AddRightBanner = () => {
         console.log(formFields)
 
         if (previews?.length === 0) {
-            context.alertBox("error", "Please select category image");
+            context.alertBox("error", "Vui lòng chọn ảnh banner");
             setIsLoading(false);
             return false
         }
@@ -119,7 +125,7 @@ export const AddRightBanner = () => {
                                 :
                                 <>
                                     <FaCloudUploadAlt className='text-[25px] text-white' />
-                                    Publish and View
+                                    Lưu và xem
                                 </>
                         }
                     </Button>

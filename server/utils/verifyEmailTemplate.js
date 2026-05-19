@@ -58,12 +58,12 @@ const VerificationEmail = (username, otp ) => {
           </div>
           <div className="content">
   
-              <p>Cảm ơn bạn đã đăng ký Mearch4u. Vui lòng sử dụng mã OTP bên dưới để xác minh địa chỉ email của bạn:</p>
+              <p>Cảm ơn bạn đã đăng ký Merch4u. Vui lòng sử dụng mã OTP bên dưới để xác minh địa chỉ email của bạn:</p>
               <div className="otp">${otp}</div>
               <p>Nếu bạn chưa tạo tài khoản, bạn có thể bỏ qua email này.</p>
           </div>
           <div className="footer">
-              <p>&copy; 2026 Mearch4u. All rights reserved.</p>
+              <p>&copy; ${new Date().getFullYear()} Merch4u. All rights reserved.</p>
           </div>
       </div>
   </body>

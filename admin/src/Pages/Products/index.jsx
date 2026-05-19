@@ -31,37 +31,43 @@ import "yet-another-react-lightbox/styles.css";
 const label = { inputProps: { "aria-label": "Checkbox demo" } };
 
 const columns = [
-    { id: "product", label: "PRODUCT", minWidth: 150 },
-    { id: "category", label: "CATEGORY", minWidth: 100 },
+    { id: "product", label: "Sản phẩm", minWidth: 150 },
+    { id: "category", label: "Danh mục", minWidth: 100, align: "center" },
     {
         id: "subcategory",
-        label: "SUB CATEGORY",
+        label: "Danh mục con",
         minWidth: 150,
+        align: "center",
     },
     {
         id: "price",
-        label: "PRICE",
+        label: "Giá",
         minWidth: 130,
+        align: "center",
     },
     {
         id: "sales",
-        label: "SALES",
+        label: "Đã bán",
         minWidth: 100,
+        align: "center",
     },
     {
         id: "stock",
-        label: "STOCK",
+        label: "Tồn kho",
         minWidth: 100,
+        align: "center",
     },
     {
         id: "rating",
-        label: "RATING",
+        label: "Đánh giá",
         minWidth: 100,
+        align: "center",
     },
     {
         id: "action",
-        label: "ACTION",
+        label: "Thao tác",
         minWidth: 120,
+        align: "center",
     },
 ];
 
@@ -93,21 +99,21 @@ export const Products = () => {
 
 
     useEffect(() => {
-        // Filter orders based on search query
+        // Filter products based on search query
         if (searchQuery !== "") {
-            const filteredOrders = productTotalData?.totalProducts?.filter((product) =>
+            const filteredProducts = productTotalData?.products?.filter((product) =>
                 product._id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                product?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                product?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 product?.catName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                product?.subCat?.includes(searchQuery)
-            );
+                product?.subCat?.toLowerCase().includes(searchQuery.toLowerCase())
+            ) || [];
             setProductData({
                 error: false,
                 success: true,
-                products: filteredOrders,
-                total: filteredOrders?.length,
+                products: filteredProducts,
+                total: filteredProducts?.length,
                 page: parseInt(page),
-                totalPages: Math.ceil(filteredOrders?.length / rowsPerPage),
+                totalPages: Math.ceil(filteredProducts?.length / rowsPerPage),
                 totalCount: productData?.totalCount
             });
 
@@ -116,6 +122,7 @@ export const Products = () => {
         }
 
     }, [searchQuery])
+
 
 
     // Handler to toggle all checkboxes
@@ -349,12 +356,18 @@ export const Products = () => {
 
 
     const deleteProduct = (id) => {
-        if (context?.userData?.role === "ADMIN") {
-            deleteData(`/api/product/${id}`).then((res) => {
-                getProducts();
-                context.alertBox("success", "Product deleted");
+        if (["ADMIN", "SUPERBOSS"].includes(context?.userData?.role)) {
+            context?.showConfirmDelete(
+                "Xóa sản phẩm?",
+                "Bạn có chắc chắn muốn xóa sản phẩm này?",
+                () => {
+                    deleteData(`/api/product/${id}`).then((res) => {
+                        getProducts();
+                        context.alertBox("success", "Product deleted");
 
-            })
+                    })
+                }
+            )
         } else {
             context.alertBox("error", "Only admin can delete data");
         }
@@ -364,24 +377,30 @@ export const Products = () => {
     const deleteMultipleProduct = () => {
 
         if (sortedIds.length === 0) {
-            context.alertBox('error', 'Please select items to delete.');
+            context.alertBox('error', 'Vui lòng chọn mục cần xóa.');
             return;
         }
 
 
-        try {
-            deleteMultipleData(`/api/product/deleteMultiple`, {
-                data: { ids: sortedIds },
-            }).then((res) => {
-                getProducts();
-                context.alertBox("success", "Product deleted");
-                setSortedIds([]);
+        context?.showConfirmDelete(
+            "Xóa các sản phẩm đã chọn?",
+            `Bạn có chắc chắn muốn xóa ${sortedIds.length} sản phẩm đã chọn?`,
+            () => {
+                try {
+                    deleteMultipleData(`/api/product/deleteMultiple`, {
+                        data: { ids: sortedIds },
+                    }).then((res) => {
+                        getProducts();
+                        context.alertBox("success", "Product deleted");
+                        setSortedIds([]);
 
-            })
+                    })
 
-        } catch (error) {
-            context.alertBox('error', 'Error deleting items.');
-        }
+                } catch (error) {
+                    context.alertBox('error', 'Error deleting items.');
+                }
+            }
+        )
 
 
     }
@@ -395,36 +414,31 @@ export const Products = () => {
 
     return (
         <>
+            <div className="card my-2 pt-5 shadow-md sm:rounded-lg bg-white">
+                <div className="flex items-center w-full px-5 pb-4 justify-between">
+                    <div className="col">
+                        <h2 className="text-[18px] font-[600]">
+                            Danh sách sản phẩm
+                        </h2>
+                    </div>
 
-            <div className="flex items-center justify-between px-2 py-0 mt-3">
-                <h2 className="text-[18px] font-[600]">
-                    Products{" "}
-                    <span className="font-[400] text-[14px]"></span>
-                </h2>
-
-                <div className="col w-[75%] ml-auto flex items-center justify-end gap-3">
-                    {
-                        sortedIds?.length !== 0 && <Button variant="contained" className="btn-sm" size="small" color="error"
-                            onClick={deleteMultipleProduct}>Delete</Button>
-                    }
-
-
-                    <Button className="btn-blue !text-white btn-sm"
-                        onClick={() => context.setIsOpenFullScreenPanel({
-                            open: true,
-                            model: 'Add Product'
-                        })}>Add Product</Button>
+                    <div className="col ml-auto flex items-center justify-end gap-3">
+                        {
+                            sortedIds?.length !== 0 && <Button variant="contained" className="btn-sm" size="small" color="error"
+                                onClick={deleteMultipleProduct}>Xóa</Button>
+                        }
+                        <Button className="btn-blue !text-white btn-sm"
+                            onClick={() => context.setIsOpenFullScreenPanel({
+                                open: true,
+                                model: 'Add Product'
+                            })}>Thêm sản phẩm</Button>
+                    </div>
                 </div>
 
 
-            </div>
-
-
-            <div className="card my-4 pt-5 shadow-md sm:rounded-lg bg-white">
-
                 <div className="grid grid-cols-1 sm:grid-cols-2  md:grid-cols-2 lg:grid-cols-4 w-full px-5 justify-beetween gap-4">
                     <div className="col">
-                        <h4 className="font-[600] text-[13px] mb-2">Category By</h4>
+                        <h4 className="font-[600] text-[13px] mb-2">Danh Mục Lớn</h4>
                         {
                             context?.catData?.length !== 0 &&
                             <Select
@@ -452,7 +466,7 @@ export const Products = () => {
 
 
                     <div className="col">
-                        <h4 className="font-[600] text-[13px] mb-2">Sub Category By</h4>
+                        <h4 className="font-[600] text-[13px] mb-2">Danh Mục Phụ</h4>
                         {
                             context?.catData?.length !== 0 &&
                             <Select
@@ -486,7 +500,7 @@ export const Products = () => {
 
 
                     <div className="col">
-                        <h4 className="font-[600] text-[13px] mb-2">Third Level Sub Category By</h4>
+                        <h4 className="font-[600] text-[13px] mb-2">Danh Mục Con</h4>
                         {
                             context?.catData?.length !== 0 &&
                             <Select
@@ -589,16 +603,16 @@ export const Products = () => {
                                                 </div>
                                             </TableCell>
 
-                                            <TableCell style={{ minWidth: columns.minWidth }}>
+                                            <TableCell style={{ minWidth: columns.minWidth }} align="center">
                                                 {product?.catName}
                                             </TableCell>
 
-                                            <TableCell style={{ minWidth: columns.minWidth }}>
+                                            <TableCell style={{ minWidth: columns.minWidth }} align="center">
                                                 {product?.subCat}
                                             </TableCell>
 
-                                            <TableCell style={{ minWidth: columns.minWidth }}>
-                                                <div className="flex gap-1 flex-col">
+                                            <TableCell style={{ minWidth: columns.minWidth }} align="center">
+                                                <div className="flex gap-1 flex-col items-center justify-center">
                                                     <span className="oldPrice line-through leading-3 text-gray-500 text-[14px] font-[500]">
                                                         {product?.oldPrice?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
                                                     </span>
@@ -608,17 +622,17 @@ export const Products = () => {
                                                 </div>
                                             </TableCell>
 
-                                            <TableCell style={{ minWidth: columns.minWidth }}>
-                                                <p className="text-[14px] w-[70px]">
-                                                    <span className="font-[600]">{product?.sale}</span> sale
+                                            <TableCell style={{ minWidth: columns.minWidth }} align="center">
+                                                <p className="text-[14px] w-[70px] mx-auto text-center">
+                                                    <span className="font-[600]">{product?.sale}</span>
                                                 </p>
 
 
                                             </TableCell>
 
 
-                                            <TableCell style={{ minWidth: columns.minWidth }}>
-                                                <p className="text-[14px] w-[70px]">
+                                            <TableCell style={{ minWidth: columns.minWidth }} align="center">
+                                                <p className="text-[14px] w-[70px] mx-auto text-center">
                                                     <span className="font-[600] text-primary">{product?.countInStock}</span>
                                                 </p>
 
@@ -626,17 +640,17 @@ export const Products = () => {
                                             </TableCell>
 
 
-                                            <TableCell style={{ minWidth: columns.minWidth }}>
-                                                <p className="text-[14px] w-[100px]">
+                                            <TableCell style={{ minWidth: columns.minWidth }} align="center">
+                                                <p className="text-[14px] w-[100px] mx-auto flex justify-center">
                                                     <Rating name="half-rating" size="small" defaultValue={product?.rating} readOnly />
                                                 </p>
 
 
                                             </TableCell>
 
-                                            <TableCell style={{ minWidth: columns.minWidth }}>
-                                                <div className="flex items-center gap-1">
-                                                    <Button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:!bg-[#f1f1f1] !min-w-[35px]"
+                                            <TableCell style={{ minWidth: columns.minWidth }} align="center">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:!bg-[#e2e2e2] flex items-center justify-center transition-all"
                                                         onClick={() => context.setIsOpenFullScreenPanel({
                                                             open: true,
                                                             model: 'Edit Product',
@@ -644,17 +658,17 @@ export const Products = () => {
                                                         })}
                                                     >
                                                         <AiOutlineEdit className="text-[rgba(0,0,0,0.7)] text-[20px] " />
-                                                    </Button>
+                                                    </button>
 
                                                     <Link to={`/product/${product?._id}`}>
-                                                        <Button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:!bg-[#f1f1f1] !min-w-[35px]">
+                                                        <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:!bg-[#e2e2e2] flex items-center justify-center transition-all">
                                                             <FaRegEye className="text-[rgba(0,0,0,0.7)] text-[18px] " />
-                                                        </Button>
+                                                        </button>
                                                     </Link>
 
-                                                    <Button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:!bg-[#f1f1f1] !min-w-[35px]" onClick={() => deleteProduct(product?._id)}>
+                                                    <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:!bg-[#e2e2e2] flex items-center justify-center transition-all" onClick={() => deleteProduct(product?._id)}>
                                                         <GoTrash className="text-[rgba(0,0,0,0.7)] text-[18px] " />
-                                                    </Button>
+                                                    </button>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -682,6 +696,7 @@ export const Products = () => {
                     </Table>
                 </TableContainer>
                 <TablePagination
+                    labelRowsPerPage="Số hàng mỗi trang:"
                     rowsPerPageOptions={[50, 100, 150, 200]}
                     component="div"
                     count={productData?.totalPages * rowsPerPage}

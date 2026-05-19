@@ -1,353 +1,298 @@
-import React, { useState, useEffect } from 'react'
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormControl from '@mui/material/FormControl';
-import FormLabel from '@mui/material/FormLabel';
-import { useContext } from 'react';
-import { MyContext } from '../../App';
-import TextField from '@mui/material/TextField';
+import React, { useContext, useEffect, useState } from "react";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import FormControl from "@mui/material/FormControl";
+import FormLabel from "@mui/material/FormLabel";
+import TextField from "@mui/material/TextField";
+import { Button } from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
+import { editData, fetchDataFromApi, postData } from "../../utils/api";
+import { MyContext } from "../../App";
 
-import { PhoneInput } from 'react-international-phone';
-import 'react-international-phone/style.css';
-import 'react-international-phone/style.css';
-import { Button } from '@mui/material';
-import { deleteData, editData, fetchDataFromApi, postData } from '../../utils/api';
-import CircularProgress from '@mui/material/CircularProgress';
+const PHONE_REGEX = /^0\d{9}$/;
+const PHONE_MESSAGE = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng 0. Ví dụ: 0326851181";
 
 const AddAddress = () => {
-
-    const [phone, setPhone] = useState('');
     const [addressType, setAddressType] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     const [formFields, setFormsFields] = useState({
-        address_line1: '',
-        city: '',
-        state: '',
-        pincode: '',
-        country: '',
-        mobile: '',
-        userId: '',
-        addressType: '',
-        landmark: ''
+        address_line1: "",
+        city: "",
+        state: "",
+        pincode: "",
+        country: "",
+        mobile: "",
+        userId: "",
+        addressType: "",
+        landmark: "",
     });
-
-    const [isLoading, setIsLoading] = useState(false);
 
     const context = useContext(MyContext);
 
     useEffect(() => {
         if (context?.userData?._id !== undefined) {
-
-
             setFormsFields((prevState) => ({
                 ...prevState,
-                userId: context?.userData?._id
-            }))
-
+                userId: context?.userData?._id,
+            }));
         }
-
     }, [context?.userData]);
 
+    useEffect(() => {
+        if (context?.addressMode === "edit") {
+            fetchAddress(context?.addressId);
+        }
+    }, [context?.addressMode, context?.addressId]);
 
     const onChangeInput = (e) => {
         const { name, value } = e.target;
-        setFormsFields(() => {
-            return {
-                ...formFields,
-                [name]: value
-            }
-        })
+        const nextValue = name === "mobile" ? value.replace(/\D/g, "").slice(0, 10) : value;
 
-    }
-
-
+        setFormsFields((prev) => ({
+            ...prev,
+            [name]: nextValue,
+        }));
+    };
 
     const handleChangeAddressType = (event) => {
-        setAddressType(event.target.value)
-        setFormsFields(() => ({
-            ...formFields,
-            addressType: event.target.value
-        }))
-    }
+        setAddressType(event.target.value);
+        setFormsFields((prev) => ({
+            ...prev,
+            addressType: event.target.value,
+        }));
+    };
 
+    const resetForm = () => {
+        setFormsFields({
+            address_line1: "",
+            city: "",
+            state: "",
+            pincode: "",
+            country: "",
+            mobile: "",
+            userId: context?.userData?._id || "",
+            addressType: "",
+            landmark: "",
+        });
+        setAddressType("");
+    };
 
-
-    useEffect(()=>{
-
-        if(context?.addressMode === "edit"){
-            fetchAddress(context?.addressId)
-        }
-        
-    },[context?.addressMode]);
-
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (formFields.address_line1 === "") {
-            context.alertBox("error", "Please enter Address Line 1");
-            return false
-        }
-
-
-        if (formFields.city === "") {
-            context.alertBox("error", "Please enter Your city name");
-            return false
+    const validateForm = () => {
+        if (formFields.address_line1.trim() === "") {
+            context.alertBox("error", "Vui lòng nhập địa chỉ");
+            return false;
         }
 
-
-        if (formFields.state === "") {
-            context.alertBox("error", "Please enter your state");
-            return false
+        if (formFields.city.trim() === "") {
+            context.alertBox("error", "Vui lòng nhập thành phố/quận huyện");
+            return false;
         }
 
-
-        if (formFields.pincode === "") {
-            context.alertBox("error", "Please enter your pincode");
-            return false
+        if (formFields.state.trim() === "") {
+            context.alertBox("error", "Vui lòng nhập tỉnh/thành");
+            return false;
         }
 
-
-        if (formFields.country === "") {
-            context.alertBox("error", "Please enter your country");
-            return false
+        if (formFields.pincode.trim() === "") {
+            context.alertBox("error", "Vui lòng nhập mã bưu chính");
+            return false;
         }
 
-
-        if (phone === "" || phone?.length < 5) {
-            context.alertBox("error", "Please enter your 10 digit mobile number a");
-            return false
+        if (formFields.country.trim() === "") {
+            context.alertBox("error", "Vui lòng nhập quốc gia");
+            return false;
         }
 
-        if (formFields.landmark === "") {
-            context.alertBox("error", "Please enter landmark");
-            return false
+        if (!PHONE_REGEX.test(formFields.mobile)) {
+            context.alertBox("error", PHONE_MESSAGE);
+            return false;
+        }
+
+        if (formFields.landmark.trim() === "") {
+            context.alertBox("error", "Vui lòng nhập ghi chú vị trí");
+            return false;
         }
 
         if (formFields.addressType === "") {
-            context.alertBox("error", "Please select address type");
-            return false
+            context.alertBox("error", "Vui lòng chọn loại địa chỉ");
+            return false;
         }
 
-      
+        return true;
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        if (!validateForm()) return;
+
+        setIsLoading(true);
 
         if (context?.addressMode === "add") {
-            setIsLoading(true);
-            postData(`/api/address/add`, formFields, { withCredentials: true }).then((res) => {
-                console.log(res)
+            postData("/api/address/add", formFields, { withCredentials: true }).then((res) => {
                 if (res?.error !== true) {
-
-                    context.alertBox("success", res?.message);
-                    setTimeout(() => {
-                        context.setOpenAddressPanel(false)
-                        setIsLoading(false);
-                    }, 500)
-
-
+                    context.alertBox("success", res?.message || "Thêm địa chỉ thành công");
+                    context.setOpenAddressPanel(false);
                     context.getUserDetails();
-
-                    setFormsFields({
-                        address_line1: '',
-                        city: '',
-                        state: '',
-                        pincode: '',
-                        country: '',
-                        mobile: '',
-                        userId: '',
-                        addressType: '',
-                        landmark: ''
-                    })
-
-                    setAddressType("");
-                    setPhone("");
-
-
-
+                    resetForm();
                 } else {
-                    context.alertBox("error", res?.message);
-                    setIsLoading(false);
+                    context.alertBox("error", res?.message || "Không thể thêm địa chỉ");
                 }
 
-            })
+                setIsLoading(false);
+            });
         }
 
-
-
-        if (context?.addressMode  === "edit") {
-            setIsLoading(true);
+        if (context?.addressMode === "edit") {
             editData(`/api/address/${context?.addressId}`, formFields, { withCredentials: true }).then((res) => {
+                if (res?.data?.error !== true) {
+                    context.alertBox("success", res?.data?.message || "Cập nhật địa chỉ thành công");
+                } else {
+                    context.alertBox("error", res?.data?.message || "Không thể cập nhật địa chỉ");
+                }
 
-                fetchDataFromApi(`/api/address/get?userId=${context?.userData?._id}`).then((res) => {
-                    setTimeout(() => {
-                        setIsLoading(false);
-                        context.setOpenAddressPanel(false);
-                    }, 500)
-                    context?.getUserDetails(res.data);
-
-                    setFormsFields({
-                        address_line1: '',
-                        city: '',
-                        state: '',
-                        pincode: '',
-                        country: '',
-                        mobile: '',
-                        userId: '',
-                        addressType: '',
-                        landmark: ''
-                    })
-
-                    setAddressType("");
-                    setPhone("");
-                })
-            })
+                fetchDataFromApi(`/api/address/get?userId=${context?.userData?._id}`).then(() => {
+                    context?.getUserDetails();
+                    context.setOpenAddressPanel(false);
+                    resetForm();
+                    setIsLoading(false);
+                });
+            });
         }
-
-
-    }
-
-
+    };
 
     const fetchAddress = (id) => {
-
         fetchDataFromApi(`/api/address/${id}`).then((res) => {
-
             setFormsFields({
-                address_line1: res?.address?.address_line1,
-                city: res?.address?.city,
-                state: res?.address?.state,
-                pincode: res?.address?.pincode,
-                country: res?.address?.country,
-                mobile: res?.address?.mobile,
-                userId: res?.address?.userId,
-                addressType: res?.address?.addressType,
-                landmark: res?.address?.landmark
-            })
+                address_line1: res?.address?.address_line1 || "",
+                city: res?.address?.city || "",
+                state: res?.address?.state || "",
+                pincode: res?.address?.pincode || "",
+                country: res?.address?.country || "",
+                mobile: res?.address?.mobile || "",
+                userId: res?.address?.userId || context?.userData?._id || "",
+                addressType: res?.address?.addressType || "",
+                landmark: res?.address?.landmark || "",
+            });
 
-            const ph = `"${res?.address?.mobile}"`
-            setPhone(ph)
-            setAddressType(res?.address?.addressType)
-
-        })
-
-    }
+            setAddressType(res?.address?.addressType || "");
+        });
+    };
 
     return (
         <form className="p-8 py-3 pb-8 px-4" onSubmit={handleSubmit}>
             <div className="col w-[100%] mb-4">
                 <TextField
                     className="w-full"
-                    label="Address Line 1"
+                    label="Địa chỉ"
                     variant="outlined"
                     size="small"
                     name="address_line1"
-                    onChange={onChangeInput} value={formFields.address_line1}
-                />
-            </div>
-
-
-            <div className="col w-[100%] mb-4">
-                <TextField
-                    className="w-full"
-                    label="City"
-                    variant="outlined"
-                    size="small"
-                    name="city" onChange={onChangeInput} value={formFields.city}
+                    onChange={onChangeInput}
+                    value={formFields.address_line1}
                 />
             </div>
 
             <div className="col w-[100%] mb-4">
                 <TextField
                     className="w-full"
-                    label="State"
+                    label="Thành phố/Quận huyện"
                     variant="outlined"
                     size="small"
-                    name="state" onChange={onChangeInput} value={formFields.state}
+                    name="city"
+                    onChange={onChangeInput}
+                    value={formFields.city}
                 />
             </div>
 
             <div className="col w-[100%] mb-4">
                 <TextField
                     className="w-full"
-                    label="Pincode"
+                    label="Tỉnh/Thành"
                     variant="outlined"
                     size="small"
-                    name="pincode" onChange={onChangeInput} value={formFields.pincode}
+                    name="state"
+                    onChange={onChangeInput}
+                    value={formFields.state}
                 />
             </div>
 
             <div className="col w-[100%] mb-4">
                 <TextField
                     className="w-full"
-                    label="Country"
+                    label="Mã bưu chính"
                     variant="outlined"
                     size="small"
-                    name="country" onChange={onChangeInput} value={formFields.country}
+                    name="pincode"
+                    onChange={onChangeInput}
+                    value={formFields.pincode}
                 />
             </div>
-
-
-            <div className="col w-[100%] mb-4">
-                <PhoneInput
-                    defaultCountry="vn"
-                    value={phone}
-                    onChange={(phone) => {
-                        setPhone(phone);
-                        setFormsFields((prevState) => ({
-                            ...prevState,
-                            mobile: phone
-                        }))
-                    }}
-                />
-            </div>
-
-
-
 
             <div className="col w-[100%] mb-4">
                 <TextField
                     className="w-full"
-                    label="Landmark"
+                    label="Quốc gia"
                     variant="outlined"
                     size="small"
-                    name="landmark" onChange={onChangeInput} value={formFields.landmark}
+                    name="country"
+                    onChange={onChangeInput}
+                    value={formFields.country}
                 />
             </div>
 
+            <div className="col w-[100%] mb-4">
+                <TextField
+                    className="w-full"
+                    label="Số điện thoại"
+                    variant="outlined"
+                    size="small"
+                    name="mobile"
+                    onChange={onChangeInput}
+                    value={formFields.mobile}
+                    placeholder="VD: 0326851181"
+                    inputProps={{ inputMode: "numeric", maxLength: 10 }}
+                />
+            </div>
+
+            <div className="col w-[100%] mb-4">
+                <TextField
+                    className="w-full"
+                    label="Ghi chú vị trí"
+                    variant="outlined"
+                    size="small"
+                    name="landmark"
+                    onChange={onChangeInput}
+                    value={formFields.landmark}
+                />
+            </div>
 
             <div className="flex gap-5 pb-5 flex-col">
                 <FormControl>
-                    <FormLabel id="demo-row-radio-buttons-group-label">Address Type</FormLabel>
+                    <FormLabel id="address-type-label">Loại địa chỉ</FormLabel>
                     <RadioGroup
                         row
-                        aria-labelledby="demo-row-radio-buttons-group-label"
-                        name="row-radio-buttons-group"
+                        aria-labelledby="address-type-label"
+                        name="addressType"
                         className="flex items-center gap-5"
                         value={addressType}
                         onChange={handleChangeAddressType}
                     >
-                        <FormControlLabel value="Home" control={<Radio />} label="Home" />
-                        <FormControlLabel value="Office" control={<Radio />} label="Office" />
-
+                        <FormControlLabel value="Home" control={<Radio />} label="Nhà riêng" />
+                        <FormControlLabel value="Office" control={<Radio />} label="Công ty" />
                     </RadioGroup>
                 </FormControl>
             </div>
 
-
-            <div className='flex items-center gap-5'>
+            <div className="flex items-center gap-5">
                 <Button type="submit" className="btn-org btn-lg w-full flex gap-2 items-center">
-                    {
-                        isLoading === true ?
-                            <CircularProgress color="inherit" />
-                            :
-
-                            'Save'
-
-                    }
+                    {isLoading === true ? <CircularProgress color="inherit" /> : "Lưu địa chỉ"}
                 </Button>
-
             </div>
         </form>
-    )
-}
+    );
+};
 
-export default AddAddress
+export default AddAddress;

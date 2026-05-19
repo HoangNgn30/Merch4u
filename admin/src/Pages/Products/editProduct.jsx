@@ -39,9 +39,7 @@ const EditProduct = () => {
         rating: "",
         isFeatured: false,
         discount: "",
-        productRam: [],
         size: [],
-        productWeight: [],
         bannerTitleName: '',
         bannerimages: [],
         isDisplayOnHomeBanner:false
@@ -50,15 +48,14 @@ const EditProduct = () => {
 
 
     const [productCat, setProductCat] = React.useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const [productSubCat, setProductSubCat] = React.useState('');
     const [productFeatured, setProductFeatured] = React.useState('');
-    const [productRams, setProductRams] = React.useState([]);
-    const [productRamsData, setProductRamsData] = React.useState([]);
-    const [productWeight, setProductWeight] = React.useState([]);
-    const [productWeightData, setProductWeightData] = React.useState([]);
-    const [productSize, setProductSize] = React.useState([]);
-    const [productSizeData, setProductSizeData] = React.useState([]);
-    const [isLoading, setIsLoading] = useState(false);
+
+    const [variantType, setVariantType] = useState('none');
+    const [selectedClothingSizes, setSelectedClothingSizes] = useState([]);
+    const [versionCount, setVersionCount] = useState(1);
+    const [versionNames, setVersionNames] = useState(['']);
 
     const [productThirdLavelCat, setProductThirdLavelCat] = useState('');
 
@@ -73,25 +70,6 @@ const EditProduct = () => {
 
 
     useEffect(() => {
-
-        fetchDataFromApi("/api/product/productRAMS/get").then((res) => {
-            if (res?.error === false) {
-                setProductRamsData(res?.data);
-            }
-        })
-
-        fetchDataFromApi("/api/product/productWeight/get").then((res) => {
-            if (res?.error === false) {
-                setProductWeightData(res?.data);
-            }
-        })
-
-        fetchDataFromApi("/api/product/productSize/get").then((res) => {
-            if (res?.error === false) {
-                setProductSizeData(res?.data);
-            }
-        })
-
 
         fetchDataFromApi(`/api/product/${context?.isOpenFullScreenPanel?.id}`).then((res) => {
 
@@ -113,9 +91,7 @@ const EditProduct = () => {
                 rating: res?.product?.rating,
                 isFeatured: res?.product?.isFeatured,
                 discount: res?.product?.discount,
-                productRam: res?.product?.productRam,
                 size: res?.product?.size,
-                productWeight: res?.product?.productWeight,
                 bannerTitleName: res?.product?.bannerTitleName,
                 bannerimages: res?.product?.bannerimages,
                 isDisplayOnHomeBanner:res?.product?.isDisplayOnHomeBanner
@@ -126,10 +102,20 @@ const EditProduct = () => {
             setProductSubCat(res?.product?.subCatId);
             setProductThirdLavelCat(res?.product?.thirdsubCatId);
             setProductFeatured(res?.product?.isFeatured)
-            setProductRams(res?.product?.productRam)
-            setProductSize(res?.product?.size)
-            setProductWeight(res?.product?.productWeight);
             setCheckedSwitch(res?.product?.isDisplayOnHomeBanner)
+
+            const sizes = res?.product?.size || [];
+            const clothingSet = ['S', 'M', 'L', 'XL', 'XXL'];
+            if (sizes.length === 0) {
+                setVariantType('none');
+            } else if (sizes.some(s => clothingSet.includes(s))) {
+                setVariantType('clothing');
+                setSelectedClothingSizes(sizes);
+            } else {
+                setVariantType('other');
+                setVersionCount(sizes.length);
+                setVersionNames(sizes);
+            }
 
             setPreviews(res?.product?.images);
             setBannerPreviews(res?.product?.bannerimages);
@@ -156,7 +142,17 @@ const EditProduct = () => {
     };
 
     const selectCatByName = (name) => {
-        formFields.catName = name
+        formFields.catName = name;
+        const lowerName = name?.toLowerCase() || '';
+        if (lowerName.includes('áo') || lowerName.includes('quần') || lowerName.includes('clothing') || lowerName.includes('apparel') || lowerName.includes('hoodie') || lowerName.includes('shirt') || lowerName.includes('merch')) {
+            setVariantType('clothing');
+        } else if (lowerName.includes('album')) {
+            setVariantType('album');
+        } else if (lowerName.includes('lightstick')) {
+            setVariantType('lightstick');
+        } else {
+            setVariantType('none');
+        }
     }
 
     const handleChangeProductSubCat = (event) => {
@@ -195,44 +191,22 @@ const EditProduct = () => {
         formFields.isFeatured = event.target.value
     };
 
-    const handleChangeProductRams = (event) => {
-        const {
-            target: { value },
-        } = event;
-        setProductRams(
-            // On autofill we get a stringified value.
-            typeof value === "string" ? value.split(",") : value
-        );
 
-        formFields.productRam = value;
 
-    };
-
-    const handleChangeProductWeight = (event) => {
-
-        const {
-            target: { value },
-        } = event;
-        setProductWeight(
-            // On autofill we get a stringified value.
-            typeof value === "string" ? value.split(",") : value
-        );
-
-        formFields.productWeight = value;
-    };
-
-    const handleChangeProductSize = (event) => {
-
-        const {
-            target: { value },
-        } = event;
-        setProductSize(
-            // On autofill we get a stringified value.
-            typeof value === "string" ? value.split(",") : value
-        );
-
-        formFields.size = value;
-    };
+    useEffect(() => {
+        if (variantType === 'none') {
+            setFormFields(prev => ({ ...prev, size: [] }));
+        } else if (variantType === 'clothing') {
+            setFormFields(prev => ({ ...prev, size: selectedClothingSizes }));
+        } else {
+            if (versionCount <= 1) {
+                setFormFields(prev => ({ ...prev, size: [] }));
+            } else {
+                const validNames = versionNames.slice(0, versionCount).map(n => n.trim()).filter(n => n !== '');
+                setFormFields(prev => ({ ...prev, size: validNames }));
+            }
+        }
+    }, [variantType, selectedClothingSizes, versionCount, versionNames]);
 
 
     const onChangeInput = (e) => {
@@ -296,18 +270,24 @@ const EditProduct = () => {
     }
 
     const removeImg = (image, index) => {
-        var imageArr = [];
-        imageArr = previews;
-        deleteImages(`/api/category/deteleImage?img=${image}`).then((res) => {
-            imageArr.splice(index, 1);
+        context?.showConfirmDelete(
+            "Xóa ảnh sản phẩm?",
+            "Bạn có chắc chắn muốn xóa ảnh sản phẩm này?",
+            () => {
+                var imageArr = [];
+                imageArr = previews;
+                deleteImages(`/api/product/deteleImage?img=${image}`).then((res) => {
+                    imageArr.splice(index, 1);
 
-            setPreviews([]);
-            setTimeout(() => {
-                setPreviews(imageArr);
-                formFields.images = imageArr
-            }, 100);
+                    setPreviews([]);
+                    setTimeout(() => {
+                        setPreviews(imageArr);
+                        formFields.images = imageArr
+                    }, 100);
 
-        })
+                })
+            }
+        )
     }
 
 
@@ -327,18 +307,24 @@ const EditProduct = () => {
 
 
     const removeBannerImg = (image, index) => {
-        var imageArr = [];
-        imageArr = bannerPreviews;
-        deleteImages(`/api/category/deteleImage?img=${image}`).then((res) => {
-            imageArr.splice(index, 1);
+        context?.showConfirmDelete(
+            "Xóa ảnh banner sản phẩm?",
+            "Bạn có chắc chắn muốn xóa ảnh banner này?",
+            () => {
+                var imageArr = [];
+                imageArr = bannerPreviews;
+                deleteImages(`/api/product/deteleImage?img=${image}`).then((res) => {
+                    imageArr.splice(index, 1);
 
-            setBannerPreviews([]);
-            setTimeout(() => {
-                setBannerPreviews(imageArr);
-                formFields.bannerimages = imageArr
-            }, 100);
+                    setBannerPreviews([]);
+                    setTimeout(() => {
+                        setBannerPreviews(imageArr);
+                        formFields.bannerimages = imageArr
+                    }, 100);
 
-        })
+                })
+            }
+        )
     }
 
 
@@ -620,79 +606,96 @@ const EditProduct = () => {
                         </div>
 
 
-                        <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>RAMS sản phẩm</h3>
-                            {
-                                productRamsData?.length !== 0 &&
-                                <Select
-                                    multiple
-                                    labelId="demo-simple-select-label"
-                                    id="productCatDrop"
-                                    size="small"
-                                    className='w-full'
-                                    value={productRams}
-                                    label="Category"
-                                    onChange={handleChangeProductRams}
-                                >
-                                    {
-                                        productRamsData?.map((item, index) => {
-                                            return <MenuItem key={index} value={item?.name}>{item.name}</MenuItem>
-                                        })
-                                    }
 
 
-                                </Select>
-                            }
-                        </div>
 
-                        <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Khối lượng sản phẩm</h3>
-                            {
-                                productWeightData?.length !== 0 &&
-                                <Select
-                                    multiple
-                                    labelId="demo-simple-select-label"
-                                    id="productCatDrop"
-                                    size="small"
-                                    className='w-full'
-                                    value={productWeight}
-                                    label="Category"
-                                    onChange={handleChangeProductWeight}
-                                >
+                        <div className='col w-full md:col-span-2 lg:col-span-4'>
+                            <h3 className='text-[14px] font-[500] mb-3 text-black'>Loại Biến thể (Variant Type)</h3>
+                            <Select
+                                size="small"
+                                className='w-full md:w-[300px] mb-4'
+                                value={variantType}
+                                onChange={(e) => setVariantType(e.target.value)}
+                            >
+                                <MenuItem value="none">Không có biến thể</MenuItem>
+                                <MenuItem value="clothing">Quần áo (S, M, L...)</MenuItem>
+                                <MenuItem value="album">Album</MenuItem>
+                                <MenuItem value="lightstick">Lightstick</MenuItem>
+                                <MenuItem value="other">Khác</MenuItem>
+                            </Select>
 
-                                    {
-                                        productWeightData?.map((item, index) => {
-                                            return <MenuItem key={index} value={item?.name}>{item?.name}</MenuItem>
-                                        })
-                                    }
+                            {variantType === 'clothing' && (
+                                <div className="flex flex-wrap gap-3">
+                                    {['S', 'M', 'L', 'XL', 'XXL'].map(size => (
+                                        <label key={size} className="flex items-center gap-2 cursor-pointer border p-2 rounded-md bg-gray-50 hover:bg-gray-100">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={selectedClothingSizes.includes(size)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setSelectedClothingSizes([...selectedClothingSizes, size]);
+                                                    } else {
+                                                        setSelectedClothingSizes(selectedClothingSizes.filter(s => s !== size));
+                                                    }
+                                                }}
+                                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                            />
+                                            <span className="text-sm font-medium text-gray-900">{size}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            )}
 
-                                </Select>
-                            }
-                        </div>
-
-
-                        <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Size</h3>
-                            {
-                                productSizeData?.length !== 0 &&
-                                <Select
-                                    multiple
-                                    labelId="demo-simple-select-label"
-                                    id="productCatDrop"
-                                    size="small"
-                                    className='w-full'
-                                    value={productSize}
-                                    label="Category"
-                                    onChange={handleChangeProductSize}
-                                >
-
-                                    {
-                                        productSizeData?.map((item, index) => {
-                                            return <MenuItem key={index} value={item?.name}>{item?.name}</MenuItem>
-                                        })
-                                    }
-                                </Select>
-                            }
+                            {(variantType === 'album' || variantType === 'lightstick' || variantType === 'other') && (
+                                <div className="flex flex-col gap-3">
+                                    <div className='flex items-center gap-3'>
+                                        <h4 className='text-[14px] font-[500]'>Số lượng version:</h4>
+                                        <input 
+                                            type="number" 
+                                            min="1" 
+                                            max="20"
+                                            className='w-[80px] h-[35px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-2 text-sm' 
+                                            value={versionCount} 
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setVersionCount(val);
+                                                if (val !== '') {
+                                                    const count = parseInt(val);
+                                                    if (versionNames.length < count) {
+                                                        setVersionNames([...versionNames, ...Array(count - versionNames.length).fill('')]);
+                                                    }
+                                                }
+                                            }} 
+                                            onBlur={(e) => {
+                                                if (e.target.value === '' || parseInt(e.target.value) < 1) {
+                                                    setVersionCount(1);
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                    
+                                    {versionCount >= 2 && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                            {Array.from({ length: versionCount }).map((_, index) => (
+                                                <div key={index} className="flex flex-col gap-1">
+                                                    <label className="text-[13px] text-gray-600">Tên version {index + 1}</label>
+                                                    <input 
+                                                        type="text" 
+                                                        className='w-full h-[35px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-2 text-sm'
+                                                        value={versionNames[index] || ''}
+                                                        onChange={(e) => {
+                                                            const newNames = [...versionNames];
+                                                            newNames[index] = e.target.value;
+                                                            setVersionNames(newNames);
+                                                        }}
+                                                        placeholder={`Ví dụ: Ver ${String.fromCharCode(65 + index)}`}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
 

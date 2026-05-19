@@ -7,7 +7,7 @@ export const addToCartItemController = async (request, response) => {
 
         if (!productId) {
             return response.status(402).json({
-                message: "Provide productId",
+                message: "Vui lòng cung cấp mã sản phẩm",
                 error: true,
                 success: false
             })
@@ -21,7 +21,7 @@ export const addToCartItemController = async (request, response) => {
 
         if (checkItemCart) {
             return response.status(400).json({
-                message: "Item already in cart"
+                message: "Sản phẩm đã có trong giỏ hàng"
             })
         }
 
@@ -49,7 +49,7 @@ export const addToCartItemController = async (request, response) => {
 
         return response.status(200).json({
             data: save,
-            message: "Item add successfully",
+            message: "Đã thêm sản phẩm vào giỏ hàng",
             error: false,
             success: true
         })
@@ -91,42 +91,36 @@ export const getCartItemController = async (request, response) => {
 
 export const updateCartItemQtyController = async (request, response) => {
     try {
-
         const userId = request.userId
         const { _id, qty , subTotal, size, weight, ram} = request.body
 
-
-
         if (!_id || !qty) {
             return response.status(400).json({
-                message: "provide _id, qty"
+                message: "Vui lòng cung cấp mã giỏ hàng và số lượng"
             })
         }
 
-        const updateCartitem = await CartProductModel.updateOne(
+        const updateCartitem = await CartProductModel.findOneAndUpdate(
             {
                 _id: _id,
                 userId: userId
             },
             {
                 quantity: qty,
-                subTotal:subTotal,
-                size:size,
-                ram:ram,
-                weight:weight
+                subTotal: subTotal,
+                size: size,
+                ram: ram,
+                weight: weight
             },
             { new: true }
         )
 
-
         return response.json({
-            message: "Update cart item",
-            success: true,
+            message: "Đã cập nhật giỏ hàng",
             error: false,
+            success: true,
             data: updateCartitem
         })
-
-
 
     } catch (error) {
         return response.status(500).json({
@@ -157,7 +151,7 @@ export const deleteCartItemQtyController = async (request, response) => {
 
           if(!deleteCartItem){
             return response.status(404).json({
-                message:"The product in the cart is not found",
+                message:"Không tìm thấy sản phẩm trong giỏ hàng",
                 error:true,
                 success:false
             })
@@ -165,7 +159,7 @@ export const deleteCartItemQtyController = async (request, response) => {
          
 
           return response.status(200).json({
-            message : "Item remove",
+            message : "Đã xóa sản phẩm khỏi giỏ hàng",
             error : false,
             success : true,
             data : deleteCartItem
@@ -185,7 +179,7 @@ export const deleteCartItemQtyController = async (request, response) => {
 
 export const emptyCartController = async (request, response) => {
     try {
-        const userId = request.params.id // middlewar
+        const userId = request.userId // auth middleware
 
         await CartProductModel.deleteMany({userId:userId })
 

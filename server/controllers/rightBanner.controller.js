@@ -1,48 +1,10 @@
 import RightBannerModel from '../models/rightBanner.model.js';
+import { cloudinary, uploadFilesToCloudinary } from '../utils/cloudinaryUpload.js';
 
-import { v2 as cloudinary } from 'cloudinary';
-import fs from 'fs';
-
-
-cloudinary.config({
-    cloud_name: process.env.cloudinary_Config_Cloud_Name,
-    api_key: process.env.cloudinary_Config_api_key,
-    api_secret: process.env.cloudinary_Config_api_secret,
-    secure: true,
-});
-
-
-//image upload
-var imagesArr = [];
 export async function uploadImages(request, response) {
     try {
-        imagesArr = [];
-
-        const image = request.files;
-
-
-        const options = {
-            use_filename: true,
-            unique_filename: false,
-            overwrite: false,
-        };
-
-        for (let i = 0; i < image?.length; i++) {
-
-            const img = await cloudinary.uploader.upload(
-                image[i].path,
-                options,
-                function (error, result) {
-                    imagesArr.push(result.secure_url);
-                    fs.unlinkSync(`uploads/${request.files[i].filename}`);
-                }
-            );
-        }
-
-        return response.status(200).json({
-            images: imagesArr
-        });
-
+        const images = await uploadFilesToCloudinary(request.files);
+        return response.status(200).json({ images });
     } catch (error) {
         return response.status(500).json({
             message: error.message || error,
@@ -60,19 +22,28 @@ export async function addBanner(request, response) {
         const bannerCount = await RightBannerModel.countDocuments();
         if (bannerCount > 0) {
             return response.status(400).json({
-                message: "A RightBanner already exists. Please edit the existing one.",
+                message: "Banner phải đã tồn tại. Vui lòng chỉnh sửa banner hiện có.",
+                error: true,
+                success: false
+            });
+        }
+
+        const images = request.body?.images?.length ? request.body.images : [];
+        if (!images[0]) {
+            return response.status(400).json({
+                message: "Vui lòng tải ảnh banner",
                 error: true,
                 success: false
             });
         }
 
         let banner = new RightBannerModel({
-            images: [imagesArr[0]],
+            images: [images[0]],
         });
 
         if (!banner) {
             return response.status(500).json({
-                message: "banner not created",
+                message: "Không thể tạo banner",
                 error: true,
                 success: false
             })
@@ -80,10 +51,8 @@ export async function addBanner(request, response) {
 
         banner = await banner.save();
 
-        imagesArr = [];
-
         return response.status(200).json({
-            message: "banner created",
+            message: "Đã tạo banner",
             error: false,
             success: true,
             banner: banner
@@ -108,7 +77,7 @@ export async function getBanners(request, response) {
         const banners = await RightBannerModel.find();
 
         if (!banners) {
-            response.status(500).json({
+            return response.status(500).json({
                 error: true,
                 success: false
             })
@@ -139,10 +108,10 @@ export async function getBanner(request, response) {
 
 
         if (!banner) {
-            response.status(500)
+            return response.status(500)
                 .json(
                     {
-                        message: "The banner with the given ID was not found.",
+                        message: "Không tìm thấy banner với mã đã cung cấp.",
                         error: true,
                         success: false
                     }
@@ -166,39 +135,55 @@ export async function getBanner(request, response) {
 }
 
 export async function deleteBanner(request, response) {
-    const banner = await RightBannerModel.findById(request.params.id);
-    const images = banner.images;
-    let img = "";
-    for (img of images) {
-        const imgUrl = img;
-        const urlArr = imgUrl.split("/");
-        const image = urlArr[urlArr.length - 1];
-
-        const imageName = image.split(".")[0];
-
-        if (imageName) {
-            cloudinary.uploader.destroy(imageName, (error, result) => {
-                // console.log(error, result);
+    try {
+        const banner = await RightBannerModel.findById(request.params.id);
+        if (!banner) {
+            return response.status(404).json({
+                message: "Không tìm thấy banner!",
+                success: false,
+                error: true
             });
         }
 
-    }
+        const images = banner.images;
+        let img = "";
+        for (img of images) {
+            const imgUrl = img;
+            const urlArr = imgUrl.split("/");
+            const image = urlArr[urlArr.length - 1];
+
+            const imageName = image.split(".")[0];
+
+            if (imageName) {
+                cloudinary.uploader.destroy(imageName, (error, result) => {
+                    // console.log(error, result);
+                });
+            }
+
+        }
 
 
-    const deletedBanner = await RightBannerModel.findByIdAndDelete(request.params.id);
-    if (!deletedBanner) {
-        response.status(404).json({
-            message: "Banner not found!",
-            success: false,
-            error: true
+        const deletedBanner = await RightBannerModel.findByIdAndDelete(request.params.id);
+        if (!deletedBanner) {
+            return response.status(404).json({
+                message: "Không tìm thấy banner!",
+                success: false,
+                error: true
+            });
+        }
+
+        return response.status(200).json({
+            success: true,
+            error: false,
+            message: "Đã xóa banner!",
         });
+    } catch (error) {
+        return response.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        })
     }
-
-    response.status(200).json({
-        success: true,
-        error: false,
-        message: "Banner Deleted!",
-    });
 }
 
 
@@ -207,27 +192,25 @@ export async function updatedBanner(request, response) {
     const banner = await RightBannerModel.findByIdAndUpdate(
         request.params.id,
         {
-            images: imagesArr.length > 0 ? [imagesArr[0]] : [request.body.images[0]],
+            images: request.body?.images?.[0] ? [request.body.images[0]] : [],
         },
         { new: true }
     );
 
     if (!banner) {
         return response.status(500).json({
-            message: "banner cannot be updated!",
+            message: "Không thể cập nhật banner!",
             success: false,
             error: true
         });
     }
 
 
-    imagesArr = [];
-
     response.status(200).json({
         error: false,
         success: true,
         banner: banner,
-        message: "banner updated successfully"
+        message: "Đã cập nhật banner"
     })
 
 }

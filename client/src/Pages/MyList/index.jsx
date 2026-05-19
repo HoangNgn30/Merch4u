@@ -3,8 +3,7 @@ import React, { useContext, useEffect, useState } from "react";
 import MyListItems from "./myListItems";
 import AccountSidebar from "../../components/AccountSidebar";
 import { MyContext } from "../../App";
-import Button from "@mui/material/Button";
-import { Link } from "react-router-dom";
+import EmptyState from "../../components/EmptyState";
 
 const MyList = () => {
 
@@ -24,10 +23,10 @@ const MyList = () => {
         <div className="col2 w-full lg:w-[70%]">
           <div className="shadow-md rounded-md bg-white">
             <div className="py-5 px-3 border-b border-[rgba(0,0,0,0.1)]">
-              <h2>My List</h2>
+              <h2>Danh sách yêu thích</h2>
               <p className="mt-0 mb-0">
-                There are <span className="font-bold text-primary">{context?.myListData?.length}</span>{" "}
-                products in your My List
+                Có <span className="font-bold text-primary">{context?.myListData?.length}</span>{" "}
+                sản phẩm đã thích
               </p>
             </div>
 
@@ -41,11 +40,13 @@ const MyList = () => {
 
                 :
 
-                <div className="flex items-center justify-center flex-col py-10 px-3 gap-5">
-                  <img src="/mylistempty.png" className="w-[100px]" />
-                  <h3>My List is currently empty</h3>
-                  <Link to="/"><Button className="btn-org btn-sm">Continue Shopping</Button></Link>
-                </div>
+                <EmptyState
+                  type="wishlist"
+                  title="Danh sách yêu thích đang trống"
+                  message="Bấm trái tim trên sản phẩm để lưu lại những món bạn đang cân nhắc."
+                  actionLabel="Khám phá sản phẩm"
+                  actionTo="/products"
+                />
 
             }
 

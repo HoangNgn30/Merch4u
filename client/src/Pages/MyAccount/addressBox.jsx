@@ -6,6 +6,10 @@ import { HiOutlineDotsVertical } from "react-icons/hi";
 import { MyContext } from '../../App';
 
 const ITEM_HEIGHT = 48;
+const addressTypeLabel = {
+    Home: "Nhà riêng",
+    Office: "Công ty",
+};
 
 const AddressBox = (props) => {
     const [anchorEl, setAnchorEl] = useState(null);
@@ -35,11 +39,13 @@ const AddressBox = (props) => {
     return (
         <div className='group relative border border-dashed border-[rgba(0,0,0,0.2)] addressBox w-full  bg-[#fafafa] p-4 rounded-md cursor-pointer'>
 
-            <span className="inline-block p-1 bg-[#e7e7e7] text-[12px] rounded-sm">{props?.address?.addressType}</span>
+            <span className="inline-block p-1 bg-[#e7e7e7] text-[12px] rounded-sm">
+                {addressTypeLabel[props?.address?.addressType] || props?.address?.addressType}
+            </span>
 
             <h4 className="pt-2 flex items-center gap-4 text-[14px]">
                 <span>{context?.userData?.name} </span>
-                <span>+{props?.address?.mobile}</span>
+                <span>{props?.address?.mobile}</span>
             </h4>
 
             <span className="pt-0 text-[13px] block w-100">
@@ -85,10 +91,10 @@ const AddressBox = (props) => {
                     }}
                 >
                     <MenuItem onClick={()=>editAddress(props?.address?._id)}>
-                        Edit
+                        Chỉnh sửa
                     </MenuItem>
                     <MenuItem onClick={()=>removeAddress(props?.address?._id)}>
-                        Delete
+                        Xóa
                     </MenuItem>
                 </Menu>
 

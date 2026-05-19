@@ -20,8 +20,8 @@ const addressSchema = mongoose.Schema({
         type : String
     },
     mobile : {
-        type : Number,
-        default : null
+        type : String,
+        default : ""
     },
     status : {
         type : Boolean,

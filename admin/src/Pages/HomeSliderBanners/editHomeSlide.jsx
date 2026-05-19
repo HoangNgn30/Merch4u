@@ -47,18 +47,24 @@ const EditHomeSlide = () => {
     }
 
     const removeImg = (image, index) => {
-        var imageArr = [];
-        imageArr = previews;
-        deleteImages(`/api/homeSlides/deteleImage?img=${image}`).then((res) => {
-            imageArr.splice(index, 1);
+        context?.showConfirmDelete(
+            "Xóa ảnh slide?",
+            "Bạn có chắc chắn muốn xóa ảnh slide này?",
+            () => {
+                var imageArr = [];
+                imageArr = previews;
+                deleteImages(`/api/homeSlides/deteleImage?img=${image}`).then((res) => {
+                    imageArr.splice(index, 1);
 
-            setPreviews([]);
-            setTimeout(() => {
-                setPreviews(imageArr);
-                formFields.images = imageArr
-            }, 100);
+                    setPreviews([]);
+                    setTimeout(() => {
+                        setPreviews(imageArr);
+                        formFields.images = imageArr
+                    }, 100);
 
-        })
+                })
+            }
+        )
     }
 
 
@@ -69,7 +75,7 @@ const EditHomeSlide = () => {
 
     
             if (previews?.length === 0) {
-                context.alertBox("error", "Please select category image");
+                context.alertBox("error", "Vui lòng chọn ảnh slide");
                 setIsLoading(false);
                 return false
             }
@@ -125,7 +131,7 @@ const EditHomeSlide = () => {
                                 :
                                 <>
                                     <FaCloudUploadAlt className='text-[25px] text-white' />
-                                    Publish and View
+                                    Lưu và xem
                                 </>
                         }
                     </Button>

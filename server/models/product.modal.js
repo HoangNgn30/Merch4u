@@ -67,6 +67,15 @@ const productSchema = mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    status: {
+        type: String,
+        enum: ['available', 'pre-order', 'exclusive', 'sold-out'],
+        default: 'available',
+    },
+    isNew: {
+        type: Boolean,
+        default: false,
+    },
     discount: {
         type: Number,
         required: true,
@@ -75,19 +84,7 @@ const productSchema = mongoose.Schema({
         type: Number,
         default:0
     },
-    productRam: [
-        {
-            type: String,
-            default: null,
-        }
-    ],
     size: [
-        {
-            type: String,
-            default: null,
-        }
-    ],
-    productWeight: [
         {
             type: String,
             default: null,
@@ -115,7 +112,8 @@ const productSchema = mongoose.Schema({
         default: undefined,
     },
 },{
-    timestamps : true
+    timestamps : true,
+    suppressReservedKeysWarning: true
 });
 
 

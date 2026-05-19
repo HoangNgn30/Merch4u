@@ -86,13 +86,13 @@ const AddSubCategory = () => {
         setIsLoading(true);
 
         if (formFields.name === "") {
-            context.alertBox("error", "Please enter category name");
+            context.alertBox("error", "Vui lòng nhập tên danh mục");
             setIsLoading(false);
             return false
         }
 
         if (productCat === "") {
-            context.alertBox("error", "Please select parent category");
+            context.alertBox("error", "Vui lòng chọn danh mục cha");
             setIsLoading(false);
             return false
         }
@@ -120,13 +120,13 @@ const AddSubCategory = () => {
         console.log(formFields2)
 
         if (formFields2.name === "") {
-            context.alertBox("error", "Please enter category name");
+            context.alertBox("error", "Vui lòng nhập tên danh mục");
             setIsLoading2(false);
             return false
         }
 
         if (productCat2 === "") {
-            context.alertBox("error", "Please select parent category");
+            context.alertBox("error", "Vui lòng chọn danh mục cha");
             setIsLoading2(false);
             return false
         }
@@ -146,18 +146,18 @@ const AddSubCategory = () => {
     return (
         <section className='p-5 bg-gray-50 grid grid-cols-1 md:grid-cols-2  gap-10'>
             <form className='form py-1 p-1 md:p-8 md:py-1' onSubmit={handleSubmit}>
-                <h4 className="font-[600]">Add Sub Category</h4>
+                <h4 className="font-[600]">Thêm danh mục con</h4>
                 <div className='scroll max-h-[72vh] overflow-y-scroll pr-4 pt-4'>
                     <div className='grid grid-cols-1 md:grid-cols-1 mb-3 gap-5'>
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Product Category</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Danh mục sản phẩm</h3>
                             <Select
                                 labelId="demo-simple-select-label"
                                 id="productCatDrop"
                                 size="small"
                                 className='w-full'
                                 value={productCat}
-                                label="Category"
+                                label="Danh mục"
                                 onChange={handleChangeProductCat}
                             >
                                 {
@@ -172,7 +172,7 @@ const AddSubCategory = () => {
                         </div>
 
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Sub Category  Name</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Tên danh mục con</h3>
                             <input type="text" className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm' name="name" value={formFields.name} onChange={onChangeInput} />
                         </div>
 
@@ -191,7 +191,7 @@ const AddSubCategory = () => {
                                 :
                                 <>
                                     <FaCloudUploadAlt className='text-[25px] text-white' />
-                                    Publish and View
+                                    Lưu và xem
                                 </>
                         }
                     </Button>
@@ -204,18 +204,18 @@ const AddSubCategory = () => {
 
 
             <form className='form py-1 p-1 md:p-8 md:py-1' onSubmit={handleSubmit2}>
-                <h4 className="font-[600]">Add Third Lavel Category</h4>
+                <h4 className="font-[600]">Thêm danh mục cấp ba</h4>
                 <div className='scroll max-h-[72vh] overflow-y-scroll pr-4 pt-4'>
                     <div className='grid grid-cols-1 md:grid-cols-1 mb-3 gap-5'>
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Product Category</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Danh mục sản phẩm</h3>
                             <Select
                                 labelId="demo-simple-select-label"
                                 id="productCatDrop"
                                 size="small"
                                 className='w-full'
                                 value={productCat2}
-                                label="Category"
+                                label="Danh mục"
                                 onChange={handleChangeProductCat2}
                             >
                                 {
@@ -235,7 +235,7 @@ const AddSubCategory = () => {
                         </div>
 
                         <div className='col'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Sub Category  Name</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Tên danh mục con</h3>
                             <input type="text" className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm' name="name" value={formFields2.name} onChange={onChangeInput2} />
                         </div>
 
@@ -254,7 +254,7 @@ const AddSubCategory = () => {
                                 :
                                 <>
                                     <FaCloudUploadAlt className='text-[25px] text-white' />
-                                    Publish and View
+                                    Lưu và xem
                                 </>
                         }
                     </Button>

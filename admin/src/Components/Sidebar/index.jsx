@@ -1,6 +1,6 @@
 import { Button } from "@mui/material";
 import React, { useContext, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
 import { FaRegImage } from "react-icons/fa";
 import { FiUsers } from "react-icons/fi";
@@ -8,6 +8,8 @@ import { RiProductHuntLine } from "react-icons/ri";
 import { TbCategory } from "react-icons/tb";
 import { IoBagCheckOutline } from "react-icons/io5";
 import { IoMdLogOut } from "react-icons/io";
+import { MdOutlineDiscount } from "react-icons/md";
+import { MdAdminPanelSettings } from "react-icons/md";
 import { FaAngleDown } from "react-icons/fa6";
 import { Collapse } from "react-collapse";
 import { MyContext } from "../../App";
@@ -28,6 +30,8 @@ const Sidebar = () => {
   };
 
   const context = useContext(MyContext);
+  const history = useNavigate();
+  const canManageAccess = context?.userData?.role === "SUPERBOSS";
 
 
   const logout = () => {
@@ -47,7 +51,16 @@ const Sidebar = () => {
 
   return (
     <>
-      <div className={`sidebar fixed top-0 left-0 z-[52] bg-[#fff] h-full border-r border-[rgba(0,0,0,0.1)] py-2 px-4 w-[${context.isSidebarOpen === true ? `${20}%` : '0px'}]`}>
+      <div
+        className={`sidebar fixed top-0 left-0 z-[52] bg-[#fff] h-full border-r border-[rgba(0,0,0,0.1)] py-2 px-4 transition-transform duration-300 ${
+          !context.isSidebarOpen && context?.windowWidth < 992 ? "-translate-x-full" : "translate-x-0"
+        }`}
+        style={
+          context?.windowWidth < 992
+            ? { width: "min(85vw, 320px)" }
+            : { width: "clamp(200px, 20vw, 300px)", maxWidth: 300 }
+        }
+      >
         <div className="py-2 w-full"
           onClick={() => {
             context?.windowWidth < 992 && context?.setisSidebarOpen(false)
@@ -71,7 +84,7 @@ const Sidebar = () => {
               }}
             >
               <Button className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]">
-                <RxDashboard className="text-[18px]" /> <span>Dashboard</span>
+                <RxDashboard className="text-[18px]" /> <span>Tổng quan</span>
               </Button>
             </Link>
           </li>
@@ -81,7 +94,7 @@ const Sidebar = () => {
               className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]"
               onClick={() => isOpenSubMenu(1)}
             >
-              <FaRegImage className="text-[18px]" /> <span>Home Slides</span>
+              <FaRegImage className="text-[18px]" /> <span>Slide trang chủ</span>
               <span className="ml-auto w-[30px] h-[30px] flex items-center justify-center">
                 <FaAngleDown
                   className={`transition-all ${submenuIndex === 1 ? "rotate-180" : ""
@@ -101,7 +114,7 @@ const Sidebar = () => {
                   >
                     <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3">
                       <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>{" "}
-                      Home Banners List
+                      Danh sách banner trang chủ
                     </Button>
                   </Link>
                 </li>
@@ -115,7 +128,7 @@ const Sidebar = () => {
                     setSubmenuIndex(null)
                   }}>
                     <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                    Add Home Banner Slide
+                    Thêm slide banner trang chủ
                   </Button>
                 </li>
               </ul>
@@ -128,7 +141,7 @@ const Sidebar = () => {
               className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]"
               onClick={() => isOpenSubMenu(3)}
             >
-              <TbCategory className="text-[18px]" /> <span>Category</span>
+              <TbCategory className="text-[18px]" /> <span>Danh mục</span>
               <span className="ml-auto w-[30px] h-[30px] flex items-center justify-center">
                 <FaAngleDown
                   className={`transition-all ${submenuIndex === 3 ? "rotate-180" : ""
@@ -146,7 +159,7 @@ const Sidebar = () => {
                   }}>
                     <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3">
                       <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>{" "}
-                      Category List
+                      Danh sách danh mục
 
                     </Button>
                   </Link>
@@ -161,7 +174,7 @@ const Sidebar = () => {
                     setSubmenuIndex(null)
                   }}>
                     <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                    Add a Category
+                    Thêm danh mục
                   </Button>
                 </li>
                 <li className="w-full">
@@ -170,7 +183,7 @@ const Sidebar = () => {
                   }}>
                     <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3">
                       <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                      Sub Category List
+                      Danh sách danh mục con
                     </Button>
                   </Link>
                 </li>
@@ -184,7 +197,7 @@ const Sidebar = () => {
                     setSubmenuIndex(null)
                   }}>
                     <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                    Add a Sub Category
+                    Thêm danh mục con
                   </Button>
                 </li>
               </ul>
@@ -197,7 +210,7 @@ const Sidebar = () => {
               onClick={() => isOpenSubMenu(4)}
             >
               <RiProductHuntLine className="text-[18px]" />{" "}
-              <span>Products</span>
+              <span>Sản phẩm</span>
               <span className="ml-auto w-[30px] h-[30px] flex items-center justify-center">
                 <FaAngleDown
                   className={`transition-all ${submenuIndex === 4 ? "rotate-180" : ""
@@ -215,7 +228,7 @@ const Sidebar = () => {
                   }}>
                     <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3">
                       <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>{" "}
-                      Product List
+                      Danh sách sản phẩm
                     </Button>
                   </Link>
                 </li>
@@ -229,50 +242,14 @@ const Sidebar = () => {
                     setSubmenuIndex(null)
                   }}>
                     <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                    Product Upload
+                    Thêm sản phẩm
                   </Button>
                 </li>
 
 
-                <li className="w-full">
-                  <Link to="/product/addRams" onClick={() => {
-                    context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-                    setSubmenuIndex(null)
-                  }}>
-                    <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3">
-                      <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                      Add Product RAMS
-                    </Button>
-                  </Link>
-                </li>
 
-                <li className="w-full">
-                  <Link to="/product/addWeight"
-                    onClick={() => {
-                      context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-                      setSubmenuIndex(null)
-                    }}
-                  >
-                    <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3">
-                      <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                      Add Product WEIGHT
-                    </Button>
-                  </Link>
-                </li>
 
-                <li className="w-full">
-                  <Link to="/product/addSize"
-                    onClick={() => {
-                      context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-                      setSubmenuIndex(null)
-                    }}
-                  >
-                    <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3">
-                      <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                      Add Product SIZE
-                    </Button>
-                  </Link>
-                </li>
+
               </ul>
             </Collapse>
           </li>
@@ -287,10 +264,27 @@ const Sidebar = () => {
               }}
             >
               <Button className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]">
-                <FiUsers className="text-[18px]" /> <span>Users</span>
+                <FiUsers className="text-[18px]" /> <span>Người dùng</span>
               </Button>
             </Link>
           </li>
+
+
+          {
+            canManageAccess &&
+            <li>
+              <Link to="/access-control"
+                onClick={() => {
+                  context?.windowWidth < 992 && context?.setisSidebarOpen(false)
+                  setSubmenuIndex(null)
+                }}
+              >
+                <Button className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]">
+                  <MdAdminPanelSettings className="text-[20px]" /> <span>Phân quyền</span>
+                </Button>
+              </Link>
+            </li>
+          }
 
 
           <li>
@@ -301,7 +295,20 @@ const Sidebar = () => {
               }}
             >
               <Button className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]">
-                <IoBagCheckOutline className="text-[20px]" /> <span>Orders</span>
+                <IoBagCheckOutline className="text-[20px]" /> <span>Đơn hàng</span>
+              </Button>
+            </Link>
+          </li>
+
+          <li>
+            <Link to="/coupons"
+              onClick={() => {
+                context?.windowWidth < 992 && context?.setisSidebarOpen(false)
+                setSubmenuIndex(null)
+              }}
+            >
+              <Button className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]">
+                <MdOutlineDiscount className="text-[20px]" /> <span>Mã Giảm Giá</span>
               </Button>
             </Link>
           </li>
@@ -315,7 +322,7 @@ const Sidebar = () => {
               onClick={() => isOpenSubMenu(5)}
             >
               <RiProductHuntLine className="text-[18px]" />
-              <span>Banners</span>
+              <span>Banner</span>
               <span className="ml-auto w-[30px] h-[30px] flex items-center justify-center">
                 <FaAngleDown
                   className={`transition-all ${submenuIndex === 5 ? "rotate-180" : ""
@@ -335,7 +342,7 @@ const Sidebar = () => {
                   >
                     <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3">
                       <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>{" "}
-                      rightBannerList
+                      Danh sách banner phải
                     </Button>
                   </Link>
                 </li>
@@ -349,7 +356,7 @@ const Sidebar = () => {
                     setSubmenuIndex(null)
                   }}>
                     <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                    addRightBanner
+                    Thêm banner phải
                   </Button>
                 </li>
               </ul>
@@ -363,7 +370,7 @@ const Sidebar = () => {
               onClick={() => isOpenSubMenu(6)}
             >
               <SiBloglovin className="text-[18px]" />
-              <span>Blogs</span>
+              <span>Blog</span>
               <span className="ml-auto w-[30px] h-[30px] flex items-center justify-center">
                 <FaAngleDown
                   className={`transition-all ${submenuIndex === 6 ? "rotate-180" : ""
@@ -381,7 +388,7 @@ const Sidebar = () => {
                   }}>
                     <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3">
                       <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                      Blog List
+                      Danh sách bài viết
                     </Button>
                   </Link>
                 </li>
@@ -395,7 +402,7 @@ const Sidebar = () => {
                     setSubmenuIndex(null)
                   }}>
                     <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                    Add Blog
+                    Thêm bài viết
                   </Button>
                 </li>
 
@@ -411,14 +418,14 @@ const Sidebar = () => {
                 className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]"
               >
                 <IoLogoBuffer className="text-[18px]" />
-                <span>Manage Logo</span>
+                <span>Quản lý logo</span>
               </Button>
             </Link>
           </li>
 
           <li>
             <Button className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]" onClick={logout}>
-              <IoMdLogOut className="text-[20px]" /> <span>Logout</span>
+              <IoMdLogOut className="text-[20px]" /> <span>Đăng xuất</span>
             </Button>
           </li>
         </ul>
@@ -430,8 +437,7 @@ const Sidebar = () => {
 
       {
         context?.windowWidth < 920 && context?.isSidebarOpen === true &&
-        <div className="sidebarOverlay pointer-events-none fixed top-0 left-0 bg-[rgba(0,0,0,0.5)] w-full h-full
-       z-[51]" onClick={() => {
+        <div className="sidebarOverlay fixed top-0 left-0 bg-[rgba(0,0,0,0.45)] w-full h-full z-[51]" role="presentation" onClick={() => {
             context?.setisSidebarOpen(false)
             setSubmenuIndex(null)
           }}>

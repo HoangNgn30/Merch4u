@@ -100,18 +100,24 @@ export const EditBannerV1 = () => {
 
 
     const removeImg = (image, index) => {
-        var imageArr = [];
-        imageArr = previews;
-        deleteImages(`/api/category/deteleImage?img=${image}`).then((res) => {
-            imageArr.splice(index, 1);
+        context?.showConfirmDelete(
+            "Xóa ảnh banner?",
+            "Bạn có chắc chắn muốn xóa ảnh banner này?",
+            () => {
+                var imageArr = [];
+                imageArr = previews;
+                deleteImages(`/api/product/deteleImage?img=${image}`).then((res) => {
+                    imageArr.splice(index, 1);
 
-            setPreviews([]);
-            setTimeout(() => {
-                setPreviews(imageArr);
-                formFields.images = imageArr
-            }, 100);
+                    setPreviews([]);
+                    setTimeout(() => {
+                        setPreviews(imageArr);
+                        formFields.images = imageArr
+                    }, 100);
 
-        })
+                })
+            }
+        )
     }
 
 
@@ -132,19 +138,19 @@ export const EditBannerV1 = () => {
         console.log(formFields)
 
         if (formFields.bannerTitle === "") {
-            context.alertBox("error", "Please enter bannerTitle");
+            context.alertBox("error", "Vui lòng nhập tiêu đề banner");
             setIsLoading(false);
             return false
         }
 
         if (formFields.price === "") {
-            context.alertBox("error", "Please enter price");
+            context.alertBox("error", "Vui lòng nhập giá");
             setIsLoading(false);
             return false
         }
 
         if (previews?.length === 0) {
-            context.alertBox("error", "Please select category image");
+            context.alertBox("error", "Vui lòng chọn ảnh banner");
             setIsLoading(false);
             return false
         }
@@ -365,7 +371,7 @@ export const EditBannerV1 = () => {
                                 :
                                 <>
                                     <FaCloudUploadAlt className='text-[25px] text-white' />
-                                    Publish and View
+                                    Lưu và xem
                                 </>
                         }
                     </Button>

@@ -82,18 +82,9 @@ const OrderConfirmationEmail = (username, orders) => {
 
     
                     <tr>
-                     <td colspan={1}></td>
-                        <td colspan={2}>Tổng</td>
-                        <td colspan={1}>
-                            ${(orders?.products?.length !== 0
-            ? orders?.products
-                ?.map(
-                    (item) =>
-                        parseInt(item.subTotal) * item.quantity
-                )
-                .reduce((total, value) => total + value, 0)
-            : 0
-        )?.toLocaleString("vi-VN", {
+                        <td colspan="2" style="text-align: right; font-weight: bold;">Tổng cộng:</td>
+                        <td style="font-weight: bold; color: #ff5252;">
+                            ${(orders?.totalAmt || 0)?.toLocaleString("vi-VN", {
             style: "currency",
             currency: "VND",
         })}
@@ -107,7 +98,7 @@ const OrderConfirmationEmail = (username, orders) => {
             <p>Nếu có bất kỳ thắc mắc nào, đừng ngần ngại liên hệ với chúng tôi.</p>
         </div >
     <div className="footer">
-        &copy; ${new Date().getFullYear()} Mearch4u. Bản quyền đã được bảo lưu.
+        &copy; ${new Date().getFullYear()} Merch4u. Bản quyền đã được bảo lưu.
     </div>
     </div >
 </body >

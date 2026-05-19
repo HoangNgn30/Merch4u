@@ -12,7 +12,8 @@ import TableRow from "@mui/material/TableRow";
 import { AiOutlineEdit } from "react-icons/ai";
 import { GoTrash } from "react-icons/go";
 import { MyContext } from '../../App';
-import { deleteData, fetchDataFromApi } from '../../utils/api';
+import { deleteData, editData, fetchDataFromApi } from '../../utils/api';
+import Switch from "@mui/material/Switch";
 
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
@@ -21,8 +22,9 @@ import "yet-another-react-lightbox/styles.css";
 const label = { inputProps: { "aria-label": "Checkbox demo" } };
 
 const columns = [
-    { id: "image", label: "IMAGE", minWidth: 250 },
-    { id: "action", label: "Action", minWidth: 100 },
+    { id: "image", label: "HÌNH ẢNH", minWidth: 250, align: "center" },
+    { id: "status", label: "TRẠNG THÁI", minWidth: 100, align: "center" },
+    { id: "action", label: "Thao Tác", minWidth: 100, align: "center" },
 ];
 
 export const HomeSliderBanners = () => {
@@ -73,41 +75,61 @@ export const HomeSliderBanners = () => {
 
 
     const deleteSlide = (id) => {
-        if (context?.userData?.role === "ADMIN") {
-            deleteData(`/api/homeSlides/${id}`).then((res) => {
-                context.alertBox("success", "Slide deleted");
-                getData();
-            })
+        if (["ADMIN", "SUPERBOSS"].includes(context?.userData?.role)) {
+            context?.showConfirmDelete(
+                "Xóa slide?",
+                "Bạn có chắc chắn muốn xóa slide này?",
+                () => {
+                    deleteData(`/api/homeSlides/${id}`).then((res) => {
+                        context.alertBox("success", "Slide deleted");
+                        getData();
+                    })
+                }
+            )
         } else {
             context.alertBox("error", "Only admin can delete data");
         }
     }
 
+    const toggleVisibility = (item) => {
+        if (["ADMIN", "SUPERBOSS"].includes(context?.userData?.role)) {
+            const newStatus = item.isVisible === false ? true : false;
+            editData(`/api/homeSlides/${item._id}`, { isVisible: newStatus }).then((res) => {
+                if (res?.status === 200 || res?.data?.error === false) {
+                    context.alertBox("success", "Cập nhật trạng thái slide thành công");
+                    getData();
+                } else {
+                    context.alertBox("error", res?.data?.message || "Cập nhật thất bại");
+                }
+            });
+        } else {
+            context.alertBox("error", "Only admin can toggle status");
+        }
+    }
+
+
     return (
         <>
+            <div className="card my-2 pt-5 shadow-md sm:rounded-lg bg-white">
+                <div className="flex items-center w-full px-5 pb-4 justify-between">
+                    <div className="col">
+                        <h2 className="text-[18px] font-[600]">
+                            Slide banner trang chủ
+                        </h2>
+                    </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 px-2 py-0 mt-1 md:mt-2">
-                <h2 className="text-[18px] font-[600]">
-                    Home Slider Banners
-                    <span className="font-[400] text-[14px]"></span>
-                </h2>
-
-                <div className="col flex items-center justify-start md:justify-end gap-3">
-                    {
-                        sortedIds?.length !== 0 && <Button variant="contained" className="btn-sm" size="small" color="error"
-                            onClick={deleteMultipleSlides}>Delete</Button>
-                    }
-                    <Button className="btn-blue !text-white btn-sm" onClick={() => context.setIsOpenFullScreenPanel({
-                        open: true,
-                        model: 'Add Home Slide'
-                    })}>Add Home Slide</Button>
+                    <div className="col ml-auto flex items-center gap-3">
+                        {
+                            sortedIds?.length !== 0 && <Button variant="contained" className="btn-sm" size="small" color="error"
+                                onClick={deleteMultipleSlides}>Xóa</Button>
+                        }
+                        <Button className="btn-blue !text-white btn-sm" onClick={() => context.setIsOpenFullScreenPanel({
+                            open: true,
+                            model: 'Add Home Slide'
+                        })}>Thêm slide trang chủ</Button>
+                    </div>
                 </div>
 
-
-            </div>
-
-
-            <div className="card my-4 pt-5 shadow-md sm:rounded-lg bg-white">
 
                 <TableContainer sx={{ maxHeight: 440 }}>
                     <Table stickyHeader aria-label="sticky table">
@@ -132,8 +154,8 @@ export const HomeSliderBanners = () => {
                                     return (
                                         <TableRow>
 
-                                            <TableCell width={300}>
-                                                <div className="flex items-center gap-4 w-[300px] cursor-pointer" onClick={() => setOpen(true)}>
+                                            <TableCell width={300} align="center">
+                                                <div className="flex items-center justify-center gap-4 w-[300px] cursor-pointer mx-auto" onClick={() => setOpen(true)}>
                                                     <div className="img w-full rounded-md overflow-hidden group">
 
                                                         <img
@@ -145,10 +167,17 @@ export const HomeSliderBanners = () => {
                                                 </div>
                                             </TableCell>
 
+                                            <TableCell width={100} align="center">
+                                                <Switch 
+                                                    checked={item?.isVisible !== false} 
+                                                    onChange={() => toggleVisibility(item)}
+                                                    color="primary"
+                                                />
+                                            </TableCell>
 
-                                            <TableCell width={100}>
-                                                <div className="flex items-center gap-1">
-                                                    <Button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:!bg-[#f1f1f1] !min-w-[35px]"
+                                            <TableCell width={100} align="center">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:bg-[#e2e2e2] flex items-center justify-center transition-all"
                                                         onClick={() => context.setIsOpenFullScreenPanel({
                                                             open: true,
                                                             model: 'Edit Home Slide',
@@ -157,12 +186,12 @@ export const HomeSliderBanners = () => {
                                                         }
                                                     >
                                                         <AiOutlineEdit className="text-[rgba(0,0,0,0.7)] text-[20px] " />
-                                                    </Button>
+                                                    </button>
 
 
-                                                    <Button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:!bg-[#f1f1f1] !min-w-[35px]" onClick={() => deleteSlide(item?._id)}>
+                                                    <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:bg-[#e2e2e2] flex items-center justify-center transition-all" onClick={() => deleteSlide(item?._id)}>
                                                         <GoTrash className="text-[rgba(0,0,0,0.7)] text-[18px] " />
-                                                    </Button>
+                                                    </button>
                                                 </div>
                                             </TableCell>
 
@@ -179,6 +208,7 @@ export const HomeSliderBanners = () => {
                     </Table>
                 </TableContainer>
                 <TablePagination
+                    labelRowsPerPage="Số hàng mỗi trang:"
                     rowsPerPageOptions={[10, 25, 100]}
                     component="div"
                     count={10}

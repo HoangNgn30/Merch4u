@@ -1,166 +1,326 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
-import { MyContext } from '../../App';
-import './style.css';
+import React, { useContext, useEffect, useRef, useState, useCallback } from "react";
+import DOMPurify from "dompurify";
+import { useNavigate } from "react-router-dom";
+import { MyContext } from "../../App";
+import { API_URL, fetchDataFromApi, deleteData } from "../../utils/api";
+import "./style.css";
 
-/**
- * Parse markdown đơn giản: **bold**, *italic*, dấu gạch đầu dòng, xuống dòng
- */
+const CHAT_SESSION_KEY = "merch4u_chat_session_id";
+
 function parseMarkdown(text) {
-    if (!text) return '';
-    return text
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" class="chat-link" style="color: #6c63ff; font-weight: 600; text-decoration: underline;">$1</a>')
-        .replace(/^[\-•]\s(.+)/gm, '<li>$1</li>')
-        .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
-        .replace(/\n/g, '<br/>');
+    if (!text) return "";
+
+    const html = text
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\*(.+?)\*/g, "<em>$1</em>")
+        .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" class="chat-link">$1</a>')
+        .replace(/^[\-•]\s(.+)/gm, "<li>$1</li>")
+        .replace(/(<li>.*<\/li>)/gs, "<ul>$1</ul>")
+        .replace(/\n/g, "<br/>");
+
+    return DOMPurify.sanitize(html, {
+        ALLOWED_TAGS: ["a", "br", "em", "li", "strong", "ul"],
+        ALLOWED_ATTR: ["class", "href"],
+    });
 }
 
-const API_URL = import.meta.env.VITE_API_URL;
+function ChatProductCards({ products = [], onView, onAdd }) {
+    if (!products.length) return null;
+
+    return (
+        <div className="chatbot-product-cards">
+            {products.map((product) => (
+                <div className="chatbot-product-card" key={product._id}>
+                    <button
+                        type="button"
+                        className="chatbot-product-image"
+                        onClick={() => onView(product._id)}
+                        aria-label={`Xem ${product.name}`}
+                    >
+                        {product?.images?.[0] && <img src={product.images[0]} alt={product.name} />}
+                    </button>
+                    <div className="chatbot-product-info">
+                        <button
+                            type="button"
+                            className="chatbot-product-name"
+                            onClick={() => onView(product._id)}
+                        >
+                            {product.name}
+                        </button>
+                        <div className="chatbot-product-price">
+                            {Number(product.price || 0).toLocaleString("vi-VN")}đ
+                        </div>
+                        <div className="chatbot-product-actions">
+                            <button type="button" onClick={() => onView(product._id)}>
+                                Xem
+                            </button>
+                            <button type="button" onClick={() => onAdd(product)}>
+                                Thêm giỏ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
 
 export default function AIChatBot() {
     const context = useContext(MyContext);
     const { isLogin, userData } = context;
-
-    console.log("%c🤖 AI ChatBot is mounting...", "color: #6c63ff; font-weight: bold; font-size: 14px;");
+    const navigate = useNavigate();
 
     const [isOpen, setIsOpen] = useState(false);
-    
-    // Khôi phục tin nhắn từ localStorage hoặc mảng rỗng
-    const [messages, setMessages] = useState(() => {
-        const saved = localStorage.getItem('merch4u_chat_history');
-        return saved ? JSON.parse(saved) : [];
-    });
-    
-    const [inputValue, setInputValue] = useState('');
+    const [showHistory, setShowHistory] = useState(false);
+    const [messages, setMessages] = useState([]);
+    const [inputValue, setInputValue] = useState("");
     const [isStreaming, setIsStreaming] = useState(false);
-    
-    // Khôi phục trạng thái đã chào
-    const [hasGreeted, setHasGreeted] = useState(() => {
-        return localStorage.getItem('merch4u_chat_greeted') === 'true';
-    });
+    const [hasGreeted, setHasGreeted] = useState(false);
+    const [sessionId, setSessionId] = useState("");
+    const [sessions, setSessions] = useState([]);
+    const [loadingSessions, setLoadingSessions] = useState(false);
+    const [quickQuestions, setQuickQuestions] = useState([
+        "Có áo BTS không?",
+        "Sản phẩm sale hôm nay?",
+        "Gợi ý quà sinh nhật",
+    ]);
 
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
     const abortControllerRef = useRef(null);
+    const prevLoginRef = useRef(isLogin);
 
-    // Tự động lưu tin nhắn và trạng thái chào vào localStorage
+    // Scroll to bottom when messages change
     useEffect(() => {
-        localStorage.setItem('merch4u_chat_history', JSON.stringify(messages));
-        localStorage.setItem('merch4u_chat_greeted', hasGreeted.toString());
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages, hasGreeted]);
+    }, [messages]);
 
-    // RESET khi Đăng xuất: Chỉ xóa nếu thực sự không còn accessToken trong localStorage
+    // On logout: clear everything visible
+    // On login: load a fresh new chat (history stays in DB)
     useEffect(() => {
-        const token = localStorage.getItem('accessToken');
-        if (!token) {
+        const wasLoggedIn = prevLoginRef.current;
+        prevLoginRef.current = isLogin;
+
+        if (!isLogin) {
+            // Logged out → wipe visible state
             setMessages([]);
             setHasGreeted(false);
-            localStorage.removeItem('merch4u_chat_history');
-            localStorage.removeItem('merch4u_chat_greeted');
+            setSessionId("");
+            setSessions([]);
+            setShowHistory(false);
+            localStorage.removeItem(CHAT_SESSION_KEY);
+        } else if (!wasLoggedIn && isLogin) {
+            // Just logged in → start fresh chat, don't restore old session
+            setMessages([]);
+            setHasGreeted(false);
+            setSessionId("");
+            localStorage.removeItem(CHAT_SESSION_KEY);
         }
-    }, [isLogin]); // Vẫn theo dõi isLogin để kích hoạt khi Header thay đổi state này
+    }, [isLogin]);
+
+    // Greeting on open
     useEffect(() => {
         if (isOpen && !hasGreeted) {
-            const name = userData?.name ? userData.name.split(' ').pop() : null;
+            const name = userData?.name ? userData.name.split(" ").pop() : null;
             const greeting = name
-                ? `Chào ${name}! 👋 Mình là trợ lý AI của **Merch4u**. Bạn đang tìm merchandise của idol nào vậy? Mình sẽ tìm ngay cho bạn! 🎵`
-                : `Xin chào! 👋 Mình là trợ lý AI của **Merch4u** — chuyên đồ Merchandise chính hãng. Hỏi mình bất cứ điều gì nhé!`;
+                ? `Chào ${name}! Mình là trợ lý AI của **Merch4u**. Bạn đang tìm merchandise của idol nào vậy?`
+                : "Xin chào! Mình là trợ lý AI của **Merch4u**. Hỏi mình về sản phẩm, quà tặng hoặc đơn hàng nhé.";
 
-            const greetingMsg = { role: 'ai', text: greeting, id: Date.now() };
-            setMessages(prev => [...prev, greetingMsg]);
+            setMessages((prev) => [...prev, { role: "ai", text: greeting, id: Date.now() }]);
             setHasGreeted(true);
         }
     }, [isOpen, hasGreeted, userData]);
 
-    // Auto scroll xuống cuối
+    // Quick suggestions on open
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+        if (!isOpen) return;
 
-    // Focus input khi mở
-    useEffect(() => {
-        if (isOpen) {
-            setTimeout(() => inputRef.current?.focus(), 150);
-        }
+        setTimeout(() => inputRef.current?.focus(), 150);
+
+        const currentProductId = localStorage.getItem("merch4u_current_product_id");
+        const query = currentProductId ? `?productId=${currentProductId}` : "";
+
+        fetchDataFromApi(`/api/ai/suggestions${query}`).then((res) => {
+            if (res?.error === false && res?.suggestions?.length) {
+                setQuickQuestions(res.suggestions);
+            }
+        });
     }, [isOpen]);
+
+    // Fetch chat sessions list (for logged-in users)
+    const fetchSessions = useCallback(() => {
+        if (!isLogin) {
+            setSessions([]);
+            return;
+        }
+        setLoadingSessions(true);
+        fetchDataFromApi("/api/ai/chat-sessions").then((res) => {
+            if (res?.success) {
+                setSessions(res.sessions || []);
+            }
+            setLoadingSessions(false);
+        }).catch(() => setLoadingSessions(false));
+    }, [isLogin]);
+
+    // Fetch sessions when history panel is opened
+    useEffect(() => {
+        if (showHistory && isLogin) {
+            fetchSessions();
+        }
+    }, [showHistory, isLogin, fetchSessions]);
 
     const handleToggle = () => setIsOpen((prev) => !prev);
 
-    const handleSend = async () => {
-        const text = inputValue.trim();
+    // Start a brand new chat
+    const handleNewChat = () => {
+        setMessages([]);
+        setHasGreeted(false);
+        setSessionId("");
+        setShowHistory(false);
+        localStorage.removeItem(CHAT_SESSION_KEY);
+    };
+
+    // Load an old session from history
+    const handleLoadSession = (sid) => {
+        if (!sid) return;
+        fetchDataFromApi(`/api/ai/chat-sessions/${sid}`).then((res) => {
+            if (res?.success && res.session) {
+                const loadedMessages = (res.session.messages || []).map((msg, i) => ({
+                    role: msg.role,
+                    text: msg.text || "",
+                    id: Date.now() + i,
+                    products: msg.products || [],
+                }));
+                setMessages(loadedMessages);
+                setSessionId(sid);
+                setHasGreeted(true);
+                setShowHistory(false);
+                localStorage.setItem(CHAT_SESSION_KEY, sid);
+            }
+        });
+    };
+
+    // Delete a session from history
+    const handleDeleteSession = (sid) => {
+        if (!window.confirm("Bạn có chắc muốn xóa cuộc trò chuyện này?")) return;
+        deleteData(`/api/ai/chat-sessions/${sid}`).then((res) => {
+            if (res?.success) {
+                setSessions((prev) => prev.filter((s) => s._id !== sid));
+                // If we're currently viewing the deleted session, start fresh
+                if (sessionId === sid) {
+                    handleNewChat();
+                }
+            }
+        });
+    };
+
+    const updateAIMessage = (aiMsgId, patch) => {
+        setMessages((prev) =>
+            prev.map((message) =>
+                message.id === aiMsgId ? { ...message, ...patch } : message
+            )
+        );
+    };
+
+    const sendMessage = async (overrideText) => {
+        const text = (overrideText || inputValue).trim();
         if (!text || isStreaming) return;
 
-        // Thêm tin nhắn user
-        const userMsg = { role: 'user', text, id: Date.now() };
-        setMessages((prev) => [...prev, userMsg]);
-        setInputValue('');
-        setIsStreaming(true);
-
-        // Placeholder AI đang gõ
+        const userMsg = { role: "user", text, id: Date.now() };
         const aiMsgId = Date.now() + 1;
+
         setMessages((prev) => [
             ...prev,
-            { role: 'ai', text: '', id: aiMsgId, isTyping: true },
+            userMsg,
+            { role: "ai", text: "", id: aiMsgId, isTyping: true, products: [] },
         ]);
+        setInputValue("");
+        setIsStreaming(true);
 
         try {
             abortControllerRef.current = new AbortController();
+            const token = localStorage.getItem("accessToken");
+            const headers = { "Content-Type": "application/json" };
+            if (token) headers.Authorization = `Bearer ${token}`;
 
             const response = await fetch(`${API_URL}/api/ai/chat`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-                },
-                body: JSON.stringify({ message: text }),
+                method: "POST",
+                headers,
+                body: JSON.stringify({ message: text, sessionId }),
                 signal: abortControllerRef.current.signal,
             });
 
-            if (!response.ok) throw new Error('API lỗi');
+            const contentType = response.headers.get("content-type") || "";
+
+            if (!response.ok) {
+                let errMsg = "AI đang bận. Bạn thử lại sau nhé!";
+                try {
+                    const errData = await response.json();
+                    errMsg = errData?.message || errMsg;
+                } catch {
+                    /* ignore */
+                }
+                updateAIMessage(aiMsgId, { text: errMsg, isTyping: false });
+                return;
+            }
+
+            if (!contentType.includes("text/event-stream") || !response.body) {
+                const data = await response.json();
+                updateAIMessage(aiMsgId, {
+                    text: data?.message || data?.error || "Không nhận được phản hồi từ AI.",
+                    isTyping: false,
+                });
+                return;
+            }
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
-            let aiText = '';
+            let aiText = "";
+            let buffer = "";
 
             while (true) {
                 const { value, done } = await reader.read();
                 if (done) break;
 
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n');
+                buffer += decoder.decode(value, { stream: true });
+                const events = buffer.split("\n\n");
+                buffer = events.pop() || "";
 
-                for (const line of lines) {
-                    if (!line.startsWith('data: ')) continue;
+                for (const event of events) {
+                    const line = event.split("\n").find((item) => item.startsWith("data: "));
+                    if (!line) continue;
+
+                    let data;
                     try {
-                        const data = JSON.parse(line.replace('data: ', ''));
-                        if (data.done) break;
-                        if (data.error) {
-                            aiText = data.error;
-                            break;
+                        data = JSON.parse(line.replace("data: ", ""));
+                    } catch {
+                        continue;
+                    }
+                    if (data.sessionId) {
+                        setSessionId(data.sessionId);
+                        if (isLogin) {
+                            localStorage.setItem(CHAT_SESSION_KEY, data.sessionId);
                         }
-                        if (data.text) {
-                            aiText += data.text;
-                            // Cập nhật tin nhắn AI theo từng chunk
-                            setMessages((prev) =>
-                                prev.map((m) =>
-                                    m.id === aiMsgId ? { ...m, text: aiText, isTyping: false } : m
-                                )
-                            );
-                        }
-                    } catch (_) { /* bỏ qua line parse lỗi */ }
+                    }
+                    if (data.error) {
+                        aiText = data.error;
+                        updateAIMessage(aiMsgId, { text: aiText, isTyping: false });
+                    }
+                    if (data.text) {
+                        aiText += data.text;
+                        updateAIMessage(aiMsgId, { text: aiText, isTyping: false });
+                    }
+                    if (data.cards) {
+                        updateAIMessage(aiMsgId, { products: data.cards, isTyping: false });
+                    }
                 }
             }
         } catch (err) {
-            if (err.name !== 'AbortError') {
-                setMessages((prev) =>
-                    prev.map((m) =>
-                        m.id === aiMsgId
-                            ? { ...m, text: 'Xin lỗi, mình đang bận, thử lại sau nhé! 😅', isTyping: false }
-                            : m
-                    )
-                );
+            if (err.name !== "AbortError") {
+                updateAIMessage(aiMsgId, {
+                    text: "Xin lỗi, AI đang bận. Bạn thử lại sau nhé!",
+                    isTyping: false,
+                });
             }
         } finally {
             setIsStreaming(false);
@@ -168,9 +328,9 @@ export default function AIChatBot() {
     };
 
     const handleKeyDown = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
-            handleSend();
+            sendMessage();
         }
     };
 
@@ -179,17 +339,42 @@ export default function AIChatBot() {
         setIsStreaming(false);
     };
 
-    // Gợi ý câu hỏi nhanh
-    const quickQuestions = [
-        'Có áo BTS không?', 'Sản phẩm sale hôm nay?', 'Gợi ý quà sinh nhật',
-    ];
+    const handleViewProduct = (productId) => {
+        if (!productId) return;
+        setIsOpen(false);
+        navigate(`/product/${productId}`);
+    };
+
+    const handleAddProduct = (product) => {
+        context?.addToCart(
+            {
+                ...product,
+                image: product?.images?.[0],
+            },
+            userData?._id,
+            1
+        );
+    };
+
+    const formatSessionDate = (dateStr) => {
+        const d = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now - d;
+        const diffMins = Math.floor(diffMs / 60000);
+        if (diffMins < 1) return "Vừa xong";
+        if (diffMins < 60) return `${diffMins} phút trước`;
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) return `${diffHours} giờ trước`;
+        const diffDays = Math.floor(diffHours / 24);
+        if (diffDays < 7) return `${diffDays} ngày trước`;
+        return d.toLocaleDateString("vi-VN");
+    };
 
     return (
         <>
-            {/* Floating Toggle Button */}
             <button
                 id="ai-chatbot-toggle"
-                className={`chatbot-toggle-btn ${isOpen ? 'chatbot-open' : ''}`}
+                className={`chatbot-toggle-btn ${isOpen ? "chatbot-open" : ""}`}
                 onClick={handleToggle}
                 aria-label="Mở AI Chat"
                 title="Chat với AI"
@@ -209,12 +394,11 @@ export default function AIChatBot() {
                 {!isOpen && <span className="chatbot-pulse" />}
             </button>
 
-            {/* Chat Window */}
-            <div className={`chatbot-window ${isOpen ? 'chatbot-window--open' : ''}`} id="ai-chatbot-window">
+            <div className={`chatbot-window ${isOpen ? "chatbot-window--open" : ""}`} id="ai-chatbot-window">
                 {/* Header */}
                 <div className="chatbot-header">
                     <div className="chatbot-header-info">
-                        <div className="chatbot-avatar">🤖</div>
+                        <div className="chatbot-avatar">AI</div>
                         <div>
                             <div className="chatbot-name">Merch AI</div>
                             <div className="chatbot-status">
@@ -226,91 +410,179 @@ export default function AIChatBot() {
                             </div>
                         </div>
                     </div>
-                    <button className="chatbot-close-btn" onClick={handleToggle} aria-label="Đóng">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
-                    </button>
-                </div>
-
-                {/* Messages */}
-                <div className="chatbot-messages" id="chatbot-messages-list">
-                    {messages.map((msg) => (
-                        <div key={msg.id} className={`chatbot-msg chatbot-msg--${msg.role}`}>
-                            {msg.role === 'ai' && <div className="chatbot-msg-avatar">🤖</div>}
-                            <div className="chatbot-msg-bubble">
-                                {msg.isTyping && !msg.text ? (
-                                    <div className="chatbot-typing-indicator">
-                                        <span /><span /><span />
-                                    </div>
-                                ) : (
-                                    <div
-                                        className="chatbot-msg-text"
-                                        dangerouslySetInnerHTML={{ __html: parseMarkdown(msg.text) }}
-                                    />
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                </div>
-
-                {/* Quick questions (chỉ khi chưa có nhiều tin nhắn) */}
-                {messages.length <= 1 && !isStreaming && (
-                    <div className="chatbot-quick-questions">
-                        {quickQuestions.map((q) => (
+                    <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                        {/* History toggle (only for logged-in users) */}
+                        {isLogin && (
                             <button
-                                key={q}
-                                className="chatbot-quick-btn"
-                                onClick={() => { setInputValue(q); setTimeout(handleSend, 50); }}
+                                className={`chatbot-close-btn ${showHistory ? 'chatbot-btn-active' : ''}`}
+                                onClick={() => setShowHistory((prev) => !prev)}
+                                aria-label="Lịch sử chat"
+                                title="Lịch sử chat"
                             >
-                                {q}
-                            </button>
-                        ))}
-                    </div>
-                )}
-
-                {/* Input Area */}
-                <div className="chatbot-input-area">
-                    {!isLogin && (
-                        <div className="chatbot-login-notice">
-                            💡 Đăng nhập để AI tư vấn cá nhân hóa hơn!
-                        </div>
-                    )}
-                    <div className="chatbot-input-row">
-                        <textarea
-                            ref={inputRef}
-                            id="chatbot-input"
-                            className="chatbot-input"
-                            value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Nhập câu hỏi... (Enter để gửi)"
-                            rows={1}
-                            disabled={isStreaming}
-                        />
-                        {isStreaming ? (
-                            <button className="chatbot-send-btn chatbot-stop-btn" onClick={handleStop} aria-label="Dừng">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                    <rect x="6" y="6" width="12" height="12" rx="2" />
-                                </svg>
-                            </button>
-                        ) : (
-                            <button
-                                className="chatbot-send-btn"
-                                onClick={handleSend}
-                                disabled={!inputValue.trim()}
-                                aria-label="Gửi"
-                                id="chatbot-send-btn"
-                            >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                    <line x1="22" y1="2" x2="11" y2="13" />
-                                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
                                 </svg>
                             </button>
                         )}
+                        {/* New chat */}
+                        <button className="chatbot-close-btn" onClick={handleNewChat} aria-label="Chat mới" title="Bắt đầu chat mới">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                        </button>
+                        {/* Close */}
+                        <button className="chatbot-close-btn" onClick={handleToggle} aria-label="Đóng">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
+
+                {/* History Panel (slides over messages) */}
+                {showHistory && (
+                    <div className="chatbot-history-panel">
+                        <div className="chatbot-history-header">
+                            <h4>Lịch sử trò chuyện</h4>
+                            <button className="chatbot-history-back" onClick={() => setShowHistory(false)}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </div>
+                        {loadingSessions ? (
+                            <div className="chatbot-history-loading">Đang tải...</div>
+                        ) : sessions.length === 0 ? (
+                            <div className="chatbot-history-empty">
+                                Chưa có cuộc trò chuyện nào được lưu
+                            </div>
+                        ) : (
+                            <div className="chatbot-history-list">
+                                {sessions.map((s) => (
+                                    <div
+                                        key={s._id}
+                                        className={`chatbot-history-item ${sessionId === s._id ? 'chatbot-history-item--active' : ''}`}
+                                    >
+                                        <button
+                                            className="chatbot-history-item-content"
+                                            onClick={() => handleLoadSession(s._id)}
+                                        >
+                                            <span className="chatbot-history-title">
+                                                {s.title || "Cuộc trò chuyện"}
+                                            </span>
+                                            <span className="chatbot-history-time">
+                                                {formatSessionDate(s.updatedAt)}
+                                            </span>
+                                        </button>
+                                        <button
+                                            className="chatbot-history-delete"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteSession(s._id);
+                                            }}
+                                            title="Xóa cuộc trò chuyện"
+                                        >
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <polyline points="3 6 5 6 21 6" />
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Messages */}
+                {!showHistory && (
+                    <>
+                        <div className="chatbot-messages" id="chatbot-messages-list">
+                            {messages.map((msg) => (
+                                <div key={msg.id} className={`chatbot-msg chatbot-msg--${msg.role}`}>
+                                    {msg.role === "ai" && <div className="chatbot-msg-avatar">AI</div>}
+                                    <div className="chatbot-msg-bubble">
+                                        {msg.isTyping && !msg.text ? (
+                                            <div className="chatbot-typing-indicator">
+                                                <span /><span /><span />
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div
+                                                    className="chatbot-msg-text"
+                                                    dangerouslySetInnerHTML={{ __html: parseMarkdown(msg.text) }}
+                                                />
+                                                <ChatProductCards
+                                                    products={msg.products || []}
+                                                    onView={handleViewProduct}
+                                                    onAdd={handleAddProduct}
+                                                />
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                            <div ref={messagesEndRef} />
+                        </div>
+
+                        {messages.length <= 2 && !isStreaming && (
+                            <div className="chatbot-quick-questions">
+                                {quickQuestions.map((question) => (
+                                    <button
+                                        key={question}
+                                        className="chatbot-quick-btn"
+                                        onClick={() => sendMessage(question)}
+                                    >
+                                        {question}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="chatbot-input-area">
+                            {!isLogin && (
+                                <div className="chatbot-login-notice">
+                                    Đăng nhập để lưu lịch sử chat và AI nhớ thông tin mua hàng của bạn.
+                                </div>
+                            )}
+                            <div className="chatbot-input-row">
+                                <textarea
+                                    ref={inputRef}
+                                    id="chatbot-input"
+                                    className="chatbot-input"
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    placeholder="Nhập câu hỏi... (Enter để gửi)"
+                                    rows={1}
+                                    disabled={isStreaming}
+                                />
+                                {isStreaming ? (
+                                    <button className="chatbot-send-btn chatbot-stop-btn" onClick={handleStop} aria-label="Dừng">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                            <rect x="6" y="6" width="12" height="12" rx="2" />
+                                        </svg>
+                                    </button>
+                                ) : (
+                                    <button
+                                        className="chatbot-send-btn"
+                                        onClick={() => sendMessage()}
+                                        disabled={!inputValue.trim()}
+                                        aria-label="Gửi"
+                                        id="chatbot-send-btn"
+                                    >
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                            <line x1="22" y1="2" x2="11" y2="13" />
+                                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                                        </svg>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
         </>
     );

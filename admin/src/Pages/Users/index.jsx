@@ -25,25 +25,29 @@ import CircularProgress from '@mui/material/CircularProgress';
 const label = { inputProps: { "aria-label": "Checkbox demo" } };
 
 const columns = [
-    { id: "user", label: "USER", minWidth: 80 },
+    { id: "user", label: "Người dùng", minWidth: 80 },
     {
         id: "userPh",
-        label: "USER PHONE NO",
+        align: "center",
+        label: "Số điện thoại",
         minWidth: 130,
     },
     {
         id: "verifyemail",
-        label: "Email Verify",
+        align: "center",
+        label: "Xác thực email",
         minWidth: 130,
     },
     {
         id: "createdDate",
-        label: "CREATED",
+        align: "center",
+        label: "Ngày tạo",
         minWidth: 130,
     },
     {
         id: "action",
-        label: "ACTION",
+        align: "center",
+        label: "Thao tác",
         minWidth: 130,
     },
 ];
@@ -175,26 +179,32 @@ export const Users = () => {
 
 
     const deleteMultiple = () => {
-        if (context?.userData?.role === "ADMIN") {
+        if (["ADMIN", "SUPERBOSS"].includes(context?.userData?.role)) {
             if (sortedIds.length === 0) {
-                context.alertBox('error', 'Please select items to delete.');
+                context.alertBox('error', 'Vui lòng chọn mục cần xóa.');
                 return;
             }
 
 
-            try {
-                deleteMultipleData(`/api/user/deleteMultiple`, {
-                    data: { ids: sortedIds },
-                }).then((res) => {
-                    getUsers(page, rowsPerPage);
-                    context.alertBox("success", "User deleted");
-                    setSortedIds([]);
+            context?.showConfirmDelete(
+                "Xóa các người dùng đã chọn?",
+                `Bạn có chắc chắn muốn xóa ${sortedIds.length} người dùng đã chọn?`,
+                () => {
+                    try {
+                        deleteMultipleData(`/api/user/deleteMultiple`, {
+                            data: { ids: sortedIds },
+                        }).then((res) => {
+                            getUsers(page, rowsPerPage);
+                            context.alertBox("success", "Đã xóa người dùng");
+                            setSortedIds([]);
 
-                })
+                        })
 
-            } catch (error) {
-                context.alertBox('error', 'Error deleting items.');
-            }
+                    } catch (error) {
+                        context.alertBox('error', 'Error deleting items.');
+                    }
+                }
+            )
         } else {
             context.alertBox("error", "Only admin can delete data");
         }
@@ -204,10 +214,16 @@ export const Users = () => {
 
 
     const deleteUser = (id) => {
-        if (context?.userData?.role === "ADMIN") {
-            deleteData(`/api/user/deleteUser/${id}`).then((res) => {
-                getUsers(page, rowsPerPage);
-            })
+        if (["ADMIN", "SUPERBOSS"].includes(context?.userData?.role)) {
+            context?.showConfirmDelete(
+                "Xóa người dùng?",
+                "Bạn có chắc chắn muốn xóa người dùng này?",
+                () => {
+                    deleteData(`/api/user/deleteUser/${id}`).then((res) => {
+                        getUsers(page, rowsPerPage);
+                    })
+                }
+            )
         } else {
             context.alertBox("error", "Only admin can delete data");
         }
@@ -221,7 +237,7 @@ export const Users = () => {
                 <div className="flex items-center w-full px-5 pb-4 justify-beetween">
                     <div className="col w-[40%]">
                         <h2 className="text-[18px] font-[600]">
-                            Users List
+                            Danh sách người dùng
                         </h2>
                     </div>
 
@@ -297,13 +313,13 @@ export const Users = () => {
                                                     </div>
                                                 </TableCell>
 
-                                                <TableCell style={{ minWidth: columns.minWidth }}>
+                                                <TableCell style={{ minWidth: columns.minWidth }} align="center">
 
-                                                    <span className="flex items-center gap-2"> <MdLocalPhone />  {user?.mobile === null ? 'NONE' : user?.mobile}</span>
+                                                    <span className="flex items-center justify-center gap-2"> <MdLocalPhone />  {user?.mobile ? user?.mobile : 'Chưa có'}</span>
                                                 </TableCell>
 
 
-                                                <TableCell style={{ minWidth: columns.minWidth }}>
+                                                <TableCell style={{ minWidth: columns.minWidth }} align="center">
                                                     {
                                                         user?.verify_email === false ?
                                                             <span
@@ -324,11 +340,11 @@ export const Users = () => {
                                                     }
                                                 </TableCell>
 
-                                                <TableCell style={{ minWidth: columns.minWidth }}>
-                                                    <span className="flex items-center gap-2"> <SlCalender />  {user?.createdAt?.split("T")[0]}</span>
+                                                <TableCell style={{ minWidth: columns.minWidth }} align="center">
+                                                    <span className="flex items-center justify-center gap-2"> <SlCalender />  {user?.createdAt?.split("T")[0]}</span>
                                                 </TableCell>
 
-                                                <TableCell style={{ minWidth: columns.minWidth }}>
+                                                <TableCell style={{ minWidth: columns.minWidth }} align="center">
                                                     <Button onClick={() => deleteUser(user?._id)} variant="outlined" color="error" size="small">Xóa</Button>
                                                 </TableCell>
 
@@ -354,6 +370,7 @@ export const Users = () => {
                     </Table>
                 </TableContainer>
                 <TablePagination
+                    labelRowsPerPage="Số hàng mỗi trang:"
                     rowsPerPageOptions={[50, 100, 150, 200]}
                     component="div"
                     count={userData?.totalPages * rowsPerPage}

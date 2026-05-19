@@ -5,7 +5,8 @@ import { FaRegUser } from "react-icons/fa";
 import { IoBagCheckOutline } from "react-icons/io5";
 import { IoMdHeartEmpty } from "react-icons/io";
 import { IoIosLogOut } from "react-icons/io";
-import { NavLink } from "react-router";
+import { RiCoupon2Line } from "react-icons/ri";
+import { NavLink, useNavigate } from "react-router-dom";
 import { MyContext } from "../../App";
 import CircularProgress from '@mui/material/CircularProgress';
 import { fetchDataFromApi, uploadImage } from "../../utils/api";
@@ -19,6 +20,7 @@ const AccountSidebar = () => {
   const [uploading, setUploading] = useState(false);
 
   const context = useContext(MyContext);
+  const history = useNavigate();
 
   useEffect(() => {
     const userAvtar = [];
@@ -53,7 +55,7 @@ const AccountSidebar = () => {
 
 
         } else {
-          context.alertBox("error", "Please select a valid JPG , PNG or webp image file.");
+          context.alertBox("error", "Vui lòng chọn tệp ảnh JPG, PNG hoặc WebP hợp lệ.");
           setUploading(false);
           return false;
         }
@@ -144,40 +146,48 @@ const AccountSidebar = () => {
 
       <ul className="list-none pb-5 bg-[#f1f1f1] myAccountTabs">
         <li className="w-full">
-          <NavLink to="/my-account" exact={true} activeClassName="isActive">
+          <NavLink to="/my-account" end className={({ isActive }) => isActive ? "isActive" : ""}>
             <Button className="w-full !text-left !py-2 !px-5 !justify-start !capitalize !text-[rgba(0,0,0,0.8)] !rounded-none flex items-center gap-2">
-              <FaRegUser className="text-[15px]" /> My Profile
+              <FaRegUser className="text-[15px]" /> Hồ sơ của tôi
             </Button>
           </NavLink>
         </li>
 
         <li className="w-full">
-          <NavLink to="/address" exact={true} activeClassName="isActive">
+          <NavLink to="/address" end className={({ isActive }) => isActive ? "isActive" : ""}>
             <Button className="w-full !text-left !py-2 !px-5 !justify-start !capitalize !text-[rgba(0,0,0,0.8)] !rounded-none flex items-center gap-2">
-              <LuMapPin className="text-[18px]" /> Address
+              <LuMapPin className="text-[18px]" /> Địa chỉ
             </Button>
           </NavLink>
         </li>
 
         <li className="w-full">
-          <NavLink to="/my-list" exact={true} activeClassName="isActive">
+          <NavLink to="/my-list" end className={({ isActive }) => isActive ? "isActive" : ""}>
             <Button className="w-full !py-2  !text-left !px-5 !justify-start !capitalize !text-[rgba(0,0,0,0.8)] !rounded-none flex items-center gap-2">
-              <IoMdHeartEmpty className="text-[17px]" /> My List
+              <IoMdHeartEmpty className="text-[17px]" /> Yêu thích
             </Button>
           </NavLink>
         </li>
 
         <li className="w-full">
-          <NavLink to="/my-orders" exact={true} activeClassName="isActive">
+          <NavLink to="/my-orders" end className={({ isActive }) => isActive ? "isActive" : ""}>
             <Button className="w-full  !py-2 !text-left !px-5 !justify-start !capitalize !text-[rgba(0,0,0,0.8)] !rounded-none flex items-center gap-2">
-              <IoBagCheckOutline className="text-[17px]" /> My Orders
+              <IoBagCheckOutline className="text-[17px]" /> Đơn hàng của tôi
+            </Button>
+          </NavLink>
+        </li>
+
+        <li className="w-full">
+          <NavLink to="/my-coupons" end className={({ isActive }) => isActive ? "isActive" : ""}>
+            <Button className="w-full  !py-2 !text-left !px-5 !justify-start !capitalize !text-[rgba(0,0,0,0.8)] !rounded-none flex items-center gap-2">
+              <RiCoupon2Line className="text-[17px]" /> Kho Coupon
             </Button>
           </NavLink>
         </li>
 
         <li className="w-full">
           <Button className="w-full !py-2  !text-left !px-5 !justify-start !capitalize !text-[rgba(0,0,0,0.8)] !rounded-none flex items-center gap-2" onClick={logout}>
-            <IoIosLogOut className="text-[18px]" /> Logout
+            <IoIosLogOut className="text-[18px]" /> Đăng xuất
           </Button>
         </li>
       </ul>

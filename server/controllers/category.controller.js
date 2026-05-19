@@ -1,48 +1,10 @@
 import CategoryModel from '../models/category.modal.js';
+import { cloudinary, uploadFilesToCloudinary } from '../utils/cloudinaryUpload.js';
 
-import { v2 as cloudinary } from 'cloudinary';
-import fs from 'fs';
-
-
-cloudinary.config({
-    cloud_name: process.env.cloudinary_Config_Cloud_Name,
-    api_key: process.env.cloudinary_Config_api_key,
-    api_secret: process.env.cloudinary_Config_api_secret,
-    secure: true,
-});
-
-
-//image upload
-var imagesArr = [];
 export async function uploadImages(request, response) {
     try {
-        imagesArr = [];
-
-        const image = request.files;
-
-
-        const options = {
-            use_filename: true,
-            unique_filename: false,
-            overwrite: false,
-        };
-
-        for (let i = 0; i < image?.length; i++) {
-
-            const img = await cloudinary.uploader.upload(
-                image[i].path,
-                options,
-                function (error, result) {
-                    imagesArr.push(result.secure_url);
-                    fs.unlinkSync(`uploads/${request.files[i].filename}`);
-                }
-            );
-        }
-
-        return response.status(200).json({
-            images: imagesArr
-        });
-
+        const images = await uploadFilesToCloudinary(request.files);
+        return response.status(200).json({ images });
     } catch (error) {
         return response.status(500).json({
             message: error.message || error,
@@ -59,14 +21,14 @@ export async function createCategory(request, response) {
     try {
         let category = new CategoryModel({
             name: request.body.name,
-            images: imagesArr,
+            images: request.body.images || [],
             parentId: request.body.parentId,
             parentCatName: request.body.parentCatName,
         });
 
         if (!category) {
             return response.status(500).json({
-                message: "Category not created",
+                message: "Không thể tạo danh mục",
                 error: true,
                 success: false
             })
@@ -74,10 +36,8 @@ export async function createCategory(request, response) {
 
         category = await category.save();
 
-        imagesArr = [];
-
         return response.status(200).json({
-            message: "Category created",
+            message: "Đã tạo danh mục",
             error: false,
             success: true,
             category: category
@@ -107,7 +67,12 @@ export async function getCategories(request, response) {
 
         categories.forEach(cat => {
             if (cat.parentId) {
-                categoryMap[cat.parentId].children.push(categoryMap[cat._id]);
+                if (categoryMap[cat.parentId]) {
+                    categoryMap[cat.parentId].children.push(categoryMap[cat._id]);
+                } else {
+                    // Orphan category (parent deleted) — treat as root
+                    rootCategories.push(categoryMap[cat._id]);
+                }
             } else {
                 rootCategories.push(categoryMap[cat._id]);
             }
@@ -135,7 +100,7 @@ export async function getCategoriesCount(request, response) {
     try {
         const categoryCount = await CategoryModel.countDocuments({ parentId: undefined });
         if (!categoryCount) {
-            response.status(500).json({ success: false, error: true });
+            return response.status(500).json({ success: false, error: true });
         }
         else {
             response.send({
@@ -159,7 +124,7 @@ export async function getSubCategoriesCount(request, response) {
     try {
         const categories = await CategoryModel.find();
         if (!categories) {
-            response.status(500).json({ success: false, error: true });
+            return response.status(500).json({ success: false, error: true });
         }
 
         else {
@@ -196,10 +161,10 @@ export async function getCategory(request, response) {
 
 
         if (!category) {
-            response.status(500)
+            return response.status(500)
                 .json(
                     {
-                        message: "The category with the given ID was not found.",
+                        message: "Không tìm thấy danh mục với mã đã cung cấp.",
                         error: true,
                         success: false
                     }
@@ -225,81 +190,94 @@ export async function getCategory(request, response) {
 
 
 export async function removeImageFromCloudinary(request, response) {
-  
-    const imgUrl = request.query.img;
+    try {
+        const imgUrl = request.query.img;
+        if (!imgUrl) {
+            return response.status(400).json({ message: "Thiếu URL ảnh", error: true, success: false });
+        }
 
-      
         const urlArr = imgUrl.split("/");
         const image = urlArr[urlArr.length - 1];
-    
         const imageName = image.split(".")[0];
 
-    
         if (imageName) {
-            const res = await cloudinary.uploader.destroy(
-                imageName,
-                (error, result) => {
-                    // console.log(error, res)
-                }
-            );
-    
-            if (res) {
-                response.status(200).send(res);
-            }
+            const res = await cloudinary.uploader.destroy(imageName);
+            return response.status(200).json(res);
         }
+
+        return response.status(400).json({ message: "Không thể xác định tên ảnh", error: true, success: false });
+    } catch (error) {
+        return response.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        });
+    }
 }
 
 
 export async function deleteCategory(request, response) {
-    const category = await CategoryModel.findById(request.params.id);
-    const images = category.images;
-    let img="";
-    for (img of images) {
-        const imgUrl = img;
-        const urlArr = imgUrl.split("/");
-        const image = urlArr[urlArr.length - 1];
-
-        const imageName = image.split(".")[0];
-
-        if (imageName) {
-            cloudinary.uploader.destroy(imageName, (error, result) => {
-                // console.log(error, result);
+    try {
+        const category = await CategoryModel.findById(request.params.id);
+        if (!category) {
+            return response.status(404).json({
+                message: "Không tìm thấy danh mục!",
+                success: false,
+                error: true
             });
         }
 
-    }
-
-    const subCategory = await CategoryModel.find({
-        parentId: request.params.id
-    });
-
-    for (let i = 0; i < subCategory.length; i++) {
-
-        const thirdsubCategory = await CategoryModel.find({
-            parentId: subCategory[i]._id
-        });
-
-        for (let i = 0; i < thirdsubCategory.length; i++) {
-            const deletedThirdSubCat = await CategoryModel.findByIdAndDelete(thirdsubCategory[i]._id);
+        const images = category.images;
+        for (const img of images || []) {
+            try {
+                const urlArr = img.split("/");
+                const imageName = urlArr[urlArr.length - 1]?.split(".")[0];
+                if (imageName) {
+                    await cloudinary.uploader.destroy(imageName);
+                }
+            } catch (err) {
+                console.error("Cloudinary delete error:", err.message);
+            }
         }
 
-        const deletedSubCat = await CategoryModel.findByIdAndDelete(subCategory[i]._id);
-    }
-
-    const deletedCat = await CategoryModel.findByIdAndDelete(request.params.id);
-    if (!deletedCat) {
-        response.status(404).json({
-            message: "Category not found!",
-            success: false,
-            error: true
+        const subCategory = await CategoryModel.find({
+            parentId: request.params.id
         });
-    }
 
-    response.status(200).json({
-        success: true,
-        error: false,
-        message: "Category Deleted!",
-    });
+        for (let i = 0; i < subCategory.length; i++) {
+
+            const thirdsubCategory = await CategoryModel.find({
+                parentId: subCategory[i]._id
+            });
+
+            for (let i = 0; i < thirdsubCategory.length; i++) {
+                const deletedThirdSubCat = await CategoryModel.findByIdAndDelete(thirdsubCategory[i]._id);
+            }
+
+            const deletedSubCat = await CategoryModel.findByIdAndDelete(subCategory[i]._id);
+        }
+
+        const deletedCat = await CategoryModel.findByIdAndDelete(request.params.id);
+        if (!deletedCat) {
+            return response.status(404).json({
+                message: "Không tìm thấy danh mục!",
+                success: false,
+                error: true
+            });
+        }
+
+        return response.status(200).json({
+            success: true,
+            error: false,
+            message: "Đã xóa danh mục!",
+        });
+    } catch (error) {
+        return response.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        })
+    }
 }
 
 export async function updatedCategory(request, response){
@@ -308,7 +286,7 @@ export async function updatedCategory(request, response){
         request.params.id,
         {
           name: request.body.name,
-          images: imagesArr.length>0 ? imagesArr[0] : request.body.images,
+          images: request.body.images,
           parentId:request.body.parentId,
           parentCatName: request.body.parentCatName
         },
@@ -317,20 +295,18 @@ export async function updatedCategory(request, response){
 
       if (!category) {
         return response.status(500).json({
-          message: "Category cannot be updated!",
+          message: "Không thể cập nhật danh mục!",
           success: false,
           error:true
         });
       }
 
 
-      imagesArr = [];
-      
       response.status(200).json({
         error:false,
         success:true,
         category:category,
-        message:"Category updated successfully"
+        message:"Đã cập nhật danh mục"
       })
     
 }

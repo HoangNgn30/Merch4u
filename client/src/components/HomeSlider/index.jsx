@@ -11,9 +11,8 @@ const HomeSlider = (props) => {
   const context  = useContext(MyContext);
 
   return (
-    <div className="homeSlider pb-3 pt-3 lg:pb-5 lg:pt-5 relative z-[99] overflow-hidden">
-      <div className="container">
-        <Swiper
+    <div className="homeSlider pb-3 pt-3 lg:pb-5 lg:pt-5 relative z-[99] overflow-hidden w-full">
+      <Swiper
           loop={true}
           spaceBetween={10}
           navigation={context?.windowWidth < 992 ? false : true}
@@ -32,7 +31,7 @@ const HomeSlider = (props) => {
                     <img
                       src={item?.images[0]}
                       alt="Banner slide"
-                      className="itemHomeSlider w-full h-[300px] object-cover"
+                      className="itemHomeSlider w-full aspect-[2/1] md:aspect-[2.5/1] lg:aspect-[3/1] object-cover"
                     />
                   </div>
                 </SwiperSlide>
@@ -41,7 +40,6 @@ const HomeSlider = (props) => {
           }
 
         </Swiper>
-      </div>
     </div>
   );
 };
