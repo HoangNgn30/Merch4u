@@ -32,10 +32,10 @@ const Navigation = (props) => {
   return (
     <>
       <nav className="navigation">
-        <div className="container flex items-center justify-start lg:justify-end gap-8">
+        <div className="w-full flex items-center justify-start lg:justify-end gap-2 xl:gap-6">
           {
             context?.windowWidth > 992 &&
-            <div className="col_1 w-[20%]">
+            <div className="col_1 flex-shrink-0">
               <Button
                 className="!text-black gap-2 w-full"
                 onClick={openCategoryPanel}
@@ -48,7 +48,7 @@ const Navigation = (props) => {
           }
 
 
-          <div className="col_2 w-full lg:w-[60%]">
+          <div className="col_2 flex-grow-0">
             <ul className="flex items-center gap-3 nav">
               <li className="list-none">
                 <Link to="/" className="link transition text-[14px] font-[500]">
@@ -127,12 +127,15 @@ const Navigation = (props) => {
             </ul>
           </div>
 
-          <div className="col_3 w-[20%] hidden lg:block">
+          {
+            !props.hidePromo &&
+            <div className="col_3 w-[20%] hidden lg:block">
             <p className="text-[14px] font-[500] flex items-center gap-3 mb-0 mt-0">
               <GoRocket className="text-[18px]" />
               Miễn Phí Giao Hàng Toàn Quốc
             </p>
           </div>
+          }
         </div>
       </nav>
 

@@ -50,7 +50,7 @@ const Navigation = (props) => {
           {/* Categories button */}
           <div className="col_1">
             <Button
-              className="!text-black gap-2 !normal-case !font-[500] !text-[14px]"
+              className="!text-black gap-2 !normal-case !font-[500] !text-[14px] !whitespace-nowrap"
               onClick={openCategoryPanel}
             >
               <RiMenu2Fill className="text-[16px]" />
@@ -63,21 +63,21 @@ const Navigation = (props) => {
           <ul className="flex items-center gap-1 nav m-0 p-0">
             <li className="list-none">
               <Link to="/">
-                <Button className="link !font-[500] !text-[rgba(0,0,0,0.8)] hover:!text-[#ff5252] !normal-case !text-[14px]">
+                <Button className="link !font-[500] !text-[rgba(0,0,0,0.8)] hover:!text-[#ff5252] !normal-case !text-[14px] !whitespace-nowrap">
                   Trang Chủ
                 </Button>
               </Link>
             </li>
             <li className="list-none">
               <Link to="/products">
-                <Button className="link !font-[500] !text-[rgba(0,0,0,0.8)] hover:!text-[#ff5252] !normal-case !text-[14px]">
+                <Button className="link !font-[500] !text-[rgba(0,0,0,0.8)] hover:!text-[#ff5252] !normal-case !text-[14px] !whitespace-nowrap">
                   Sản Phẩm
                 </Button>
               </Link>
             </li>
             <li className="list-none">
               <Link to="/coupon-game">
-                <Button className="link !font-[500] !text-[rgba(0,0,0,0.8)] hover:!text-[#ff5252] !normal-case !text-[14px]">
+                <Button className="link !font-[500] !text-[rgba(0,0,0,0.8)] hover:!text-[#ff5252] !normal-case !text-[14px] !whitespace-nowrap">
                   Mã Giảm Giá
                 </Button>
               </Link>

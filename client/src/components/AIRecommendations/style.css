@@ -51,12 +51,9 @@
 
 .ai-rec-title {
     font-size: 20px;
-    font-weight: 700;
+    font-weight: 600;
     margin: 0;
-    background: linear-gradient(135deg, #6c63ff, #e040fb);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #3e3e3e;
 }
 
 .ai-rec-subtitle {

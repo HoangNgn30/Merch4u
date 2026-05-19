@@ -1,16 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Button } from "@mui/material";
-import { FaAngleDown } from "react-icons/fa6";
-import Badge from "../../Components/Badge";
+import { FaAngleDown, FaAngleUp } from "react-icons/fa6";
+import { GoTrash } from "react-icons/go";
 import SearchBox from '../../Components/SearchBox';
-import { FaAngleUp } from "react-icons/fa6";
 import { deleteData, editData, fetchDataFromApi } from '../../utils/api';
 import Pagination from "@mui/material/Pagination";
-
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
-import { useContext } from 'react';
-
 import { MyContext } from "../../App.jsx";
 
 const addressTypeLabel = {
@@ -18,11 +14,27 @@ const addressTypeLabel = {
   Office: "Công ty",
 };
 
-export const Orders = () => {
+// Helper for status styles
+const getStatusClasses = (status) => {
+  switch (status) {
+    case 'pending':
+      return 'bg-amber-50 text-amber-700 border-amber-200';
+    case 'confirm':
+      return 'bg-sky-50 text-sky-700 border-sky-200';
+    case 'shipped':
+      return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+    case 'delivered':
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    case 'cancelled':
+      return 'bg-rose-50 text-rose-700 border-rose-200';
+    default:
+      return 'bg-slate-50 text-slate-700 border-slate-200';
+  }
+};
 
+export const Orders = () => {
   const [isOpenOrderdProduct, setIsOpenOrderdProduct] = useState(null);
   const [orderStatus, setOrderStatus] = useState('');
-
   const [ordersData, setOrdersData] = useState([]);
   const [orders, setOrders] = useState([]);
   const [pageOrder, setPageOrder] = useState(1);
@@ -30,7 +42,6 @@ export const Orders = () => {
   const [totalOrdersData, setTotalOrdersData] = useState([]);
 
   const context = useContext(MyContext);
-
 
   const isShowOrderdProduct = (index) => {
     if (isOpenOrderdProduct === index) {
@@ -40,98 +51,103 @@ export const Orders = () => {
     }
   };
 
-
   const handleChange = (event, id) => {
-    setOrderStatus(event.target.value);
-
+    const newStatus = event.target.value;
     const obj = {
       id: id,
-      order_status: event.target.value
-    }
+      order_status: newStatus
+    };
 
     editData(`/api/order/order-status/${id}`, obj).then((res) => {
-      if (res?.data?.error === false) {
-        context.alertBox("success", res?.data?.message);
+      const payload = res?.data || res;
+      if (payload?.error === false || payload?.success === true) {
+        context.alertBox("success", payload?.message || "Đã cập nhật trạng thái");
+        
+        // Re-fetch the orders list to update UI reactively!
+        context?.setProgress(50);
+        fetchDataFromApi(`/api/order/order-list?page=${pageOrder}&limit=5`).then((listRes) => {
+          if (listRes?.error === false) {
+            setOrdersData(listRes?.data);
+            context?.setProgress(100);
+          }
+        });
+      } else {
+        context.alertBox("error", payload?.message || "Cập nhật thất bại");
       }
-    })
-
+    });
   };
-
 
   useEffect(() => {
     context?.setProgress(50);
     fetchDataFromApi(`/api/order/order-list?page=${pageOrder}&limit=5`).then((res) => {
       if (res?.error === false) {
-        setOrdersData(res?.data)
+        setOrdersData(res?.data);
         context?.setProgress(100);
       }
-    })
+    });
     fetchDataFromApi(`/api/order/order-list`).then((res) => {
       if (res?.error === false) {
-        setTotalOrdersData(res)
+        setTotalOrdersData(res);
       }
-    })
-  }, [orderStatus, pageOrder])
-
+    });
+  }, [pageOrder]);
 
   useEffect(() => {
-
-    // Filter orders based on search query
     if (searchQuery !== "") {
       const filteredOrders = totalOrdersData?.data?.filter((order) =>
         order._id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order?.userId?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order?.userId?.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order?.createdAt.includes(searchQuery)
+        order?.userId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order?.userId?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order?.createdAt?.includes(searchQuery)
       );
-      setOrdersData(filteredOrders)
+      setOrdersData(filteredOrders);
     } else {
       fetchDataFromApi(`/api/order/order-list?page=${pageOrder}&limit=5`).then((res) => {
         if (res?.error === false) {
-          setOrders(res)
-          setOrdersData(res?.data)
+          setOrders(res);
+          setOrdersData(res?.data);
         }
-      })
+      });
     }
+  }, [searchQuery]);
 
-  }, [searchQuery])
+  const deleteOrder = (id) => {
+    if (["ADMIN", "SUPERBOSS"].includes(context?.userData?.role)) {
+      context?.showConfirmDelete(
+        "Xóa đơn hàng?",
+        "Bạn có chắc chắn muốn xóa đơn hàng này?",
+        () => {
+          deleteData(`/api/order/deleteOrder/${id}`).then((res) => {
+            fetchDataFromApi(`/api/order/order-list?page=${pageOrder}&limit=5`).then((res) => {
+              if (res?.error === false) {
+                setOrdersData(res?.data);
+                context?.setProgress(100);
+                context.alertBox("success", "Xóa đơn hàng thành công");
+              }
+            });
 
-
-    const deleteOrder = (id) => {
-          if (["ADMIN", "SUPERBOSS"].includes(context?.userData?.role)) {
-              context?.showConfirmDelete(
-                "Xóa đơn hàng?",
-                "Bạn có chắc chắn muốn xóa đơn hàng này?",
-                () => {
-                  deleteData(`/api/order/deleteOrder/${id}`).then((res) => {
-                    fetchDataFromApi(`/api/order/order-list?page=${pageOrder}&limit=5`).then((res) => {
-                      if (res?.error === false) {
-                        setOrdersData(res?.data)
-                        context?.setProgress(100);
-                        context.alertBox("success", "Xóa đơn hàng thành công");
-                      }
-                    })
-
-                    fetchDataFromApi(`/api/order/order-list`).then((res) => {
-                      if (res?.error === false) {
-                        setTotalOrdersData(res)
-                      }
-                    })
-                    
-                  })
-                }
-              )
-          } else {
-              context.alertBox("error", "Only admin can delete data");
-          }
-      }
-  
+            fetchDataFromApi(`/api/order/order-list`).then((res) => {
+              if (res?.error === false) {
+                setTotalOrdersData(res);
+              }
+            });
+          });
+        }
+      );
+    } else {
+      context.alertBox("error", "Chỉ admin mới có quyền xóa đơn hàng");
+    }
+  };
 
   return (
-    <div className="card my-2 md:mt-4 shadow-md sm:rounded-lg bg-white">
-      <div className="grid grid-cols-1 lg:grid-cols-2 px-5 py-5 flex-col sm:flex-row">
-        <h2 className="text-[18px] font-[600] text-left mb-2 lg:mb-0">Đơn hàng gần đây</h2>
-        <div className="ml-auto w-full">
+    <div className="card my-4 p-6 shadow-xl border border-slate-100 rounded-2xl bg-white transition-all">
+      <div className="flex flex-col sm:flex-row items-center w-full pb-6 justify-between gap-4">
+        <div className="col">
+          <h2 className="text-[18px] font-[600] text-slate-800">
+            Danh sách đơn hàng gần đây
+          </h2>
+        </div>
+        <div className="col sm:ml-auto w-full sm:w-[320px]">
           <SearchBox
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
@@ -140,266 +156,214 @@ export const Orders = () => {
         </div>
       </div>
 
-      <div className="relative overflow-x-auto">
-        <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+      <div className="relative overflow-x-auto rounded-xl border border-slate-100 shadow-sm">
+        <table className="w-full text-sm text-left text-slate-600">
+          <thead className="text-[12px] text-slate-500 uppercase bg-slate-50/80 border-b border-slate-100">
             <tr>
-              <th scope="col" className="px-6 py-3 w-[50px]">
-                &nbsp;
-              </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
-                Mã đơn hàng
-              </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
-                Mã thanh toán
-              </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                Họ tên
-              </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
-                Số điện thoại
-              </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                Địa chỉ
-              </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
-                Mã bưu chính
-              </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
-                Tổng tiền
-              </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
-                Email
-              </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
-                Mã người dùng
-              </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
-                Trạng thái đơn hàng
-              </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
-                Ngày tạo
-              </th>
-              <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
-                Thao tác
-              </th>
+              <th scope="col" className="px-5 py-4 w-[50px] text-center">&nbsp;</th>
+              <th scope="col" className="px-5 py-4 whitespace-nowrap text-center">Mã đơn hàng</th>
+              <th scope="col" className="px-5 py-4 whitespace-nowrap text-center">Mã thanh toán</th>
+              <th scope="col" className="px-5 py-4 whitespace-nowrap">Khách hàng</th>
+              <th scope="col" className="px-5 py-4 whitespace-nowrap text-center">Số điện thoại</th>
+              <th scope="col" className="px-5 py-4 whitespace-nowrap min-w-[280px]">Địa chỉ giao hàng</th>
+              <th scope="col" className="px-5 py-4 whitespace-nowrap text-center">Tổng tiền</th>
+              <th scope="col" className="px-5 py-4 whitespace-nowrap text-center">Trạng thái</th>
+              <th scope="col" className="px-5 py-4 whitespace-nowrap text-center">Ngày tạo</th>
+              <th scope="col" className="px-5 py-4 whitespace-nowrap text-center">Thao tác</th>
             </tr>
           </thead>
-          <tbody>
-
-            {
-              ordersData?.length !== 0 && ordersData?.map((order, index) => {
+          <tbody className="divide-y divide-slate-100">
+            {ordersData?.length !== 0 ? (
+              ordersData?.map((order, index) => {
+                const currentStatus = order?.order_status || 'pending';
                 return (
                   <React.Fragment key={order?._id || index}>
-                    <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                      <td className="px-6 py-4 font-[500] w-[50px]">
+                    <tr className={`hover:bg-slate-50/80 transition-colors ${isOpenOrderdProduct === index ? 'bg-rose-50/20' : ''}`}>
+                      <td className="px-5 py-4 text-center">
                         <button
                           type="button"
                           onClick={() => isShowOrderdProduct(index)}
-                          className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 border border-gray-300 flex items-center justify-center transition-colors focus:outline-none"
+                          className="w-8 h-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 flex items-center justify-center transition-all shadow-sm focus:outline-none"
                         >
                           {isOpenOrderdProduct === index ? (
-                            <FaAngleUp className="text-[15px] text-gray-700" />
+                            <FaAngleUp className="text-[14px] text-[#ff5252]" />
                           ) : (
-                            <FaAngleDown className="text-[15px] text-gray-700" />
+                            <FaAngleDown className="text-[14px] text-slate-500" />
                           )}
                         </button>
                       </td>
-                      <td className="px-6 py-4 font-[500] text-center">
-                        <span className="text-primary font-[500]">
+                      <td className="px-5 py-4 font-semibold text-center text-slate-800">
+                        <span className="text-xs font-mono select-all bg-slate-100 px-2 py-1 rounded text-slate-700">
                           {order?._id}
                         </span>
                       </td>
 
-                      <td className="px-6 py-4 font-[500] text-center">
-                        <span className="text-primary whitespace-nowrap text-[13px]">{order?.paymentId ? order?.paymentId : 'Thanh toán khi nhận hàng'}</span>
+                      <td className="px-5 py-4 text-center font-medium">
+                        {order?.paymentId ? (
+                          <span className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded font-mono">
+                            {order?.paymentId}
+                          </span>
+                        ) : (
+                          <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded">
+                            COD (Nhận hàng)
+                          </span>
+                        )}
                       </td>
 
-                      <td className="px-6 py-4 font-[500] whitespace-nowrap">
-                        {order?.userId?.name}
+                      <td className="px-5 py-4 whitespace-nowrap font-medium text-slate-800">
+                        <div className="flex flex-col">
+                          <span className="font-semibold">{order?.userId?.name || "Khách ẩn danh"}</span>
+                          <span className="text-xs text-slate-400 font-normal">{order?.userId?.email}</span>
+                        </div>
                       </td>
 
-                      <td className="px-6 py-4 font-[500] text-center">{order?.delivery_address?.mobile}</td>
-
-                      <td className="px-6 py-4 font-[500]">
-                        <span className='inline-block text-[13px] font-[500] px-2.5 py-0.5 bg-[#f1f1f1] rounded-full mb-1 whitespace-nowrap text-gray-600 border border-gray-200'>
-                          {addressTypeLabel[order?.delivery_address?.addressType] || order?.delivery_address?.addressType}
-                        </span>
-                        <span className="block w-[300px] text-[13px] leading-snug text-gray-800 font-[600]">
-                          {order?.delivery_address?.address_line1 + " " +
-                           order?.delivery_address?.city + " " +
-                           order?.delivery_address?.landmark + " " +
-                           order?.delivery_address?.state + " " +
-                           order?.delivery_address?.country}
-                        </span>
-                        <span className="block text-[13px] text-gray-500 font-[600] mt-0.5">
-                          {order?.delivery_address?.mobile}
-                        </span>
+                      <td className="px-5 py-4 text-center font-medium text-slate-700">
+                        {order?.delivery_address?.mobile || "-"}
                       </td>
 
-                      <td className="px-6 py-4 font-[500] text-center">{order?.delivery_address?.pincode}</td>
-
-                      <td className="px-6 py-4 font-[500] text-center">{order?.totalAmt?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</td>
-
-                      <td className="px-6 py-4 font-[500] text-center">
-                        {order?.userId?.email?.substr(0,5)+'***'}
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col gap-1 w-[260px]">
+                          <span className='inline-flex self-start text-[10px] font-bold px-2 py-0.5 bg-slate-100 rounded text-slate-600 border border-slate-200 uppercase tracking-wider'>
+                            {addressTypeLabel[order?.delivery_address?.addressType] || order?.delivery_address?.addressType || "Địa chỉ"}
+                          </span>
+                          <span className="text-[12px] leading-relaxed text-slate-700 font-medium">
+                            {[
+                              order?.delivery_address?.address_line1,
+                              order?.delivery_address?.city,
+                              order?.delivery_address?.state,
+                              order?.delivery_address?.country
+                            ].filter(Boolean).join(", ")}
+                          </span>
+                        </div>
                       </td>
 
-                      <td className="px-6 py-4 font-[500] text-center">
-                        <span className="text-primary">
-                          {order?.userId?._id}
-                        </span>
+                      <td className="px-5 py-4 text-center font-bold text-[#ff5252] text-[14px]">
+                        {order?.totalAmt?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
                       </td>
 
-                      <td className="px-6 py-4 font-[500] text-center">
-                        <Select
-                          labelId="demo-simple-select-helper-label"
-                          id="demo-simple-select-helper"
-                          value={order?.order_status !== null ? order?.order_status : orderStatus}
-                          label="Trạng thái"
-                          size="small"
-                          style={{ zoom: '80%' }}
-                          className="w-full"
-                          onChange={(e) => handleChange(e, order?._id)}
+                      <td className="px-5 py-4 text-center">
+                        <div className="min-w-[120px] inline-block">
+                          <Select
+                            value={currentStatus}
+                            size="small"
+                            className={`w-full text-xs font-semibold rounded-lg border ${getStatusClasses(currentStatus)}`}
+                            sx={{
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              '& .MuiSelect-select': {
+                                py: '4px',
+                                px: '8px',
+                              }
+                            }}
+                            onChange={(e) => handleChange(e, order?._id)}
+                          >
+                            <MenuItem value={'pending'} className="text-xs font-semibold text-amber-700">Chờ xử lý</MenuItem>
+                            <MenuItem value={'confirm'} className="text-xs font-semibold text-sky-700">Đã xác nhận</MenuItem>
+                            <MenuItem value={'shipped'} className="text-xs font-semibold text-indigo-700">Đang giao</MenuItem>
+                            <MenuItem value={'delivered'} className="text-xs font-semibold text-emerald-700">Đã giao</MenuItem>
+                            <MenuItem value={'cancelled'} disabled className="text-xs font-semibold text-rose-700">Đã hủy</MenuItem>
+                          </Select>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap text-center font-medium text-slate-500">
+                        {order?.createdAt ? order.createdAt.split("T")[0] : "-"}
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                        <button 
+                          onClick={() => deleteOrder(order?._id)} 
+                          className="w-[32px] h-[32px] mx-auto bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-100 hover:border-rose-600 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-300"
+                          title="Xóa đơn hàng"
                         >
-                          <MenuItem value={'pending'}>Chờ xử lý</MenuItem>
-                          <MenuItem value={'confirm'}>Đã xác nhận</MenuItem>
-                          <MenuItem value={'shipped'}>Đang giao</MenuItem>
-                          <MenuItem value={'delivered'}>Đã giao</MenuItem>
-                          <MenuItem value={'cancelled'} disabled>Đã hủy</MenuItem>
-                        </Select>
-                      </td>
-                      <td className="px-6 py-4 font-[500] whitespace-nowrap text-center">
-                        {order?.createdAt?.split("T")[0]}
-                      </td>
-                      <td className="px-6 py-4 font-[500] whitespace-nowrap text-center">
-                        <Button onClick={() => deleteOrder(order?._id)} variant="outlined" color="error" size="small">Xóa</Button>
+                          <GoTrash className="text-[15px]" />
+                        </button>
                       </td>
                     </tr>
 
                     {isOpenOrderdProduct === index && (
-                      <tr>
-                        <td className="pl-20" colSpan="6">
-                          <div className="relative overflow-x-auto">
-                            <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                              <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                                <tr>
-                                  <th
-                                    scope="col"
-                                    className="px-6 py-3 whitespace-nowrap"
-                                  >
-                                    Mã sản phẩm
-                                  </th>
-                                  <th
-                                    scope="col"
-                                    className="px-6 py-3 whitespace-nowrap"
-                                  >
-                                    Tên sản phẩm
-                                  </th>
-                                  <th
-                                    scope="col"
-                                    className="px-6 py-3 whitespace-nowrap"
-                                  >
-                                    Ảnh
-                                  </th>
-                                  <th
-                                    scope="col"
-                                    className="px-6 py-3 whitespace-nowrap"
-                                  >
-                                    Số lượng
-                                  </th>
-                                  <th
-                                    scope="col"
-                                    className="px-6 py-3 whitespace-nowrap"
-                                  >
-                                    Giá
-                                  </th>
-                                  <th
-                                    scope="col"
-                                    className="px-6 py-3 whitespace-nowrap"
-                                  >
-                                    Tạm tính
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {
-                                  order?.products?.map((item, index) => {
-                                    return (
-                                      <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                        <td className="px-6 py-4 font-[500]">
-                                          <span className="text-gray-600">
-                                            {item?._id}
-                                          </span>
-                                        </td>
-                                        <td className="px-6 py-4 font-[500]">
-                                          <div className="w-[200px]">
-                                            {item?.productTitle}
-                                          </div>
-                                        </td>
-
-                                        <td className="px-6 py-4 font-[500]">
+                      <tr className="bg-slate-50/50">
+                        <td className="px-6 py-4" colSpan={10}>
+                          <div className="my-2 p-5 bg-white border border-slate-100 rounded-xl shadow-inner">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                              Chi tiết sản phẩm thuộc đơn hàng
+                            </h4>
+                            <div className="relative overflow-x-auto rounded-lg border border-slate-100">
+                              <table className="w-full text-sm text-left text-slate-600">
+                                <thead className="text-[11px] text-slate-500 uppercase bg-slate-50 border-b border-slate-100">
+                                  <tr>
+                                    <th scope="col" className="px-4 py-3 whitespace-nowrap">Mã sản phẩm</th>
+                                    <th scope="col" className="px-4 py-3 whitespace-nowrap">Tên sản phẩm</th>
+                                    <th scope="col" className="px-4 py-3 whitespace-nowrap text-center">Hình ảnh</th>
+                                    <th scope="col" className="px-4 py-3 whitespace-nowrap text-center">Số lượng</th>
+                                    <th scope="col" className="px-4 py-3 whitespace-nowrap text-right">Đơn giá</th>
+                                    <th scope="col" className="px-4 py-3 whitespace-nowrap text-right">Tạm tính</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                  {order?.products?.map((item, itemIdx) => (
+                                    <tr key={item?._id || itemIdx} className="hover:bg-slate-50/40 transition-colors">
+                                      <td className="px-4 py-3 font-mono text-xs text-slate-400">
+                                        {item?._id}
+                                      </td>
+                                      <td className="px-4 py-3 font-semibold text-slate-800 max-w-[320px]">
+                                        {item?.productTitle}
+                                      </td>
+                                      <td className="px-4 py-3 text-center">
+                                        <div className="w-[45px] h-[45px] mx-auto rounded-lg overflow-hidden shadow-sm border border-slate-100">
                                           <img
                                             src={item?.image}
-                                            className="w-[40px] h-[40px] object-cover rounded-md"
+                                            className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+                                            alt="product"
                                           />
-                                        </td>
-
-                                        <td className="px-6 py-4 font-[500] whitespace-nowrap">
-                                          {item?.quantity}
-                                        </td>
-
-                                        <td className="px-6 py-4 font-[500]">{item?.price?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</td>
-
-                                        <td className="px-6 py-4 font-[500]">{(item?.price * item?.quantity)?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</td>
-                                      </tr>
-                                    )
-                                  })
-                                }
-
-
-                                <tr>
-                                  <td
-                                    className="bg-[#f1f1f1]"
-                                    colSpan="12"
-                                  ></td>
-                                </tr>
-                              </tbody>
-                            </table>
+                                        </div>
+                                      </td>
+                                      <td className="px-4 py-3 text-center font-bold text-slate-700">
+                                        {item?.quantity}
+                                      </td>
+                                      <td className="px-4 py-3 text-right font-medium text-slate-600">
+                                        {item?.price?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+                                      </td>
+                                      <td className="px-4 py-3 text-right font-bold text-[#ff5252]">
+                                        {(item?.price * item?.quantity)?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
                           </div>
                         </td>
                       </tr>
                     )}
                   </React.Fragment>
-                )
+                );
               })
-
-            }
-
-
-
-
-
-
+            ) : (
+              <tr>
+                <td colSpan={10} className="px-5 py-12 text-center text-slate-400 font-medium italic">
+                  Không tìm thấy đơn hàng nào tương ứng.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
-
-      {
-        orders?.totalPages > 1 &&
-        <div className="flex items-center justify-center mt-10 pb-5">
+      {orders?.totalPages > 1 && (
+        <div className="flex items-center justify-center mt-8 pt-4 border-t border-slate-50">
           <Pagination
-            showFirstButton showLastButton
+            showFirstButton 
+            showLastButton
             count={orders?.totalPages}
             page={pageOrder}
             onChange={(e, value) => setPageOrder(value)}
+            color="primary"
+            className="text-indigo-600"
           />
         </div>
-      }
+      )}
     </div>
-  )
-}
-
+  );
+};
 
 export default Orders;

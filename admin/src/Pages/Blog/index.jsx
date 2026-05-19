@@ -154,18 +154,22 @@ export const BlogList = () => {
                                             </TableCell>
 
                                             <TableCell width={100} align="center">
-                                                <div className="flex items-center justify-center gap-1">
-                                                    <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:bg-[#e2e2e2] flex items-center justify-center transition-all" onClick={() => context.setIsOpenFullScreenPanel({
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    <button className="action-btn-edit" onClick={() => context.setIsOpenFullScreenPanel({
                                                         open: true,
                                                         model: 'Edit Blog',
                                                         id: item?._id
-                                                    })}>
-                                                        <AiOutlineEdit className="text-[rgba(0,0,0,0.7)] text-[20px] " />
+                                                    })}
+                                                        title="Sửa bài viết"
+                                                    >
+                                                        <AiOutlineEdit />
                                                     </button>
 
 
-                                                    <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:bg-[#e2e2e2] flex items-center justify-center transition-all" onClick={() => deleteSlide(item?._id)}>
-                                                        <GoTrash className="text-[rgba(0,0,0,0.7)] text-[18px] " />
+                                                    <button className="action-btn-delete" onClick={() => deleteSlide(item?._id)}
+                                                        title="Xóa bài viết"
+                                                    >
+                                                        <GoTrash />
                                                     </button>
                                                 </div>
                                             </TableCell>

@@ -116,7 +116,7 @@ const Header2 = () => {
     return (
         <>
         <header className="fixed lg:sticky z-[1000] top-0 left-0 w-full bg-white/95 backdrop-blur-md border-b border-[rgba(0,0,0,0.08)]">
-            <div className="container flex items-center justify-between py-3 gap-2">
+            <div className="w-full max-w-[1440px] mx-auto flex items-center justify-between py-3 px-4 lg:px-6 xl:px-8 gap-2 lg:gap-4">
 
                 <div className="flex items-center lg:hidden">
                     <Button
@@ -137,11 +137,11 @@ const Header2 = () => {
                     </Link>
                 </div>
 
-                <div className="hidden lg:flex items-center flex-1 px-4">
-                    <Navigation isOpenCatPanel={isOpenCatPanel} setIsOpenCatPanel={setIsOpenCatPanel} />
+                <div className="hidden lg:flex items-center flex-1 px-2 xl:px-4">
+                    <Navigation isOpenCatPanel={isOpenCatPanel} setIsOpenCatPanel={setIsOpenCatPanel} hidePromo={true} />
                 </div>
 
-                <div className="hidden lg:flex flex-1 max-w-[420px]">
+                <div className="hidden lg:flex flex-1 max-w-[280px] xl:max-w-[420px]">
                     <Search />
                 </div>
 

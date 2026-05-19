@@ -80,6 +80,27 @@ const Checkout = () => {
     }
   }, [context?.userData, subTotal]);
 
+  useEffect(() => {
+    const savedCode = localStorage.getItem("appliedCouponCode");
+    if (savedCode && subTotal > 0) {
+      localStorage.removeItem("appliedCouponCode");
+      setCouponCode(savedCode.toUpperCase());
+      
+      postData("/api/coupon/validate", {
+        code: savedCode,
+        orderTotal: subTotal
+      }).then((res) => {
+        if (res?.error === false) {
+          setAppliedCoupon(res);
+          context?.alertBox("success", `Tự động áp dụng mã: ${res?.message}`);
+        } else {
+          setAppliedCoupon(null);
+          context?.alertBox("error", res?.message || "Không thể tự động áp dụng mã giảm giá");
+        }
+      });
+    }
+  }, [context?.userData, subTotal]);
+
 
 
 
@@ -281,17 +302,20 @@ const Checkout = () => {
 
 
       postData(`/api/order/create`, payLoad).then((res) => {
-        context.alertBox("success", res?.message);
-
         if (res?.error === false) {
-          deleteData(`/api/cart/emptyCart/${user?._id}`).then((res) => {
+          context.alertBox("success", res?.message || "Đơn hàng đã được đặt thành công!");
+          deleteData(`/api/cart/emptyCart/${user?._id}`).then(() => {
             context?.getCartItems();
             setIsloading(false);
-          })
+          });
+          history("/order/success");
         } else {
-          context.alertBox("error", res?.message);
+          context.alertBox("error", res?.message || "Đặt hàng thất bại!");
+          setIsloading(false);
         }
-        history("/order/success");
+      }).catch((err) => {
+        context.alertBox("error", err?.message || "Lỗi khi xử lý đặt hàng!");
+        setIsloading(false);
       });
     } else {
       context.alertBox("error", "Vui lòng thêm địa chỉ");
@@ -523,6 +547,18 @@ const Checkout = () => {
                           className="!rounded-md !border-dashed !text-blue-700 !border-blue-400 hover:!bg-blue-100"
                           onClick={() => { 
                             setCouponCode(c.code);
+                            postData("/api/coupon/validate", {
+                              code: c.code,
+                              orderTotal: subTotal
+                            }).then((res) => {
+                              if (res?.error === false) {
+                                setAppliedCoupon(res);
+                                context?.alertBox("success", res?.message);
+                              } else {
+                                setAppliedCoupon(null);
+                                context?.alertBox("error", res?.message || "Mã giảm giá không hợp lệ");
+                              }
+                            });
                           }}
                         >
                           {c.code} (-{c.type === "percent" ? `${c.discount}%` : formatVnd(c.discount)})

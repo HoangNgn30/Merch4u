@@ -264,27 +264,10 @@ const Sidebar = () => {
               }}
             >
               <Button className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]">
-                <FiUsers className="text-[18px]" /> <span>Người dùng</span>
+                <FiUsers className="text-[18px]" /> <span>Thành viên & Quyền</span>
               </Button>
             </Link>
           </li>
-
-
-          {
-            canManageAccess &&
-            <li>
-              <Link to="/access-control"
-                onClick={() => {
-                  context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-                  setSubmenuIndex(null)
-                }}
-              >
-                <Button className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]">
-                  <MdAdminPanelSettings className="text-[20px]" /> <span>Phân quyền</span>
-                </Button>
-              </Link>
-            </li>
-          }
 
 
           <li>

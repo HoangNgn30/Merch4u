@@ -106,12 +106,56 @@ const restoreInventoryForOrder = async (order) => {
             continue;
         }
 
-        product.countInStock = Number(product.countInStock || 0) + quantity;
-        product.sale = Math.max(0, Number(product.sale || 0) - quantity);
-        await product.save();
+        const newStock = Number(product.countInStock || 0) + quantity;
+        const newSale = Math.max(0, Number(product.sale || 0) - quantity);
+
+        await ProductModel.findByIdAndUpdate(
+            item.productId,
+            { countInStock: newStock, sale: newSale },
+            { runValidators: false }
+        );
     }
 
     order.stockRestoredOnCancel = true;
+}
+
+const restoreCouponForOrder = async (order) => {
+    if (!order || !order.couponCode || order.couponRestoredOnCancel === true) {
+        return;
+    }
+
+    try {
+        const coupon = await CouponModel.findOne({ code: order.couponCode });
+        if (coupon) {
+            const user = await UserModel.findById(order.userId);
+            if (user) {
+                if (!user.gameData) {
+                    user.gameData = {};
+                }
+                if (!user.gameData.wonCoupons) {
+                    user.gameData.wonCoupons = [];
+                }
+
+                const entry = user.gameData.wonCoupons.find(
+                    wc => wc.couponId?.toString() === coupon._id.toString()
+                );
+
+                if (entry) {
+                    entry.quantity = (entry.quantity || 1) + 1;
+                } else {
+                    user.gameData.wonCoupons.push({
+                        couponId: coupon._id,
+                        quantity: 1,
+                        wonAt: new Date()
+                    });
+                }
+                await user.save();
+            }
+        }
+        order.couponRestoredOnCancel = true;
+    } catch (err) {
+        console.error("Error restoring coupon on cancel:", err);
+    }
 }
 
 /**
@@ -145,9 +189,14 @@ const deductInventoryForOrder = async (products = []) => {
         const product = await ProductModel.findById(item.productId);
         if (!product) continue;
 
-        product.countInStock = Math.max(0, Number(product.countInStock || 0) - quantity);
-        product.sale = Number(product.sale || 0) + quantity;
-        await product.save();
+        const newStock = Math.max(0, Number(product.countInStock || 0) - quantity);
+        const newSale = Number(product.sale || 0) + quantity;
+
+        await ProductModel.findByIdAndUpdate(
+            item.productId,
+            { countInStock: newStock, sale: newSale },
+            { runValidators: false }
+        );
     }
 }
 
@@ -592,6 +641,7 @@ export const cancelOrderController = async (request, response) => {
         }
 
         await restoreInventoryForOrder(order);
+        await restoreCouponForOrder(order);
 
         order.order_status = "cancelled";
         order.cancelledAt = new Date();
@@ -845,7 +895,7 @@ export const verifyPayosPaymentController = async (request, response) => {
     try {
         const { orderCode } = request.params;
         
-        const paymentInfo = await payos.paymentRequests.getPaymentLinkById(Number(orderCode));
+        const paymentInfo = await payos.paymentRequests.getPaymentLinkInformation(Number(orderCode));
 
         if (paymentInfo.status === 'PAID') {
             const order = await OrderModel.findOne({ paymentId: String(orderCode) });

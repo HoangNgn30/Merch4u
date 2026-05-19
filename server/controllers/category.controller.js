@@ -98,16 +98,12 @@ export async function getCategories(request, response) {
 //get category count
 export async function getCategoriesCount(request, response) {
     try {
-        const categoryCount = await CategoryModel.countDocuments({ parentId: undefined });
-        if (!categoryCount) {
-            return response.status(500).json({ success: false, error: true });
-        }
-        else {
-            response.send({
-                categoryCount: categoryCount,
-            });
-        }
-
+        const categoryCount = await CategoryModel.countDocuments({ parentId: null });
+        return response.status(200).json({
+            error: false,
+            success: true,
+            categoryCount: categoryCount || 0
+        });
     } catch (error) {
         return response.status(500).json({
             message: error.message || error,
@@ -130,7 +126,7 @@ export async function getSubCategoriesCount(request, response) {
         else {
             const subCatList = [];
             for (let cat of categories) {
-                if (cat.parentId !== undefined) {
+                if (cat.parentId !== null && cat.parentId !== undefined) {
                     subCatList.push(cat);
                 }
             }

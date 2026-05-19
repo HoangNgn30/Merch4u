@@ -163,8 +163,8 @@ const AddVariant = () => {
                 data?.length !== 0 &&
                 <div className="card my-4 pt-5 pb-5 shadow-md sm:rounded-lg bg-white w-[100%] sm:w-[100%] lg:w-[65%]">
                     <div className="relative overflow-x-auto mt-5 pb-5">
-                        <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                            <thead className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
+                        <table className="w-full text-sm text-left rtl:text-right text-slate-600">
+                            <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-100">
                                 <tr>
                                    
                                     <th scope="col" className="px-6 py-3 whitespace-nowrap" width="30%">
@@ -182,7 +182,7 @@ const AddVariant = () => {
                             <tbody>
                                 {
                                     data?.map((item, index) => {
-                                        return <tr className="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700" key={index}>
+                                        return <tr className="odd:bg-white even:bg-slate-50/50 border-b border-slate-100 hover:bg-slate-50 transition-colors" key={index}>
                                         
                                             <td className="px-6 py-2">
                                                <span className="font-[500] text-gray-500"> {item?.type}</span>
@@ -192,15 +192,13 @@ const AddVariant = () => {
                                             </td>
 
                                             <td className="px-6 py-2">
-                                                <div className="flex items-center gap-1">
-                                                    <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:bg-[#e2e2e2] flex items-center justify-center transition-all" onClick={()=>editItem(item?._id)}>
-                                                        <AiOutlineEdit className="text-[rgba(0,0,0,0.7)] text-[20px] " />
+                                                <div className="flex items-center gap-1.5">
+                                                    <button className="action-btn-edit" onClick={()=>editItem(item?._id)} title="Sửa biến thể">
+                                                        <AiOutlineEdit />
                                                     </button>
 
-
-
-                                                    <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:bg-[#e2e2e2] flex items-center justify-center transition-all" onClick={()=>deleteItem(item?._id)}>
-                                                        <GoTrash className="text-[rgba(0,0,0,0.7)] text-[18px] " />
+                                                    <button className="action-btn-delete" onClick={()=>deleteItem(item?._id)} title="Xóa biến thể">
+                                                        <GoTrash />
                                                     </button>
                                                 </div>
                                             </td>

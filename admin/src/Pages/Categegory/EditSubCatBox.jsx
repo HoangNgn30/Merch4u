@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { MdOutlineModeEdit } from "react-icons/md";
-import { FaRegTrashAlt } from "react-icons/fa";
+import { GoTrash } from "react-icons/go";
 import { Button } from "@mui/material";
 import { MyContext } from "../../App";
 import Select from '@mui/material/Select';
@@ -16,142 +16,166 @@ export const EditSubCatBox = (props) => {
     name: "",
     parentCatName: null,
     parentId: null
-  })
+  });
 
   const context = useContext(MyContext);
 
-
   useEffect(() => {
-    formFields.name = props?.name;
-    formFields.parentCatName = props?.selectedCatName;
-    formFields.parentId = props?.selectedCat;
-    setSelectVal(props?.selectedCat)
-  }, [])
-
+    setFormFields({
+      name: props?.name || "",
+      parentCatName: props?.selectedCatName || null,
+      parentId: props?.selectedCat || null
+    });
+    setSelectVal(props?.selectedCat || "");
+  }, [props]);
 
   const onChangeInput = (e) => {
     const { name, value } = e.target;
-
-    const catId = selectVal
-    setSelectVal(catId);
-
-    setFormFields(() => {
-      return {
-        ...formFields,
-        [name]: value
-      }
-    })
-  }
+    setFormFields((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleChange = (event) => {
     setSelectVal(event.target.value);
-    formFields.parentId = event.target.value;
+    setFormFields((prev) => ({
+      ...prev,
+      parentId: event.target.value
+    }));
   };
-
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setIsLoading(true);
-    if (formFields.name === "") {
-      context.alertBox("error", "Please enter category name");
-      return false
+    if (!formFields.name || formFields.name.trim() === "") {
+      context.alertBox("error", "Vui lòng điền tên danh mục con");
+      setIsLoading(false);
+      return false;
     }
-
 
     editData(`/api/category/${props?.id}`, formFields).then((res) => {
       setTimeout(() => {
-        context.alertBox("success", res?.data?.message);
+        context.alertBox("success", res?.data?.message || "Đã lưu thay đổi");
         context?.getCat();
         setIsLoading(false);
-      }, 1000);
+        setEditMode(false);
+      }, 800);
     });
-
-  }
-
+  };
 
   const deleteCat = (id) => {
-    if (context?.userData?.role === "ADMIN") {
-      deleteData(`/api/category/${id}`).then((res) => {
-        context?.getCat();
-      })
+    if (["ADMIN", "SUPERBOSS"].includes(context?.userData?.role)) {
+      context?.showConfirmDelete(
+        "Xóa danh mục con?",
+        "Hành động này sẽ xóa danh mục con được chọn. Bạn có chắc chắn muốn xóa?",
+        () => {
+          deleteData(`/api/category/${id}`).then((res) => {
+            context?.getCat();
+            context.alertBox("success", "Đã xóa danh mục con thành công");
+          });
+        }
+      );
     } else {
-      context.alertBox("error", "Only admin can delete data");
+      context.alertBox("error", "Chỉ admin mới có quyền xóa dữ liệu");
     }
-  }
+  };
 
   return (
-    <form className="w-100  flex items-center gap-3 p-0 px-4" onSubmit={handleSubmit}>
-
-      {
-        editMode === true &&
-        <>
-          <div className="flex items-center justify-between py-2 gap-4 whitespace-nowrap overflow-x-scroll">
-            <div className="w-[180px] md:w-[150px]">
+    <form className="w-full flex items-center gap-3 p-3 px-5 min-h-[50px]" onSubmit={handleSubmit}>
+      {editMode === true ? (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full py-2 gap-3 flex-wrap">
+          <div className="flex flex-1 items-center gap-3 w-full sm:w-auto">
+            <div className="w-[140px] flex-shrink-0">
               <Select
-                style={{ zoom: '75%' }}
-                className="w-full"
+                className="w-full text-xs font-semibold bg-white rounded-lg"
+                sx={{
+                  zoom: '80%',
+                  '& .MuiSelect-select': { py: '8px' }
+                }}
                 size="small"
                 value={selectVal}
                 onChange={handleChange}
                 displayEmpty
-                inputProps={{ 'aria-label': 'Without label' }}
               >
-                {
-                  props?.catData?.length !== 0 && props?.catData?.map((item, index) => {
-                    return (
-                      <MenuItem value={item?._id} key={index} onClick={() => {
-                        formFields.parentCatName = item?.name
-                      }}>{item?.name}</MenuItem>
-                    )
-                  })
-                }
-
+                {props?.catData?.length !== 0 && props?.catData?.map((item, index) => {
+                  return (
+                    <MenuItem 
+                      value={item?._id} 
+                      key={item?._id || index} 
+                      className="text-xs font-semibold"
+                      onClick={() => {
+                        formFields.parentCatName = item?.name;
+                      }}
+                    >
+                      {item?.name}
+                    </MenuItem>
+                  );
+                })}
               </Select>
             </div>
 
-            <input type="text" className='w-[150px] md:w-full h-[30px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm' name="name" value={formFields?.name} onChange={onChangeInput} />
-
-            <div className="flex items-center gap-2">
-              <Button size="small" className="btn-sml" type="submit" variant="contained">
-                {
-                  isLoading === true ? <CircularProgress color="inherit" />
-                    :
-                    <>
-                      Edit
-                    </>
-                }
-              </Button>
-              <Button size="small" variant="outlined" onClick={() => setEditMode(false)}>Cancel</Button>
-            </div>
-
-
+            <input 
+              type="text" 
+              className="flex-1 min-w-[140px] h-[32px] border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 rounded-lg px-3 text-xs font-medium text-slate-800" 
+              name="name" 
+              value={formFields?.name} 
+              onChange={onChangeInput} 
+              placeholder="Tên danh mục..."
+            />
           </div>
-        </>
-      }
 
-
-      {
-        editMode === false &&
-        <>
-          <span className="font-[500] text-[14px]">{props?.name}</span>
-          <div className="flex items-center ml-auto gap-2">
-            <button className="!min-w-[35px] !w-[35px] !h-[35px] !rounded-full !text-black flex items-center justify-center hover:bg-[#e2e2e2] transition-all"
-              onClick={() => {
-                setEditMode(true);
-              }}
+          <div className="flex items-center gap-2">
+            <Button 
+              size="small" 
+              className="!normal-case font-bold !bg-indigo-600 !text-white rounded-xl px-3 py-1.5 min-w-[70px]" 
+              type="submit" 
+              variant="contained"
+              disabled={isLoading}
             >
-              <MdOutlineModeEdit />
+              {isLoading === true ? (
+                <CircularProgress size={14} color="inherit" />
+              ) : (
+                "Lưu"
+              )}
+            </Button>
+            <Button 
+              size="small" 
+              variant="outlined" 
+              className="!normal-case font-bold !border-slate-200 !text-slate-500 hover:!bg-slate-50 rounded-xl px-3 py-1.5"
+              onClick={() => setEditMode(false)}
+            >
+              Hủy
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <span className="font-semibold text-slate-700 text-[13px] hover:text-indigo-600 transition-colors">
+            {props?.name}
+          </span>
+          <div className="flex items-center ml-auto gap-2">
+            <button 
+              type="button"
+              className="w-[28px] h-[28px] bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white border border-indigo-100 hover:border-indigo-600 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-300"
+              onClick={() => setEditMode(true)}
+              title="Sửa danh mục con"
+            >
+              <MdOutlineModeEdit className="text-[14px]" />
             </button>
-            <button className="!min-w-[35px] !w-[35px] !h-[35px] !rounded-full !text-black flex items-center justify-center hover:bg-[#e2e2e2] transition-all"
+            <button 
+              type="button"
+              className="w-[28px] h-[28px] bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-100 hover:border-rose-600 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-300"
               onClick={() => deleteCat(props?.id)}
-            ><FaRegTrashAlt /></button>
+              title="Xóa danh mục con"
+            >
+              <GoTrash className="text-[13px]" />
+            </button>
           </div>
         </>
-      }
-
+      )}
     </form>
-  )
-}
-
+  );
+};
 
 export default EditSubCatBox;
