@@ -279,7 +279,7 @@ const Orders = () => {
                                         {
                                           order?.products?.map((item, index) => {
                                             return (
-                                              <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                              <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700" key={item?._id || index}>
                                                 <td className="px-6 py-4 font-[500]">
                                                   <span className="text-gray-600">
                                                     {item?._id}

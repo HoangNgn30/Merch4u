@@ -5,12 +5,24 @@ import { fetchDataFromApi, deleteData } from "../../utils/api";
 import CircularProgress from "@mui/material/CircularProgress";
 import { Button } from "@mui/material";
 import { FaTrashAlt } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Coupons = () => {
     const context = useContext(MyContext);
+    const navigate = useNavigate();
     const [coupons, setCoupons] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+
+    const handleUseCoupon = (code) => {
+        localStorage.setItem("appliedCouponCode", code);
+        if (context?.cartData?.length > 0) {
+            context?.alertBox("success", "Đã chọn mã giảm giá, đang đi tới trang thanh toán...");
+            navigate("/checkout");
+        } else {
+            context?.alertBox("success", "Đã chọn mã giảm giá! Hãy chọn sản phẩm mua sắm.");
+            navigate("/products");
+        }
+    };
 
     useEffect(() => {
         getCoupons();
@@ -106,6 +118,15 @@ const Coupons = () => {
                                             </p>
                                             {isExpired(coupon.expiryDate) && (
                                                 <p className="text-xs text-red-500 mt-1 font-bold">Đã hết hạn</p>
+                                            )}
+                                            {!isExpired(coupon.expiryDate) && (
+                                                <Button 
+                                                    onClick={() => handleUseCoupon(coupon.code)}
+                                                    className="!bg-primary !text-white !font-bold !rounded-md w-full !mt-3 hover:!bg-red-600 transition-colors !text-[12px] !py-1.5"
+                                                    size="small"
+                                                >
+                                                    {context?.cartData?.length > 0 ? "DÙNG NGAY" : "MUA SẮM NGAY"}
+                                                </Button>
                                             )}
                                         </div>
                                         <div className="mt-4 flex justify-between items-center">

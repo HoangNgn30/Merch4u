@@ -258,9 +258,7 @@ const ProductItem = (props) => {
             <MdZoomOutMap size={18} />
           </button>
 
-          <button className="flex items-center justify-center w-[35px] h-[35px] rounded-full bg-white shadow-md hover:bg-primary text-gray-800 hover:text-white group transition-colors">
-            <IoGitCompareOutline size={18} />
-          </button>
+
 
           <button className="flex items-center justify-center w-[35px] h-[35px] rounded-full bg-white shadow-md hover:bg-primary text-gray-800 hover:text-white group transition-colors"
             onClick={() => handleAddToMyList(props?.item)}

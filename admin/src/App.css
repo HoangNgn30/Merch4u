@@ -6,7 +6,7 @@
   /* Font chữ chính hỗ trợ Tiếng Việt tốt */
   --font-main: "Inter", "Roboto", "Segoe UI", sans-serif;
 
-  --primary: #FF4D00;           
+  --primary: #ff5252;           
   --btn-blue: #3872fa;          
   --btn-blue-hover: #3067e5;    
   
@@ -372,5 +372,160 @@ select {
 select:focus {
   border-color: var(--primary) !important;
   box-shadow: 0 0 0 3px rgba(255, 77, 0, 0.15) !important;
+}
+
+/* ==========================================================================
+   GLOBAL PREMIUM SYNCHRONIZED ACTION BUTTONS (EDIT, VIEW, DELETE)
+   MATCHES THE USER IMAGE PERFECTLY (ROUND CIRCULAR PASTEL DESIGN)
+   ========================================================================== */
+
+/* 1. Edit Action Buttons */
+button:has(svg.AiOutlineEdit),
+button:has(svg.AiOutlineEdit) svg,
+button:has(svg[class*="Edit"]),
+button:has(.AiOutlineEdit),
+button.bg-indigo-50,
+.action-btn-edit {
+  background-color: #eff6ff !important; /* Very soft light blue/indigo background matching image */
+  color: #3b82f6 !important;            /* Indigo/blue edit icon color matching image */
+  border: 1px solid #dbeafe !important; /* Very subtle light border matching image */
+  border-radius: 9999px !important;    /* 100% Circular */
+  width: 35px !important;
+  height: 35px !important;
+  min-width: 35px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: none !important;
+}
+
+button:has(svg.AiOutlineEdit):hover,
+button:has(svg[class*="Edit"]):hover,
+button:has(.AiOutlineEdit):hover,
+button.bg-indigo-50:hover,
+.action-btn-edit:hover {
+  background-color: #3b82f6 !important; /* Solid elegant blue on hover */
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+  transform: scale(1.05);
+}
+
+button:has(svg.AiOutlineEdit):hover svg,
+button:has(svg[class*="Edit"]):hover svg,
+button:has(.AiOutlineEdit):hover svg,
+button.bg-indigo-50:hover svg,
+.action-btn-edit:hover svg {
+  color: #ffffff !important;
+}
+
+button:has(svg.AiOutlineEdit) svg,
+button:has(svg[class*="Edit"]) svg,
+button:has(.AiOutlineEdit) svg,
+button.bg-indigo-50 svg,
+.action-btn-edit svg {
+  color: #3b82f6 !important;
+  font-size: 16px !important;
+  transition: color 0.2s ease !important;
+}
+
+/* 2. View Action Buttons */
+button:has(svg.FaRegEye),
+button:has(svg.FaRegEye) svg,
+button:has(svg[class*="Eye"]),
+button:has(.FaRegEye),
+button.bg-emerald-50,
+.action-btn-view {
+  background-color: #ecfdf5 !important; /* Very soft light emerald background */
+  color: #059669 !important;            /* Elegant emerald view icon color */
+  border: 1px solid #d1fae5 !important; /* Subtle emerald border */
+  border-radius: 9999px !important;    /* 100% Circular */
+  width: 35px !important;
+  height: 35px !important;
+  min-width: 35px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: none !important;
+}
+
+button:has(svg.FaRegEye):hover,
+button:has(svg[class*="Eye"]):hover,
+button:has(.FaRegEye):hover,
+button.bg-emerald-50:hover,
+.action-btn-view:hover {
+  background-color: #059669 !important; /* Solid emerald on hover */
+  color: #ffffff !important;
+  border-color: #059669 !important;
+  transform: scale(1.05);
+}
+
+button:has(svg.FaRegEye):hover svg,
+button:has(svg[class*="Eye"]):hover svg,
+button:has(.FaRegEye):hover svg,
+button.bg-emerald-50:hover svg,
+.action-btn-view:hover svg {
+  color: #ffffff !important;
+}
+
+button:has(svg.FaRegEye) svg,
+button:has(svg[class*="Eye"]) svg,
+button:has(.FaRegEye) svg,
+button.bg-emerald-50 svg,
+.action-btn-view svg {
+  color: #059669 !important;
+  font-size: 16px !important;
+  transition: color 0.2s ease !important;
+}
+
+/* 3. Delete Action Buttons */
+button:has(svg.GoTrash),
+button:has(svg.GoTrash) svg,
+button:has(svg[class*="Trash"]),
+button:has(.GoTrash),
+button.bg-rose-50,
+.action-btn-delete {
+  background-color: #fff1f2 !important; /* Very soft light rose background matching image */
+  color: #f43f5e !important;            /* Rose delete icon color matching image */
+  border: 1px solid #ffe4e6 !important; /* Very subtle rose border matching image */
+  border-radius: 9999px !important;    /* 100% Circular */
+  width: 35px !important;
+  height: 35px !important;
+  min-width: 35px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: none !important;
+}
+
+button:has(svg.GoTrash):hover,
+button:has(svg[class*="Trash"]):hover,
+button:has(.GoTrash):hover,
+button.bg-rose-50:hover,
+.action-btn-delete:hover {
+  background-color: #f43f5e !important; /* Solid rose on hover */
+  color: #ffffff !important;
+  border-color: #f43f5e !important;
+  transform: scale(1.05);
+}
+
+button:has(svg.GoTrash):hover svg,
+button:has(svg[class*="Trash"]):hover svg,
+button:has(.GoTrash):hover svg,
+button.bg-rose-50:hover svg,
+.action-btn-delete:hover svg {
+  color: #ffffff !important;
+}
+
+button:has(svg.GoTrash) svg,
+button:has(svg[class*="Trash"]) svg,
+button:has(.GoTrash) svg,
+button.bg-rose-50 svg,
+.action-btn-delete svg {
+  color: #f43f5e !important;
+  font-size: 16px !important;
+  transition: color 0.2s ease !important;
 }
 

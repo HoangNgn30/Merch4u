@@ -283,7 +283,7 @@ export const ProductDetailsComponent = (props) => {
           Thêm Yêu thích
         </span>
 
-        <span className="flex items-center gap-2 text-[14px] sm:text-[15px] cursor-pointer font-[600] text-gray-600 hover:text-primary transition-colors group">
+        <span className="hidden">
           <IoGitCompareOutline className="text-[20px] group-hover:text-primary" /> So sánh
         </span>
       </div>

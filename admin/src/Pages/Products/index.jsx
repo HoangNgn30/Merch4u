@@ -455,7 +455,7 @@ export const Products = () => {
                                 {
                                     context?.catData?.map((cat, index) => {
                                         return (
-                                            <MenuItem value={cat?._id}>{cat?.name}</MenuItem>
+                                            <MenuItem key={cat?._id || index} value={cat?._id}>{cat?.name}</MenuItem>
                                         )
                                     })
                                 }
@@ -481,17 +481,15 @@ export const Products = () => {
                             >
                                 <MenuItem value={null}>None</MenuItem>
                                 {
-                                    context?.catData?.filter(cat => cat._id === productCat).map((cat, index) => {
-                                        return (
-                                            cat?.children?.length !== 0 && cat?.children?.map((subCat, index_) => {
-                                                return (
-                                                    <MenuItem value={subCat?._id} key={index_}>
-                                                        {subCat?.name}</MenuItem>
-                                                )
-                                            })
-
-                                        )
-                                    })
+                                    context?.catData?.filter(cat => cat._id === productCat).map((cat, index) => (
+                                        <React.Fragment key={cat?._id || index}>
+                                            {cat?.children?.length !== 0 && cat?.children?.map((subCat, index_) => (
+                                                <MenuItem value={subCat?._id} key={subCat?._id || index_}>
+                                                    {subCat?.name}
+                                                </MenuItem>
+                                            ))}
+                                        </React.Fragment>
+                                    ))
                                 }
 
                             </Select>
@@ -515,20 +513,19 @@ export const Products = () => {
                             >
                                 <MenuItem value={null}>None</MenuItem>
                                 {
-                                    context?.catData?.filter(cat => cat._id === productCat).map((cat) => {
-                                        return (
-                                            cat?.children?.length !== 0 && cat?.children?.filter(subCat => subCat._id === productSubCat).map((subCat) => {
-                                                return (
-                                                    subCat?.children?.length !== 0 && subCat?.children?.map((thirdLavelCat, index) => {
-                                                        return <MenuItem value={thirdLavelCat?._id} key={index}
-                                                        >{thirdLavelCat?.name}</MenuItem>
-                                                    })
-
-                                                )
-                                            })
-
-                                        )
-                                    })
+                                    context?.catData?.filter(cat => cat._id === productCat).map((cat, index) => (
+                                        <React.Fragment key={cat?._id || index}>
+                                            {cat?.children?.length !== 0 && cat?.children?.filter(subCat => subCat._id === productSubCat).map((subCat, index_) => (
+                                                <React.Fragment key={subCat?._id || index_}>
+                                                    {subCat?.children?.length !== 0 && subCat?.children?.map((thirdLavelCat, index__) => (
+                                                        <MenuItem value={thirdLavelCat?._id} key={thirdLavelCat?._id || index__}>
+                                                            {thirdLavelCat?.name}
+                                                        </MenuItem>
+                                                    ))}
+                                                </React.Fragment>
+                                            ))}
+                                        </React.Fragment>
+                                    ))
                                 }
 
                             </Select>
@@ -576,98 +573,124 @@ export const Products = () => {
                             {
                                 isLoading === false ? productData?.products?.length !== 0 && productData?.products?.map((product, index) => {
                                     return (
-                                        <TableRow key={index} className={product.checked === true ? '!bg-[#1976d21f]' : ''}>
+                                        <TableRow key={index} className={`hover:bg-slate-50/80 transition-colors ${product.checked === true ? '!bg-indigo-50/50' : ''}`}>
                                             <TableCell style={{ minWidth: columns.minWidth }}>
                                                 <Checkbox {...label} size="small" checked={product.checked === true ? true : false}
                                                     onChange={(e) => handleCheckboxChange(e, product._id, index)}
+                                                    className="text-indigo-600"
                                                 />
                                             </TableCell>
                                             <TableCell style={{ minWidth: columns.minWidth }}>
-                                                <div className="flex items-center gap-4 w-[300px]" title={product?.name}>
-                                                    <div className="img w-[65px] h-[65px] rounded-md overflow-hidden group cursor-pointer" onClick={() => setOpen(true)}>
+                                                <div className="flex items-center gap-4 w-[320px]" title={product?.name}>
+                                                    <div className="img relative w-[65px] h-[65px] rounded-xl overflow-hidden group cursor-pointer shadow-md border border-slate-100" onClick={() => setOpen(true)}>
                                                         <LazyLoadImage
                                                             alt={"image"}
                                                             effect="blur"
                                                             src={product?.images[0]}
-                                                            className="w-full group-hover:scale-105 transition-all"
+                                                            className="w-full h-full object-cover group-hover:scale-110 transition-all duration-300"
                                                         />
                                                     </div>
-                                                    <div className="info w-[75%]">
-                                                        <h3 className="font-[600] text-[12px] leading-4 hover:text-primary">
+                                                    <div className="info w-[75%] flex flex-col gap-0.5">
+                                                        <h3 className="font-[600] text-[13px] text-slate-800 leading-snug hover:text-indigo-600 transition-colors">
                                                             <Link to={`/product/${product?._id}`}>
-                                                                {product?.name?.substr(0, 50) + '...'}
+                                                                {product?.name?.length > 48 ? product?.name?.substr(0, 45) + '...' : product?.name}
                                                             </Link>
                                                         </h3>
-                                                        <span className="text-[12px]">{product?.brand}</span>
+                                                        <span className="text-[11px] font-medium text-slate-400 tracking-wider uppercase">{product?.brand || "No Brand"}</span>
                                                     </div>
                                                 </div>
                                             </TableCell>
 
                                             <TableCell style={{ minWidth: columns.minWidth }} align="center">
-                                                {product?.catName}
+                                                <span className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-sky-50 text-sky-700 border border-sky-100">
+                                                    {product?.catName}
+                                                </span>
                                             </TableCell>
 
                                             <TableCell style={{ minWidth: columns.minWidth }} align="center">
-                                                {product?.subCat}
-                                            </TableCell>
-
-                                            <TableCell style={{ minWidth: columns.minWidth }} align="center">
-                                                <div className="flex gap-1 flex-col items-center justify-center">
-                                                    <span className="oldPrice line-through leading-3 text-gray-500 text-[14px] font-[500]">
-                                                        {product?.oldPrice?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+                                                {product?.subCat ? (
+                                                    <span className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-violet-50 text-violet-700 border border-violet-100">
+                                                        {product?.subCat}
                                                     </span>
-                                                    <span className="price text-primary text-[14px]  font-[600]">
+                                                ) : (
+                                                    <span className="text-slate-300 text-[12px] italic">-</span>
+                                                )}
+                                            </TableCell>
+
+                                            <TableCell style={{ minWidth: columns.minWidth }} align="center">
+                                                <div className="flex gap-0.5 flex-col items-center justify-center">
+                                                    {product?.oldPrice > product?.price && (
+                                                        <span className="oldPrice line-through text-slate-400 text-[12px] font-[500]">
+                                                            {product?.oldPrice?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+                                                        </span>
+                                                    )}
+                                                    <span className="price text-indigo-600 text-[14px] font-[700]">
                                                         {product?.price?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
                                                     </span>
                                                 </div>
                                             </TableCell>
 
                                             <TableCell style={{ minWidth: columns.minWidth }} align="center">
-                                                <p className="text-[14px] w-[70px] mx-auto text-center">
-                                                    <span className="font-[600]">{product?.sale}</span>
-                                                </p>
-
-
+                                                {product?.sale > 20 ? (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                                                        {product?.sale} đã bán
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center px-2.5 py-1 text-[11px] font-semibold rounded-full bg-slate-50 text-slate-600 border border-slate-200">
+                                                        {product?.sale || 0}
+                                                    </span>
+                                                )}
                                             </TableCell>
 
 
                                             <TableCell style={{ minWidth: columns.minWidth }} align="center">
-                                                <p className="text-[14px] w-[70px] mx-auto text-center">
-                                                    <span className="font-[600] text-primary">{product?.countInStock}</span>
-                                                </p>
-
-
+                                                {product?.countInStock === 0 ? (
+                                                    <span className="px-2.5 py-1 text-[11px] font-bold rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                                                        Hết hàng
+                                                    </span>
+                                                ) : product?.countInStock < 10 ? (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                                                        ({product?.countInStock})
+                                                    </span>
+                                                ) : (
+                                                    <span className="px-2.5 py-1 text-[11px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                        {product?.countInStock}
+                                                    </span>
+                                                )}
                                             </TableCell>
 
 
                                             <TableCell style={{ minWidth: columns.minWidth }} align="center">
-                                                <p className="text-[14px] w-[100px] mx-auto flex justify-center">
-                                                    <Rating name="half-rating" size="small" defaultValue={product?.rating} readOnly />
-                                                </p>
-
-
+                                                <div className="flex justify-center">
+                                                    <Rating name="half-rating" size="small" defaultValue={product?.rating} readOnly className="text-amber-400" />
+                                                </div>
                                             </TableCell>
 
                                             <TableCell style={{ minWidth: columns.minWidth }} align="center">
-                                                <div className="flex items-center justify-center gap-1">
-                                                    <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:!bg-[#e2e2e2] flex items-center justify-center transition-all"
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    <button className="w-[32px] h-[32px] bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white border border-indigo-100 hover:border-indigo-600 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-300"
                                                         onClick={() => context.setIsOpenFullScreenPanel({
                                                             open: true,
                                                             model: 'Edit Product',
                                                             id: product?._id
                                                         })}
+                                                        title="Sửa sản phẩm"
                                                     >
-                                                        <AiOutlineEdit className="text-[rgba(0,0,0,0.7)] text-[20px] " />
+                                                        <AiOutlineEdit className="text-[18px]" />
                                                     </button>
 
-                                                    <Link to={`/product/${product?._id}`}>
-                                                        <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:!bg-[#e2e2e2] flex items-center justify-center transition-all">
-                                                            <FaRegEye className="text-[rgba(0,0,0,0.7)] text-[18px] " />
+                                                    <Link to={`/product/${product?._id}`} title="Xem chi tiết">
+                                                        <button className="w-[32px] h-[32px] bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-100 hover:border-emerald-600 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-300">
+                                                            <FaRegEye className="text-[16px]" />
                                                         </button>
                                                     </Link>
 
-                                                    <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:!bg-[#e2e2e2] flex items-center justify-center transition-all" onClick={() => deleteProduct(product?._id)}>
-                                                        <GoTrash className="text-[rgba(0,0,0,0.7)] text-[18px] " />
+                                                    <button className="w-[32px] h-[32px] bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-100 hover:border-rose-600 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-300"
+                                                        onClick={() => deleteProduct(product?._id)}
+                                                        title="Xóa sản phẩm"
+                                                    >
+                                                        <GoTrash className="text-[16px]" />
                                                     </button>
                                                 </div>
                                             </TableCell>
@@ -680,7 +703,7 @@ export const Products = () => {
 
                                     <>
                                         <TableRow>
-                                            <TableCell colspan={8}>
+                                            <TableCell colSpan={9}>
                                                 <div className="flex items-center justify-center w-full min-h-[400px]">
                                                     <CircularProgress color="inherit" />
                                                 </div>
@@ -699,7 +722,7 @@ export const Products = () => {
                     labelRowsPerPage="Số hàng mỗi trang:"
                     rowsPerPageOptions={[50, 100, 150, 200]}
                     component="div"
-                    count={productData?.totalPages * rowsPerPage}
+                    count={Number(productData?.totalCount) || Number(productData?.total) || (Number(productData?.totalPages) * rowsPerPage) || 0}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={handleChangePage}

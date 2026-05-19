@@ -5,54 +5,30 @@ import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
-import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import { AiOutlineEdit } from "react-icons/ai";
 import { GoTrash } from "react-icons/go";
 import { MyContext } from '../../App';
-import { deleteData, deleteMultipleData, fetchDataFromApi } from '../../utils/api';
-
-
-
-const label = { inputProps: { "aria-label": "Checkbox demo" } };
+import { deleteData, fetchDataFromApi } from '../../utils/api';
 
 const columns = [
-    { id: "image", label: "HÌNH ẢNH", minWidth: 100, align: "center" },
-    { id: "action", label: "Thao Tác", minWidth: 100, align: "center" },
+    { id: "image", label: "Hình Ảnh Banner", minWidth: 200, align: "center" },
+    { id: "action", label: "Thao Tác", minWidth: 120, align: "center" },
 ];
 
-const RightBannerList = (props) => {
-    const [page, setPage] = React.useState(0);
-    const [rowsPerPage, setRowsPerPage] = React.useState(10);
-
+const RightBannerList = () => {
     const [slidesData, setSlidesData] = useState([]);
-    const [sortedIds, setSortedIds] = useState([]);
-
     const context = useContext(MyContext);
-
 
     useEffect(() => {
         getData();
-    }, [context?.isOpenFullScreenPanel])
-
-
+    }, [context?.isOpenFullScreenPanel]);
 
     const getData = () => {
         fetchDataFromApi("/api/rightBanner").then((res) => {
-            setSlidesData(res?.data);
+            setSlidesData(res?.data || []);
         });
-    }
-
-
-    const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(+event.target.value);
-        setPage(0);
     };
-
-    const handleChangePage = (event, newPage) => {
-        setPage(newPage);
-    };
-
 
     const deleteSlide = (id) => {
         if (["ADMIN", "SUPERBOSS"].includes(context?.userData?.role)) {
@@ -60,110 +36,118 @@ const RightBannerList = (props) => {
                 "Xóa banner?",
                 "Bạn có chắc chắn muốn xóa banner này?",
                 () => {
-                    deleteData(`/api/rightBanner/${id}`).then((res) => {
-                        context.alertBox("success", "Banner deleted");
+                    deleteData(`/api/rightBanner/${id}`).then(() => {
+                        context.alertBox("success", "Đã xóa banner thành công");
                         getData();
-                    })
+                    });
                 }
-            )
+            );
         } else {
-            context.alertBox("error", "Only admin can delete data");
+            context.alertBox("error", "Chỉ admin mới có quyền xóa dữ liệu");
         }
-    }
+    };
 
     return (
-        <>
-            <div className="card my-2 pt-5 shadow-md sm:rounded-lg bg-white">
-                <div className="flex items-center w-full px-5 pb-4 justify-between">
-                    <div className="col">
-                        <h2 className="text-[18px] font-[600]">
-                            Danh sách Banner
-                        </h2>
-                    </div>
-
-                    <div className="col ml-auto flex items-center justify-end gap-3">
-                        {slidesData?.length === 0 && (
-                            <Button className="btn-blue !text-white btn-sm" onClick={() => context.setIsOpenFullScreenPanel({
-                                open: true,
-                                model: 'addRightBanner'
-                            })}>Thêm Banner</Button>
-                        )}
-                    </div>
+        <div className="card my-4 p-6 shadow-xl border border-slate-100 rounded-2xl bg-white transition-all">
+            <div className="flex items-center w-full pb-6 justify-between">
+                <div className="col">
+                    <h2 className="text-[18px] font-[600] text-slate-800">
+                        Danh sách Banner Phải (Right Banners)
+                    </h2>
                 </div>
 
+                <div className="col ml-auto">
+                    {slidesData?.length === 0 && (
+                        <Button 
+                            variant="contained"
+                            size="small"
+                            className="btn-blue !text-white !normal-case font-semibold rounded-xl px-4 py-2" 
+                            onClick={() => context.setIsOpenFullScreenPanel({
+                                open: true,
+                                model: 'addRightBanner'
+                            })}
+                        >
+                            Thêm Banner Mới
+                        </Button>
+                    )}
+                </div>
+            </div>
 
-                <TableContainer sx={{ maxHeight: 440 }}>
+            <div className="relative overflow-x-auto rounded-xl border border-slate-100 shadow-sm">
+                <TableContainer>
                     <Table stickyHeader aria-label="sticky table">
                         <TableHead>
                             <TableRow>
-
                                 {columns.map((column) => (
                                     <TableCell
-                                        width={column.minWidth}
                                         key={column.id}
                                         align={column.align}
-
+                                        style={{ minWidth: column.minWidth }}
+                                        className="!bg-slate-50/80 !text-slate-500 !font-semibold !text-[12px] uppercase"
                                     >
                                         {column.label}
                                     </TableCell>
                                 ))}
                             </TableRow>
                         </TableHead>
-                        <TableBody>
-                            {
-                                slidesData?.length !== 0 && slidesData?.map((item, index) => {
+                        <TableBody className="divide-y divide-slate-100">
+                            {slidesData?.length !== 0 ? (
+                                slidesData?.map((item, index) => {
                                     return (
-                                        <TableRow>
-
-                                            <TableCell width={100} align="center">
-                                                <div className="flex items-center justify-center gap-4 w-[130px] lg:w-[200px] mx-auto">
-                                                    <div className="img w-full rounded-md overflow-hidden group">
-
+                                        <TableRow key={item?._id || index} className="hover:bg-slate-50/80 transition-colors">
+                                            <TableCell align="center">
+                                                <div className="w-[180px] lg:w-[240px] mx-auto rounded-xl overflow-hidden shadow-md border border-slate-100 bg-slate-50 group cursor-pointer p-1">
+                                                    {item?.images && item?.images[0] ? (
                                                         <img
                                                             src={item?.images[0]}
-                                                            className="w-full group-hover:scale-105 transition-all"
+                                                            className="w-full h-auto rounded-lg group-hover:scale-105 transition-transform duration-300 object-cover"
+                                                            alt="banner"
                                                         />
-                                                    </div>
-
+                                                    ) : (
+                                                        <span className="text-xs text-slate-300 italic">No image</span>
+                                                    )}
                                                 </div>
                                             </TableCell>
 
-
-                                            <TableCell width={100} align="center">
-                                                <div className="flex items-center justify-center gap-1">
-                                                    <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:bg-[#e2e2e2] flex items-center justify-center transition-all" onClick={() => context.setIsOpenFullScreenPanel({
-                                                        open: true,
-                                                        model: 'editRightBanner',
-                                                        id: item?._id
-                                                    })}>
-                                                        <AiOutlineEdit className="text-[rgba(0,0,0,0.7)] text-[20px] " />
+                                            <TableCell align="center">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button 
+                                                        className="w-[32px] h-[32px] bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white border border-indigo-100 hover:border-indigo-600 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-300"
+                                                        onClick={() => context.setIsOpenFullScreenPanel({
+                                                            open: true,
+                                                            model: 'editRightBanner',
+                                                            id: item?._id
+                                                        })}
+                                                        title="Sửa Banner"
+                                                    >
+                                                        <AiOutlineEdit className="text-[16px]" />
                                                     </button>
 
-
-                                                    <button className="!w-[35px] !h-[35px] bg-[#f1f1f1] !border !border-[rgba(0,0,0,0.4)] !rounded-full hover:bg-[#e2e2e2] flex items-center justify-center transition-all" onClick={() => deleteSlide(item?._id)}>
-                                                        <GoTrash className="text-[rgba(0,0,0,0.7)] text-[18px] " />
+                                                    <button 
+                                                        className="w-[32px] h-[32px] bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-100 hover:border-rose-600 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-300"
+                                                        onClick={() => deleteSlide(item?._id)}
+                                                        title="Xóa Banner"
+                                                    >
+                                                        <GoTrash className="text-[16px]" />
                                                     </button>
                                                 </div>
                                             </TableCell>
-
                                         </TableRow>
-                                    )
+                                    );
                                 })
-                            }
-
-
-
-
-
+                            ) : (
+                                <TableRow>
+                                    <td colSpan={2} className="px-5 py-12 text-center text-slate-400 font-medium italic">
+                                        Chưa có banner nào được tạo.
+                                    </td>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </TableContainer>
-
             </div>
-
-
-        </>
-    )
-}
+        </div>
+    );
+};
 
 export default RightBannerList;

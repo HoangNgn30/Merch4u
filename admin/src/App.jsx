@@ -25,7 +25,6 @@ import Profile from "./Pages/Profile";
 import ProductDetails from "./Pages/Products/productDetails";
 import RightBannerList from "./Pages/Banners/rightBannerList";
 import Coupons from "./Pages/Coupons";
-import AccessControl from "./Pages/AccessControl";
 import ConfirmDeleteDialog from "./Components/ConfirmDeleteDialog";
 import { BlogList } from "./Pages/Blog";
 import ManageLogo from "./Pages/ManageLogo";
@@ -231,17 +230,6 @@ function App() {
         <>
           <AdminShell>
                 <Coupons />
-          </AdminShell>
-        </>
-      ),
-    },
-    {
-      path: "/access-control",
-      exact: true,
-      element: (
-        <>
-          <AdminShell>
-                <AccessControl />
           </AdminShell>
         </>
       ),
