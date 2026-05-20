@@ -12,7 +12,12 @@ const userSchema = mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, "Provide password"]
+        required: [
+            function() {
+                return !this.signUpWithGoogle;
+            },
+            "Provide password"
+        ]
     },
     avatar: {
         type: String,

@@ -50,11 +50,13 @@ const AddressBox = (props) => {
 
             <span className="pt-0 text-[13px] block w-100">
                 {
-                    props?.address?.address_line1 + " " +
-                    props?.address?.city + " " +
-                    props?.address?.country + " " +
-                    props?.address?.state + " " +
-                    props?.address?.pincode
+                    [
+                        props?.address?.address_line1,
+                        props?.address?.city,
+                        props?.address?.state,
+                        props?.address?.country
+                    ].filter(Boolean).join(", ") +
+                    (props?.address?.landmark ? ` (${props?.address?.landmark})` : "")
                 }
             </span>
 

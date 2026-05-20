@@ -4,10 +4,15 @@ import { BsFillBagCheckFill } from "react-icons/bs";
 import { MyContext } from '../../App';
 import { FaPlus } from "react-icons/fa6";
 import Radio from '@mui/material/Radio';
-import { deleteData, fetchDataFromApi, postData } from "../../utils/api";
+import { deleteData, editData, fetchDataFromApi, postData } from "../../utils/api";
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 import CircularProgress from '@mui/material/CircularProgress';
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import { GoTriangleDown } from "react-icons/go";
+import { IoCloseSharp } from "react-icons/io5";
+import { QtyBox } from "../../components/QtyBox";
 
 const VITE_APP_PAYPAL_CLIENT_ID = import.meta.env.VITE_APP_PAYPAL_CLIENT_ID;
 const VITE_API_URL = import.meta.env.VITE_API_URL;
@@ -19,6 +24,120 @@ const addressTypeLabel = {
 };
 
 const formatVnd = (value) => Number(value || 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+
+const CheckoutCartItem = ({ item, index, updateCartSize, updateCartQty, removeItem }) => {
+  const [sizeAnchorEl, setSizeAnchorEl] = useState(null);
+  const openSize = Boolean(sizeAnchorEl);
+  const [productSizes, setProductSizes] = useState([]);
+  const [loadingSizes, setLoadingSizes] = useState(true);
+
+  useEffect(() => {
+    if (item?.productId) {
+      fetchDataFromApi(`/api/product/${item.productId}`).then((res) => {
+        if (res?.product) {
+          const sizes = res.product.size || [];
+          setProductSizes(sizes.filter(s => s && s.trim() !== ""));
+        }
+        setLoadingSizes(false);
+      });
+    } else {
+      setLoadingSizes(false);
+    }
+  }, [item?.productId]);
+
+  const handleClickSize = (event) => {
+    setSizeAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseSize = (value) => {
+    setSizeAnchorEl(null);
+    if (value !== null) {
+      updateCartSize(item, value);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2 py-3 border-b border-[rgba(0,0,0,0.06)] relative group">
+      {/* Top row: Image, Title, Delete */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <div className="img w-[50px] h-[50px] shrink-0 object-cover overflow-hidden rounded-md cursor-pointer border border-gray-100">
+            <img
+              src={item?.image}
+              className="w-full h-full object-cover transition-all group-hover:scale-105"
+              alt={item?.productTitle}
+            />
+          </div>
+          <div className="info">
+            <h4 className="text-[13px] font-semibold text-gray-800 leading-snug line-clamp-1 w-[160px] md:w-[180px]" title={item?.productTitle}>
+              {item?.productTitle}
+            </h4>
+            <span className="text-[11px] text-gray-500 font-medium">
+              Đơn giá: {Number(item?.price || 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+            </span>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => removeItem(item?._id)}
+          className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1 rounded-full transition-colors border-none bg-transparent cursor-pointer shrink-0"
+          title="Xóa sản phẩm"
+        >
+          <IoCloseSharp className="text-[18px]" />
+        </button>
+      </div>
+
+      {/* Bottom row: Variant selector & QtyBox & subtotal */}
+      <div className="flex items-center justify-between gap-2 mt-1">
+        <div className="flex items-center gap-2">
+          {!loadingSizes && productSizes.length > 0 && (
+            <>
+              <button
+                type="button"
+                className="flex items-center justify-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[12px] font-[600] h-[30px] px-3.5 rounded-full border-none cursor-pointer transition-all min-w-[55px]"
+                onClick={handleClickSize}
+              >
+                {item?.size || productSizes[0]} <GoTriangleDown className="text-[11px]" />
+              </button>
+
+              <Menu
+                anchorEl={sizeAnchorEl}
+                open={openSize}
+                onClose={() => handleCloseSize(null)}
+                MenuListProps={{
+                  "aria-labelledby": "basic-button",
+                }}
+              >
+                {productSizes.map((sizeName, idx) => (
+                  <MenuItem
+                    key={idx}
+                    selected={sizeName === item?.size}
+                    onClick={() => handleCloseSize(sizeName)}
+                    className="text-xs"
+                  >
+                    {sizeName}
+                  </MenuItem>
+                ))}
+              </Menu>
+            </>
+          )}
+
+          <div className="w-[100px] h-[30px] shrink-0">
+            <QtyBox
+              handleSelecteQty={(val) => updateCartQty(item, val)}
+              initialQty={item?.quantity}
+              maxQty={item?.countInStock || 999}
+            />
+          </div>
+        </div>
+
+        <span className="text-[13px] font-[600] text-gray-800">
+          {Number(item?.quantity * item?.price || 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+        </span>
+      </div>
+    </div>
+  );
+};
 
 const Checkout = () => {
 
@@ -38,6 +157,59 @@ const Checkout = () => {
   const shippingFee = subTotal >= FREE_SHIPPING_THRESHOLD ? 0 : FIXED_SHIPPING_FEE;
   const couponDiscount = Number(appliedCoupon?.discountAmount || 0);
   const payableAmount = Math.max(0, subTotal - couponDiscount) + shippingFee;
+
+  const updateCartSize = (item, selectedVal) => {
+    const cartObj = {
+      _id: item?._id,
+      qty: item?.quantity,
+      subTotal: item?.price * item?.quantity,
+      size: selectedVal,
+    };
+
+    fetchDataFromApi(`/api/product/${item?.productId}`).then((res) => {
+      const product = res?.product;
+      const sizeExists = product?.size?.filter((size) => size?.includes(selectedVal));
+
+      if (sizeExists?.length !== 0) {
+        editData("/api/cart/update-qty", cartObj).then((res) => {
+          if (res?.data?.error === false) {
+            context.alertBox("success", res?.data?.message);
+            context?.getCartItems();
+          }
+        });
+      } else {
+        context.alertBox("error", `Sản phẩm không có biến thể ${selectedVal}`);
+      }
+    });
+  };
+
+  const updateCartQty = (item, newQty) => {
+    const cartObj = {
+      _id: item?._id,
+      qty: newQty,
+      subTotal: item?.price * newQty
+    };
+
+    editData("/api/cart/update-qty", cartObj).then((res) => {
+      if (res?.data?.error === false) {
+        context.alertBox("success", res?.data?.message);
+        context?.getCartItems();
+      }
+    });
+  };
+
+  const removeItem = (id) => {
+    context?.showConfirmBox(
+      "Xóa sản phẩm khỏi giỏ hàng?",
+      "Sản phẩm này sẽ được xóa khỏi giỏ hàng của bạn.",
+      () => {
+        deleteData(`/api/cart/delete-cart-item/${id}`).then((res) => {
+          context.alertBox("success", "Đã xóa sản phẩm khỏi giỏ hàng");
+          context?.getCartItems();
+        });
+      }
+    );
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -377,6 +549,21 @@ const Checkout = () => {
     }
 
 
+  if (!context?.cartData || context?.cartData?.length === 0) {
+    return (
+      <section className="py-10 lg:py-20 px-3 text-center">
+        <div className="max-w-[500px] mx-auto bg-white p-8 rounded-2xl shadow-md flex flex-col items-center gap-5">
+          <img src="/empty-cart.png" className="w-[120px]" alt="Giỏ hàng trống" />
+          <h2 className="text-xl font-bold text-gray-800">Giỏ hàng của bạn đang trống</h2>
+          <p className="text-gray-500 text-sm mt-[-10px]">Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán.</p>
+          <Button className="btn-org !font-bold !rounded-md !px-6 !py-2 transition-colors" onClick={() => history("/")}>
+            Quay lại cửa hàng
+          </Button>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-3 lg:py-10 px-3">
       <div>
@@ -419,7 +606,13 @@ const Checkout = () => {
                           </span>
                           <h3>{userData?.name}</h3>
                           <p className="mt-0 mb-0">
-                            {address?.address_line1 + " " + address?.city + " " + address?.country + " " + address?.state + " " + address?.landmark + " " + address?.mobile}
+                            {[
+                              address?.address_line1,
+                              address?.city,
+                              address?.state,
+                              address?.country
+                            ].filter(Boolean).join(", ") +
+                             (address?.landmark ? ` (${address?.landmark})` : "")}
                           </p>
 
    
@@ -467,34 +660,21 @@ const Checkout = () => {
                 <span className="text-[14px] font-[600]">Thành tiền</span>
               </div>
 
-              <div className="mb-5 scroll max-h-[250px] overflow-y-scroll overflow-x-hidden pr-2">
-
+              <div className="mb-5 scroll max-h-[350px] overflow-y-scroll overflow-x-hidden pr-2 flex flex-col gap-1">
                 {
                   context?.cartData?.length !== 0 && context?.cartData?.map((item, index) => {
                     return (
-                      <div className="flex items-center justify-between py-2" key={index}>
-                        <div className="part1 flex items-center gap-3">
-                          <div className="img w-[50px] h-[50px] object-cover overflow-hidden rounded-md group cursor-pointer">
-                            <img
-                              src={item?.image}
-                              className="w-full transition-all group-hover:scale-105"
-                            />
-                          </div>
-
-                          <div className="info">
-                            <h4 className="text-[14px]" title={item?.productTitle}>{item?.productTitle?.substr(0, 20) + '...'} </h4>
-                            <span className="text-[13px]">SL : {item?.quantity}</span>
-                          </div>
-                        </div>
-
-                        <span className="text-[14px] font-[500]">{(item?.quantity * item?.price)?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</span>
-                      </div>
+                      <CheckoutCartItem
+                        key={index}
+                        item={item}
+                        index={index}
+                        updateCartSize={updateCartSize}
+                        updateCartQty={updateCartQty}
+                        removeItem={removeItem}
+                      />
                     )
                   })
                 }
-
-
-
               </div>
 
               <div className="border-t border-[rgba(0,0,0,0.1)] pt-4 mb-4">

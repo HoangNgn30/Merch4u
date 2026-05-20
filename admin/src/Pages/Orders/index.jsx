@@ -232,7 +232,8 @@ export const Orders = () => {
                               order?.delivery_address?.city,
                               order?.delivery_address?.state,
                               order?.delivery_address?.country
-                            ].filter(Boolean).join(", ")}
+                            ].filter(Boolean).join(", ") +
+                             (order?.delivery_address?.landmark ? ` (${order?.delivery_address?.landmark})` : "")}
                           </span>
                         </div>
                       </td>

@@ -5,7 +5,7 @@ import ProductItem from "../../components/ProductItem";
 import ProductItemListView from "../../components/ProductItemListView";
 import Button from "@mui/material/Button";
 import { IoGridSharp } from "react-icons/io5";
-import { LuMenu } from "react-icons/lu";
+import { LuMenu, LuChevronsUpDown } from "react-icons/lu";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Pagination from "@mui/material/Pagination";
@@ -159,21 +159,23 @@ const ProductListing = () => {
             </div>
 
             <div className="bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 p-3 w-full mb-5 rounded-[16px] flex items-center justify-between">
-              <div className="col1 flex items-center itemViewActions">
-                <Button
-                  className={`!w-[35px] !h-[35px] !min-w-[35px] !rounded-full 
-                    !text-[#000] ${itemView === "list" && "active !bg-[#dfdfdf]"}`}
+              <div className="col1 flex items-center gap-1.5 itemViewActions">
+                <button
+                  className={`w-[35px] h-[35px] rounded-full flex items-center justify-center border border-gray-200/80 transition-all
+                    ${itemView === "list" ? "bg-primary text-white border-primary active" : "bg-[#f1f5f9] text-slate-700 hover:bg-slate-200 border-slate-200"}`}
                   onClick={() => setItemView("list")}
+                  title="Xem dạng danh sách"
                 >
-                  <LuMenu className="text-[rgba(0,0,0,0.7)] text-[16px]" />
-                </Button>
-                <Button
-                  className={`!w-[35px] !h-[35px] !min-w-[35px] !rounded-full 
-                    !text-[#000] ${itemView === "grid" && "active !bg-[#dfdfdf]"}`}
+                  <LuMenu className="text-[16px]" />
+                </button>
+                <button
+                  className={`w-[35px] h-[35px] rounded-full flex items-center justify-center border border-gray-200/80 transition-all
+                    ${itemView === "grid" ? "bg-primary text-white border-primary active" : "bg-[#f1f5f9] text-slate-700 hover:bg-slate-200 border-slate-200"}`}
                   onClick={() => setItemView("grid")}
+                  title="Xem dạng lưới"
                 >
-                  <IoGridSharp className="text-[rgba(0,0,0,0.7)] text-[14px]" />
-                </Button>
+                  <IoGridSharp className="text-[14px]" />
+                </button>
 
                 <span className="text-[14px] hidden sm:block md:block lg:block font-[500] pl-3 text-[rgba(0,0,0,0.7)]">
                   Có {visibleProducts?.length || 0} sản phẩm.
@@ -185,17 +187,17 @@ const ProductListing = () => {
                   Sắp xếp
                 </span>
 
-                <Button
+                <button
                   id="basic-button"
                   aria-controls={open ? "basic-menu" : undefined}
                   aria-haspopup="true"
                   aria-expanded={open ? "true" : undefined}
                   onClick={handleClick}
-                  className="!bg-white !text-[12px] !text-[#000] !capitalize !border-2 
-                  !border-[#000]"
+                  className="bg-white text-[13px] text-slate-700 font-semibold px-4 py-2 border border-slate-300 hover:border-slate-400 rounded-xl shadow-sm flex items-center gap-2 transition-all cursor-pointer"
                 >
-                  {selectedSortVal}
-                </Button>
+                  <span>{selectedSortVal}</span>
+                  <LuChevronsUpDown className="text-slate-500 text-[14px]" />
+                </button>
 
                 <Menu
                   id="basic-menu"
@@ -333,7 +335,7 @@ const ProductListing = () => {
 
       {/* AI Gợi ý cá nhân hóa */}
       <div className="">
-        <AIRecommendations title="✨ Gợi ý cho bạn" />
+        <AIRecommendations title="Gợi ý cho bạn" />
       </div>
     </section>
   );

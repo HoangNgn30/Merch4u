@@ -35,6 +35,35 @@ const CHART_COLORS = [
   "#3b82f6", "#f43f5e", "#a855f7", "#0ea5e9", "#22c55e"
 ];
 
+const translateStatus = (status) => {
+  const mapping = {
+    pending: "Chờ xử lý",
+    confirm: "Đã xác nhận",
+    processing: "Đang xử lý",
+    shipping: "Đang giao",
+    shipped: "Đang giao",
+    delivered: "Đã giao",
+    cancelled: "Đã hủy",
+    canceled: "Đã hủy",
+    unknown: "Chưa rõ"
+  };
+  return mapping[status.toLowerCase()] || status;
+};
+
+const addressTypeLabel = {
+  Home: "Nhà riêng",
+  Office: "Công ty",
+};
+
+const formatCurrencyCompact = (value) => {
+  if (value >= 1000000) {
+    return (value / 1000000).toFixed(0) + " Tr";
+  }
+  if (value >= 1000) {
+    return (value / 1000).toFixed(0) + " k";
+  }
+  return value;
+};
 
 const Dashboard = () => {
   const [isOpenOrderdProduct, setIsOpenOrderdProduct] = useState(null);
@@ -142,6 +171,13 @@ const Dashboard = () => {
       }
     })
 
+    fetchDataFromApi("/api/order/delivered-charts-data").then((res) => {
+      if (res?.error === false) {
+        setTopProductsData(res.topProductsData || []);
+        setCategoryData(res.categoryData || []);
+      }
+    })
+
   }, [])
 
 
@@ -212,8 +248,8 @@ const Dashboard = () => {
         }
       });
       return newCombined.sort((a, b) => {
-        const months = ["JAN", "FEB", "MAR", "APRIL", "MAY", "JUNE", "JULY", "AUG", "SEP", "OCT", "NOV", "DEC"];
-        return months.indexOf(a.name) - months.indexOf(b.name);
+        const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+        return months.indexOf(a.name?.toUpperCase()) - months.indexOf(b.name?.toUpperCase());
       });
     });
   }
@@ -222,44 +258,18 @@ const Dashboard = () => {
     if (totalOrdersData?.data?.length > 0) {
       const statusCounts = {};
       totalOrdersData.data.forEach((order) => {
-        const status = order.order_status || "unknown";
-        statusCounts[status] = (statusCounts[status] || 0) + 1;
+        const translated = translateStatus(order.order_status || "unknown");
+        statusCounts[translated] = (statusCounts[translated] || 0) + 1;
       });
-      const formattedStatusData = Object.keys(statusCounts).map((status) => ({
-        name: status,
-        value: statusCounts[status],
+      const formattedStatusData = Object.keys(statusCounts).map((statusName) => ({
+        name: statusName,
+        value: statusCounts[statusName],
       }));
       setOrderStatusData(formattedStatusData);
     }
   }, [totalOrdersData]);
 
-  useEffect(() => {
-    if (productData?.products?.length > 0) {
-      // Top Selling Products
-      const topProducts = [...productData.products]
-        .sort((a, b) => (b.sale || 0) - (a.sale || 0))
-        .slice(0, 5)
-        .map(p => ({
-          name: p.name.length > 20 ? p.name.substring(0, 20) + "..." : p.name,
-          sales: p.sale || 0
-        }));
-      setTopProductsData(topProducts);
 
-      // Category Sales Distribution
-      const catSales = {};
-      productData.products.forEach(p => {
-        const catName = p.category?.name || p.catName || "Other";
-        catSales[catName] = (catSales[catName] || 0) + (p.sale || 0);
-      });
-      const formattedCatData = Object.keys(catSales)
-        .map(cat => ({
-          name: cat,
-          value: catSales[cat]
-        }))
-        .filter(item => item.value > 0); // Only show categories with actual sales
-      setCategoryData(formattedCatData);
-    }
-  }, [productData]);
 
   useEffect(() => {
     getTotalUsersByYear();
@@ -332,9 +342,7 @@ const Dashboard = () => {
                 <th scope="col" className="px-6 py-3 whitespace-nowrap">
                   Địa chỉ
                 </th>
-                <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
-                  Mã bưu điện
-                </th>
+
                 <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
                   Tổng số tiền
                 </th>
@@ -398,18 +406,18 @@ const Dashboard = () => {
 
                       <td className="px-6 py-4">
                         <span className='inline-block text-[10px] font-bold px-2 py-0.5 bg-slate-100 rounded text-slate-600 border border-slate-200 uppercase tracking-wider mb-1'>
-                          {order?.delivery_address?.addressType || "Địa chỉ"}
+                          {addressTypeLabel[order?.delivery_address?.addressType] || order?.delivery_address?.addressType || "Địa chỉ"}
                         </span>
                         <span className="block w-[260px] text-[12px] leading-relaxed text-slate-700 font-medium">
-                          {order?.delivery_address?.address_line1 + " " +
-                           order?.delivery_address?.city + " " +
-                           order?.delivery_address?.landmark + " " +
-                           order?.delivery_address?.state + " " +
-                           order?.delivery_address?.country}
+                          {[
+                            order?.delivery_address?.address_line1,
+                            order?.delivery_address?.city,
+                            order?.delivery_address?.state,
+                            order?.delivery_address?.country
+                          ].filter(Boolean).join(", ") +
+                           (order?.delivery_address?.landmark ? ` (${order?.delivery_address?.landmark})` : "")}
                         </span>
                       </td>
-
-                      <td className="px-6 py-4 font-[500] text-slate-500 text-center">{order?.delivery_address?.pincode || "-"}</td>
 
                       <td className="px-6 py-4 font-bold text-[#ff5252] text-center text-[14px]">{order?.totalAmt?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</td>
 
@@ -435,7 +443,7 @@ const Dashboard = () => {
 
                       {isOpenOrderdProduct === index && (
                         <tr>
-                          <td className="pl-20" colSpan="12">
+                          <td className="pl-20" colSpan="11">
                             <div className="relative overflow-x-auto">
                               <table className="w-full text-sm text-left rtl:text-right text-gray-600">
                                 <thead className="text-xs text-gray-500 uppercase bg-slate-50 border-b border-slate-100">
@@ -561,35 +569,46 @@ const Dashboard = () => {
               <AreaChart data={combinedChartData}>
                 <defs>
                   <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
+                <YAxis yAxisId="left" tickFormatter={formatCurrencyCompact} tick={{ fontSize: 12 }} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
                 <Tooltip
                   contentStyle={{ backgroundColor: "#1e293b", color: "#fff", borderRadius: "8px", border: "none" }}
                   itemStyle={{ color: "#fff" }}
+                  formatter={(value, name) => {
+                    if (name === "Doanh thu") {
+                      return [new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value), name];
+                    }
+                    return [value + " người", name];
+                  }}
                 />
                 <Legend verticalAlign="top" height={36} />
                 <Area
                   type="monotone"
+                  yAxisId="left"
                   dataKey="TotalSales"
                   name="Doanh thu"
                   stroke="#6366f1"
+                  strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorSales)"
                 />
                 <Area
                   type="monotone"
+                  yAxisId="right"
                   dataKey="TotalUsers"
                   name="Người dùng mới"
                   stroke="#10b981"
+                  strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorUsers)"
                 />
@@ -612,14 +631,18 @@ const Dashboard = () => {
                   outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                 >
                   {orderStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                     <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
-                <Legend />
+                <Tooltip
+                  contentStyle={{ backgroundColor: "#1e293b", color: "#fff", borderRadius: "8px", border: "none" }}
+                  itemStyle={{ color: "#fff" }}
+                  formatter={(value) => [`${value} đơn hàng`, "Số lượng"]}
+                />
+                <Legend verticalAlign="bottom" height={36} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -637,14 +660,18 @@ const Dashboard = () => {
                   cy="50%"
                   outerRadius={80}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                 >
                   {categoryData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={CHART_COLORS[(index + 5) % CHART_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
-                <Legend />
+                <Tooltip
+                  contentStyle={{ backgroundColor: "#1e293b", color: "#fff", borderRadius: "8px", border: "none" }}
+                  itemStyle={{ color: "#fff" }}
+                  formatter={(value) => [`${value} lượt bán`, "Số lượng"]}
+                />
+                <Legend verticalAlign="bottom" height={36} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -660,6 +687,12 @@ const Dashboard = () => {
                 data={topProductsData}
                 margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
               >
+                <defs>
+                  <linearGradient id="colorBarSales" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="5%" stopColor="#f97316" stopOpacity={1} />
+                    <stop offset="95%" stopColor="#fdba74" stopOpacity={0.8} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                 <XAxis type="number" hide />
                 <YAxis
@@ -669,10 +702,12 @@ const Dashboard = () => {
                   tick={{ fontSize: 12 }}
                 />
                 <Tooltip
-                  cursor={{ fill: "transparent" }}
-                  contentStyle={{ backgroundColor: "#1e293b", color: "#fff", borderRadius: "8px" }}
+                  cursor={{ fill: "rgba(249, 115, 22, 0.05)" }}
+                  contentStyle={{ backgroundColor: "#1e293b", color: "#fff", borderRadius: "8px", border: "none" }}
+                  itemStyle={{ color: "#fff" }}
+                  formatter={(value) => [`${value} lượt bán`, "Lượt bán"]}
                 />
-                <Bar dataKey="sales" name="Lượt bán" fill="#f97316" radius={[0, 4, 4, 0]} barSize={30} />
+                <Bar dataKey="sales" name="Lượt bán" fill="url(#colorBarSales)" radius={[0, 6, 6, 0]} barSize={30} />
               </BarChart>
             </ResponsiveContainer>
           </div>

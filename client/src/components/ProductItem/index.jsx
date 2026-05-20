@@ -9,7 +9,7 @@ import { MdZoomOutMap } from "react-icons/md";
 import { MyContext } from "../../App";
 import { MdOutlineShoppingCart } from "react-icons/md";
 import { FaMinus, FaPlus } from "react-icons/fa";
-import { deleteData, editData, postData } from "../../utils/api";
+import { deleteData, editData, postData, fetchDataFromApi } from "../../utils/api";
 import CircularProgress from '@mui/material/CircularProgress';
 import { MdClose } from "react-icons/md";
 import { IoMdHeart } from "react-icons/io";
@@ -28,62 +28,87 @@ const ProductItem = (props) => {
   const [selectedTabName, setSelectedTabName] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [sizes, setSizes] = useState(props?.item?.size || []);
 
   const context = useContext(MyContext);
 
-  const addToCart = (product, userId, quantity) => {
-
-    const productItem = {
-      _id: product?._id,
-      name: product?.name,
-      image: product?.images?.[0],
-      rating: product?.rating,
-      price: product?.price,
-      oldPrice: product?.oldPrice,
-      discount: product?.discount,
-      quantity: quantity,
-      subTotal: parseInt(product?.price * quantity),
-      productId: product?._id,
-      countInStock: product?.countInStock,
-      brand: product?.brand,
-      size: props?.item?.size?.length > 0 ? selectedTabName : '',
-
-    }
-
-
-    setIsLoading(true);
-
-    if (props?.item?.size?.length > 0) {
-      setIsShowTabs(true)
+  useEffect(() => {
+    if (props?.item?.size) {
+      setSizes(props.item.size);
     } else {
-      setIsAdded(true);
-
-      setIsShowTabs(false);
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 500);
-      context?.addToCart(productItem, userId, quantity);
-
+      setSizes([]);
     }
+  }, [props?.item?.size]);
 
-
-
-    if (activeTab !== null) {
-      context?.addToCart(productItem, userId, quantity);
-      setIsAdded(true);
-      setIsShowTabs(false)
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 500);
+  const addToCart = (product, userId, qtyVal) => {
+    if (!context?.isLogin || userId === undefined) {
+      context?.alertBox("error", "Vui lòng đăng nhập trước khi thêm sản phẩm vào giỏ hàng");
+      return false;
     }
+    setQuantity(1);
+    setSelectedTabName(null);
+    setActiveTab(null);
 
-
+    const currentSizes = product?.size || [];
+    if (currentSizes.length === 0) {
+      setIsLoading(true);
+      fetchDataFromApi(`/api/product/${product?._id}`).then((res) => {
+        setIsLoading(false);
+        if (res?.product?.size && res.product.size.length > 0) {
+          setSizes(res.product.size);
+        } else {
+          setSizes([]);
+        }
+        setIsShowTabs(true);
+      }).catch((err) => {
+        setIsLoading(false);
+        setSizes([]);
+        setIsShowTabs(true);
+      });
+    } else {
+      setSizes(currentSizes);
+      setIsShowTabs(true);
+    }
   }
 
+  const handleConfirmAddToCart = () => {
+    if (!context?.isLogin || context?.userData?._id === undefined) {
+      context?.alertBox("error", "Vui lòng đăng nhập trước khi thêm sản phẩm vào giỏ hàng");
+      return false;
+    }
 
-  const handleClickActiveTab = (index, name) => {
-    setActiveTab(index)
-    setSelectedTabName(name)
+    if (sizes?.length > 0 && selectedTabName === null) {
+      context?.alertBox("error", "Vui lòng chọn phiên bản sản phẩm");
+      return;
+    }
+
+    const productItem = {
+      _id: props?.item?._id,
+      name: props?.item?.name,
+      image: props?.item?.images?.[0],
+      rating: props?.item?.rating,
+      price: props?.item?.price,
+      oldPrice: props?.item?.oldPrice,
+      discount: props?.item?.discount,
+      quantity: quantity,
+      subTotal: parseInt(props?.item?.price * quantity),
+      productId: props?.item?._id,
+      countInStock: props?.item?.countInStock,
+      brand: props?.item?.brand,
+      size: selectedTabName || '',
+    }
+
+    setIsLoading(true);
+    context?.addToCart(productItem, context?.userData?._id, quantity);
+
+    setIsShowTabs(false);
+    setActiveTab(null);
+    setSelectedTabName(null);
+    setQuantity(1);
+
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
   }
 
   useEffect(() => {
@@ -124,7 +149,7 @@ const ProductItem = (props) => {
     if (quantity === 1) {
       deleteData(`/api/cart/delete-cart-item/${cartItem[0]?._id}`).then((res) => {
         setIsAdded(false);
-        context.alertBox("success", "Item Removed ");
+        context.alertBox("Thành công", "Đã gỡ sản phẩm khỏi giỏ hàng");
         context?.getCartItems();
         setIsShowTabs(false);
         setActiveTab(null);
@@ -200,7 +225,81 @@ const ProductItem = (props) => {
 
 
   return (
-    <div className="productItem shadow-lg rounded-md overflow-hidden border-1 border-[rgba(0,0,0,0.1)]">
+    <div className="productItem relative shadow-lg rounded-md overflow-hidden border border-[rgba(0,0,0,0.1)]">
+      {
+        isShowTabs === true &&
+        <div className="absolute top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.9)] z-[60] p-4 flex flex-col justify-center items-center gap-4 text-white rounded-md">
+          
+          {/* Close button */}
+          <button type="button" className="absolute top-[10px] right-[10px] w-[28px] h-[28px] rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white border-none cursor-pointer transition-colors z-[90]"
+            onClick={() => {
+              setIsShowTabs(false);
+              setSelectedTabName(null);
+              setActiveTab(null);
+              setQuantity(1);
+            }}
+          >
+            <MdClose className="text-white text-[18px]" />
+          </button>
+
+          {/* Title / Header */}
+          <div className="text-center w-full">
+            <span className="text-[14px] font-bold tracking-wider text-gray-200 uppercase">Tùy Chọn Mua Hàng</span>
+          </div>
+
+          {/* Sizes selection */}
+          {sizes?.length > 0 && (
+            <div className="w-full flex flex-col items-center gap-2">
+              <span className="text-[12px] text-gray-400 font-semibold">Chọn phiên bản:</span>
+              <div className="flex flex-wrap items-center justify-center gap-2 max-h-[120px] overflow-y-auto w-full px-2">
+                {sizes.map((item, index) => {
+                  return (
+                    <span key={index} className={`flex items-center justify-center px-4 py-1.5 bg-white/10 hover:bg-white/25 rounded-full font-bold text-[12px] text-white cursor-pointer transition-all shadow-sm border border-white/10
+              ${activeTab === index && '!bg-primary !text-white !border-primary'}`}
+                      onClick={() => {
+                        setActiveTab(index);
+                        setSelectedTabName(item);
+                      }}
+                    >{item}
+                    </span>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Quantity Selector */}
+          <div className="flex flex-col items-center gap-2 w-full">
+            <span className="text-[12px] text-gray-400 font-semibold">Chọn số lượng:</span>
+            <div className="flex items-center justify-between rounded-full border border-white/20 h-[35px] w-[110px] overflow-hidden bg-white/5">
+              <button type="button" className="flex items-center justify-center w-[35px] h-full hover:bg-white/10 text-white border-none cursor-pointer"
+                onClick={() => setQuantity(prev => prev > 1 ? prev - 1 : 1)}
+              >
+                <FaMinus size={11} />
+              </button>
+              <span className="text-[14px] font-bold text-white">{quantity}</span>
+              <button type="button" className="flex items-center justify-center w-[35px] h-full hover:bg-white/10 text-white border-none cursor-pointer"
+                onClick={() => setQuantity(prev => prev < (props?.item?.countInStock || 999) ? prev + 1 : prev)}
+              >
+                <FaPlus size={11} />
+              </button>
+            </div>
+          </div>
+
+          {/* Add to Cart button */}
+          <div className="w-full px-4 mt-2">
+            <Button
+              className="!bg-primary !text-white !rounded-full flex gap-1.5 w-full !py-2 !font-bold !text-[13px] !shadow-md hover:!bg-red-600 transition-colors"
+              onClick={() => handleConfirmAddToCart()}
+              disabled={sizes?.length > 0 && activeTab === null}
+            >
+              Xác Nhận
+            </Button>
+          </div>
+
+        </div>
+      }
+
       <div className="group imgWrapper w-[100%]  overflow-hidden  rounded-md rounded-bl-none rounded-br-none relative">
         <Link to={`/product/${props?.item?._id}`}>
           <div className="img h-[200px] overflow-hidden">
@@ -220,32 +319,6 @@ const ProductItem = (props) => {
 
           </div>
         </Link>
-
-
-
-        {
-          isShowTabs === true &&
-          <div className="flex items-center justify-center absolute top-0 left-0 w-full h-full 
-      bg-[rgba(0,0,0,0.7)] z-[60] p-3 gap-2">
-
-            <Button className="!absolute top-[10px] right-[10px] !min-w-[30px] !min-h-[30px] !w-[30px] !h-[30px] !rounded-full !bg-[rgba(255,255,255,1)] text-black"
-              onClick={() => setIsShowTabs(false)}
-            > <MdClose className=" text-black z-[90] text-[25px]" /></Button>
-
-            {
-              props?.item?.size?.length > 0 && props?.item?.size?.map((item, index) => {
-                return (
-                  <span key={index} className={`flex items-center justify-center p-1 px-2 bg-[rgba(255,555,255,0.8)] max-w-[35px] h-[25px]  
-          rounded-sm cursor-pointer hover:bg-white 
-          ${activeTab === index && '!bg-primary text-white'}`}
-                    onClick={() => handleClickActiveTab(index, item)}
-                  >{item}
-                  </span>)
-              })
-            }
-
-          </div>
-        }
 
 
         <span className="discount flex items-center absolute top-[10px] left-[10px] z-50 bg-primary text-white rounded-lg p-1 text-[12px] font-[500]">
@@ -300,38 +373,17 @@ const ProductItem = (props) => {
         <div className="!absolute bottom-[15px] left-0 pl-3 pr-3 w-full">
 
           {
-            isAdded === false ?
+            isLoading === true ?
+              <Button className="addtocart btn-org btn-border flex w-full btn-sm gap-2 !h-[35px]" size="small" disabled>
+                <CircularProgress size={20} />
+              </Button>
+
+              :
 
               <Button className="btn-org addToCartBtn btn-border flex w-full btn-sm gap-2 !h-[35px]" size="small"
                 onClick={() => addToCart(props?.item, context?.userData?._id, quantity)}>
                 <MdOutlineShoppingCart className="text-[18px]" /> Thêm Vào Giỏ
               </Button>
-
-              :
-
-              <>
-                {
-                  isLoading === true ?
-                    <Button className="addtocart btn-org btn-border flex w-full btn-sm gap-2 !h-[35px]" size="small">
-                      <CircularProgress size={20} />
-                    </Button>
-
-                    :
-
-
-                    <div className="flex items-center justify-between overflow-hidden rounded-full border border-[rgba(0,0,0,0.1)] h-[35px]">
-                      <button className="flex items-center justify-center w-[35px] h-full bg-[#f1f1f1]" onClick={minusQty}>
-                        <FaMinus size={12} color="rgba(0,0,0,0.7)" />
-                      </button>
-                      <span className="text-[14px] font-semibold">{quantity}</span>
-                      <button className="flex items-center justify-center w-[35px] h-full bg-gray-800" onClick={addQty}>
-                        <FaPlus size={12} color="#ffffff" />
-                      </button>
-                    </div>
-
-                }
-              </>
-
           }
 
         </div>

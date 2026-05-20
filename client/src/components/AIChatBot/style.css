@@ -578,3 +578,36 @@
     color: #ff5252;
     background: #fff0f0;
 }
+
+/* Markdown Table Styles in Chat */
+.chat-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+.chat-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.8rem;
+}
+.chat-table th {
+    background-color: #f8fafc;
+    color: #334155;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+}
+.chat-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    color: #475569;
+}
+.chat-table tr:nth-child(even) {
+    background-color: rgba(248, 250, 252, 0.6);
+}
+.chat-table tr:hover {
+    background-color: rgba(255, 82, 82, 0.05);
+}

@@ -11,32 +11,60 @@ import { QtyBox } from "../../components/QtyBox";
 
 const CartItems = (props) => {
   const [sizeanchorEl, setSizeAnchorEl] = useState(null);
-  const [selectedSize, setCartItems] = useState(props.selected);
   const openSize = Boolean(sizeanchorEl);
 
-  const [qtyanchorEl, setQtyAnchorEl] = useState(null);
   const [selectedQty, setSelectedQty] = useState(props.qty);
-  const openQty = Boolean(qtyanchorEl);
-
-  const numbers = Array.from({ length: 20 }, () => Math.floor(Math.random() * 10) + 1);
+  const [productSizes, setProductSizes] = useState([]);
+  const [loadingSizes, setLoadingSizes] = useState(true);
 
   const context = useContext(MyContext);
+
+  useEffect(() => {
+    setSelectedQty(props.qty);
+  }, [props.qty]);
+
+  useEffect(() => {
+    if (props?.item?.productId) {
+      fetchDataFromApi(`/api/product/${props.item.productId}`).then((res) => {
+        if (res?.product) {
+          const sizes = res.product.size || [];
+          setProductSizes(sizes.filter(s => s && s.trim() !== ""));
+        }
+        setLoadingSizes(false);
+      });
+    } else {
+      setLoadingSizes(false);
+    }
+  }, [props?.item?.productId]);
 
   const handleClickSize = (event) => {
     setSizeAnchorEl(event.currentTarget);
   };
+
   const handleCloseSize = (value) => {
     setSizeAnchorEl(null);
     if (value !== null) {
-      setCartItems(value);
+      updateCartSize(value);
     }
   };
 
-  const handleClickQty = (event) => {
-    setQtyAnchorEl(event.currentTarget);
-  };
+  const updateCartSize = (selectedVal) => {
+    const cartObj = {
+      _id: props?.item?._id,
+      qty: props?.item?.quantity,
+      subTotal: props?.item?.price * props?.item?.quantity,
+      size: selectedVal,
+    }
+
+    editData("/api/cart/update-qty", cartObj).then((res) => {
+      if (res?.data?.error === false) {
+        context.alertBox("success", res?.data?.message);
+        context?.getCartItems();
+      }
+    })
+  }
+
   const handleCloseQty = (value) => {
-    setQtyAnchorEl(null);
     if (value !== null) {
       setSelectedQty(value);
 
@@ -52,55 +80,8 @@ const CartItems = (props) => {
           context?.getCartItems();
         }
       })
-
-
-
     }
   };
-
-
-  const updateCart = (selectedVal, qty, field) => {
-    handleCloseSize(selectedVal)
-
-    const cartObj = {
-      _id: props?.item?._id,
-      qty: qty,
-      subTotal: props?.item?.price * qty,
-      size: props?.item?.size !== "" ? selectedVal : '',
-    }
-
-
-    //if product size available
-    if (field === "size") {
-
-      fetchDataFromApi(`/api/product/${props?.item?.productId}`).then((res) => {
-        const product = res?.product;
-
-
-        const item = product?.size?.filter((size) =>
-          size?.includes(selectedVal)
-        )
-
-        if (item?.length !== 0) {
-          editData("/api/cart/update-qty", cartObj).then((res) => {
-            if (res?.data?.error === false) {
-              context.alertBox("success", res?.data?.message);
-              context?.getCartItems();
-            }
-          })
-        } else {
-          context.alertBox("error", `Sản phẩm không có biến thể ${selectedVal}`);
-        }
-
-
-      })
-
-    }
-
-
-
-
-  }
 
 
 
@@ -140,51 +121,40 @@ const CartItems = (props) => {
         <Rating name="size-small" value={props?.item?.rating} size="small" readOnly />
 
         <div className="flex items-center gap-4 mt-2">
-          {
-            props?.item?.size !== "" &&
-            <>
-              {
-                props?.productVariantData?.length !== 0 &&
-                <div className="relative">
-                  <span
-                    className="flex items-center justify-center bg-[#f1f1f1] text-[11px]
-       font-[600] py-1 px-2 rounded-md cursor-pointer"
-                    onClick={handleClickSize}
+          {!loadingSizes && productSizes.length > 0 && (
+            <div className="relative">
+              <button
+                type="button"
+                className="flex items-center justify-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[13px] font-[600] h-[35px] px-4 rounded-full border-none cursor-pointer transition-all min-w-[65px]"
+                onClick={handleClickSize}
+              >
+                {props?.item?.size || productSizes[0]} <GoTriangleDown className="text-[12px]" />
+              </button>
+
+              <Menu
+                id="size-menu"
+                anchorEl={sizeanchorEl}
+                open={openSize}
+                onClose={() => handleCloseSize(null)}
+                MenuListProps={{
+                  "aria-labelledby": "basic-button",
+                }}
+              >
+                {productSizes.map((sizeName, idx) => (
+                  <MenuItem
+                    key={idx}
+                    selected={sizeName === props?.item?.size}
+                    onClick={() => handleCloseSize(sizeName)}
+                    className="text-xs"
                   >
-                    Biến thể: {selectedSize} <GoTriangleDown />
-                  </span>
+                    {sizeName}
+                  </MenuItem>
+                ))}
+              </Menu>
+            </div>
+          )}
 
-                  <Menu
-                    id="size-menu"
-                    anchorEl={sizeanchorEl}
-                    open={openSize}
-                    onClose={() => handleCloseSize(null)}
-                    MenuListProps={{
-                      "aria-labelledby": "basic-button",
-                    }}
-                  >
-                    {
-                      props?.productVariantData?.map((item, index) => {
-                        return (
-                          <MenuItem key={index}
-                            className={`${item?.name === selectedSize && 'selected'}`}
-                            onClick={() => updateCart(item?.name, props?.item?.quantity, "size")}>
-                            {item?.name}
-                          </MenuItem>
-                        )
-                      })
-                    }
-
-                  </Menu>
-                </div>
-              }
-            </>
-          }
-
-
-
-
-          <div className="relative">
+          <div className="relative w-[110px] h-[35px]">
             <QtyBox handleSelecteQty={(val) => handleCloseQty(val)} initialQty={selectedQty} maxQty={props?.item?.countInStock || 999} />
           </div>
         </div>

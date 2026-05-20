@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import OrderModel from "../models/order.model.js";
 import ProductModel from '../models/product.modal.js';
 import UserModel from '../models/user.model.js';
@@ -709,9 +710,18 @@ export const totalSalesController = async (request, response) => {
 
 export const totalUsersController = async (request, response) => {
     try {
+        const currentYear = new Date().getFullYear();
         const MONTH_NAMES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
         const users = await UserModel.aggregate([
+            {
+                $match: {
+                    createdAt: {
+                        $gte: new Date(`${currentYear}-01-01T00:00:00.000Z`),
+                        $lte: new Date(`${currentYear}-12-31T23:59:59.999Z`)
+                    }
+                }
+            },
             {
                 $group: {
                     _id: {
@@ -959,3 +969,65 @@ export const verifyPayosPaymentController = async (request, response) => {
         })
     }
 }
+
+export const getDeliveredChartsData = async (request, response) => {
+    try {
+        const deliveredOrders = await OrderModel.find({ order_status: "delivered" });
+
+        const productSales = {};
+        for (const order of deliveredOrders) {
+            for (const item of order.products || []) {
+                if (item.productId && mongoose.Types.ObjectId.isValid(item.productId) && item.quantity > 0) {
+                    productSales[item.productId] = (productSales[item.productId] || 0) + item.quantity;
+                }
+            }
+        }
+
+        const productIds = Object.keys(productSales);
+        const products = await ProductModel.find({ _id: { $in: productIds } }).populate("category");
+
+        const topProductsMap = [];
+        const categorySalesMap = {};
+
+        for (const product of products) {
+            const sales = productSales[product._id.toString()] || 0;
+            topProductsMap.push({
+                name: product.name,
+                sales: sales
+            });
+
+            const catName = product.category?.name || product.catName || "Khác";
+            categorySalesMap[catName] = (categorySalesMap[catName] || 0) + sales;
+        }
+
+        const topProductsData = topProductsMap
+            .sort((a, b) => b.sales - a.sales)
+            .slice(0, 5)
+            .map(p => ({
+                name: p.name.length > 20 ? p.name.substring(0, 20) + "..." : p.name,
+                sales: p.sales
+            }));
+
+        const categoryData = Object.keys(categorySalesMap)
+            .map(cat => ({
+                name: cat,
+                value: categorySalesMap[cat]
+            }))
+            .filter(item => item.value > 0);
+
+        return response.status(200).json({
+            error: false,
+            success: true,
+            topProductsData,
+            categoryData
+        });
+
+    } catch (error) {
+        return response.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        });
+    }
+}
+

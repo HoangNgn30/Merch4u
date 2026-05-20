@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import Header from "../Header";
 import Sidebar from "../Sidebar";
 import { MyContext } from "../../App";
+import AdminAIChatBot from "../AdminAIChatBot";
 
 const AdminShell = ({ children }) => {
   const { isSidebarOpen, windowWidth } = useContext(MyContext);
@@ -31,6 +32,7 @@ const AdminShell = ({ children }) => {
           {children}
         </div>
       </div>
+      <AdminAIChatBot />
     </section>
   );
 };

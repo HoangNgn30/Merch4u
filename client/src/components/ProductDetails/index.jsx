@@ -251,7 +251,7 @@ export const ProductDetailsComponent = (props) => {
       }
 
       <p className="text-[14px] mt-6 mb-3 text-gray-800 font-medium">
-        ✨ Miễn phí vận chuyển (Giao hàng dự kiến 2-3 ngày)
+        Giao hàng dự kiến 2-3 ngày
       </p>
       
       <div className="flex items-center gap-4 py-4">

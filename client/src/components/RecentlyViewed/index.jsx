@@ -12,6 +12,7 @@ const normalizeProduct = (product) => ({
   oldPrice: product?.oldPrice,
   discount: product?.discount,
   images: product?.images || [],
+  size: product?.size || [],
   brand: product?.brand,
   catName: product?.catName,
   catId: product?.catId,

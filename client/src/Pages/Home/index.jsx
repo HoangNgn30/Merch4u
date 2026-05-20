@@ -156,7 +156,7 @@ const Home = () => {
 
 
       <div className="body-container ">
-        <section className="py-20 bg-white lg:py-8!">
+        <section className="py-8 bg-white">
           <div className="container">
             <div className="flex items-center justify-between flex-col lg:flex-row">
               <div className="leftSec w-full lg:w-[40%]">
@@ -188,7 +188,7 @@ const Home = () => {
             </div>
 
 
-            <div className="min-h-max lg:min-h-[60vh]">
+            <div className="min-h-max">
               {
                 popularProductsData?.length === 0 && <ProductLoading />
               }
