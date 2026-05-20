@@ -146,7 +146,7 @@ footer form input::placeholder{font-size: 14px;}
   transition: height 400ms;
 }
 
-.itemViewActions button.active svg{color:#ff5252 !important; opacity: 1;}
+.itemViewActions button.active svg{color:#fff !important; opacity: 1;}
 .Mui-selected.MuiPaginationItem-page{background: #ff5252 !important; color:#fff !important;}
 
 .shadow-md{box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.02) !important; border-radius: 16px !important;}

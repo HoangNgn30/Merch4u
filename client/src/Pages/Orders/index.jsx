@@ -103,9 +103,7 @@ const Orders = () => {
                       <th scope="col" className="px-6 py-3 whitespace-nowrap">
                         Địa chỉ
                       </th>
-                      <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
-                        Mã bưu chính
-                      </th>
+
                       <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
                         Tổng tiền
                       </th>
@@ -170,18 +168,18 @@ const Orders = () => {
                                   {addressTypeLabel[order?.delivery_address?.addressType] || order?.delivery_address?.addressType}
                                 </span>
                                 <span className="block max-w-[200px] lg:max-w-[280px] text-[13px] leading-snug text-gray-800 font-[600]">
-                                  {order?.delivery_address?.address_line1 + " " +
-                                   order?.delivery_address?.city + " " +
-                                   order?.delivery_address?.landmark + " " +
-                                   order?.delivery_address?.state + " " +
-                                   order?.delivery_address?.country}
+                                  {[
+                                    order?.delivery_address?.address_line1,
+                                    order?.delivery_address?.city,
+                                    order?.delivery_address?.state,
+                                    order?.delivery_address?.country
+                                  ].filter(Boolean).join(", ") +
+                                   (order?.delivery_address?.landmark ? ` (${order?.delivery_address?.landmark})` : "")}
                                 </span>
                                 <span className="block text-[13px] text-gray-500 font-[600] mt-0.5">
                                   {order?.delivery_address?.mobile}
                                 </span>
                               </td>
-
-                              <td className="px-6 py-4 font-[500] text-center">{order?.delivery_address?.pincode}</td>
 
                               <td className="px-6 py-4 font-[500] text-center">{order?.totalAmt?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</td>
 
@@ -229,7 +227,7 @@ const Orders = () => {
 
                             {isOpenOrderdProduct === index && (
                               <tr>
-                                <td className="pl-5 lg:pl-20" colSpan="14">
+                                <td className="pl-5 lg:pl-20" colSpan="13">
                                   <div className="py-4 pr-5">
                                     <OrderTimeline status={order?.order_status} />
                                   </div>

@@ -326,8 +326,15 @@ function App() {
       return false;
     }
 
+    const getSingleValue = (val) => {
+      if (Array.isArray(val)) {
+        return val[0] || "";
+      }
+      return val || "";
+    };
+
     const data = {
-      productTitle: product?.name,
+      productTitle: product?.name || product?.productTitle,
       image: product?.image,
       rating: product?.rating,
       price: product?.price,
@@ -335,12 +342,12 @@ function App() {
       discount: product?.discount,
       quantity: quantity,
       subTotal: parseInt(product?.price * quantity),
-      productId: product?._id,
+      productId: product?._id || product?.productId,
       countInStock: product?.countInStock,
       brand: product?.brand,
-      size: product?.size,
-      weight: product?.weight,
-      ram: product?.ram
+      size: getSingleValue(product?.size),
+      weight: getSingleValue(product?.weight),
+      ram: getSingleValue(product?.ram)
     }
 
 

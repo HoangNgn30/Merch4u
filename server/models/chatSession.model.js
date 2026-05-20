@@ -42,6 +42,11 @@ const chatSessionSchema = new mongoose.Schema(
             default: null,
             index: true,
         },
+        isAdmin: {
+            type: Boolean,
+            default: false,
+            index: true,
+        },
         title: {
             type: String,
             default: "New Chat",

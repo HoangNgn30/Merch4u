@@ -10,7 +10,43 @@ const CHAT_SESSION_KEY = "merch4u_chat_session_id";
 function parseMarkdown(text) {
     if (!text) return "";
 
-    const html = text
+    // Parse Markdown Tables
+    let safeText = text;
+    const tableRegex = /((?:^\|.+(?:\r?\n|$))+)/gm;
+    safeText = safeText.replace(tableRegex, (match) => {
+        const lines = match.trim().split(/\r?\n/);
+        if (lines.length < 2) return match;
+
+        let tableHtml = '<div class="chat-table-wrapper"><table class="chat-table">';
+        let hasHeader = false;
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line.startsWith("|")) continue;
+
+            // Check if it's a separator line (e.g. |---|---|)
+            if (/^[|\s\-:]+$/.test(line)) {
+                hasHeader = true;
+                continue;
+            }
+
+            let cells = line.split("|").map(c => c.trim()).slice(1);
+            if (cells.length > 0 && cells[cells.length - 1] === "") {
+                cells.pop();
+            }
+            const tag = (i === 0 && !hasHeader) || (i === 0) ? "th" : "td";
+
+            tableHtml += "<tr>";
+            for (const cell of cells) {
+                tableHtml += `<${tag}>${cell}</${tag}>`;
+            }
+            tableHtml += "</tr>";
+        }
+        tableHtml += "</table></div>";
+        return tableHtml;
+    });
+
+    const html = safeText
         .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
         .replace(/\*(.+?)\*/g, "<em>$1</em>")
         .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" class="chat-link">$1</a>')
@@ -19,7 +55,7 @@ function parseMarkdown(text) {
         .replace(/\n/g, "<br/>");
 
     return DOMPurify.sanitize(html, {
-        ALLOWED_TAGS: ["a", "br", "em", "li", "strong", "ul"],
+        ALLOWED_TAGS: ["a", "br", "em", "li", "strong", "ul", "table", "thead", "tbody", "tr", "th", "td", "div"],
         ALLOWED_ATTR: ["class", "href"],
     });
 }

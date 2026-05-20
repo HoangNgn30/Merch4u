@@ -13,7 +13,8 @@ import {  captureOrderPaypalController,
     createOrderPayosController,
     cancelOrderController,
     receivePayosWebhookController,
-    verifyPayosPaymentController 
+    verifyPayosPaymentController,
+    getDeliveredChartsData 
 } from "../controllers/order.controller.js";
 
 const orderRouter = Router();
@@ -36,5 +37,6 @@ orderRouter.get('/sales',auth,authRole('ADMIN'),totalSalesController)
 orderRouter.get('/users',auth,authRole('ADMIN'),totalUsersController)
 orderRouter.get('/order-list/orders',auth,getUserOrderDetailsController)
 orderRouter.delete('/deleteOrder/:id',auth,authRole('ADMIN'),deleteOrder)
+orderRouter.get('/delivered-charts-data',auth,authRole('ADMIN'),getDeliveredChartsData)
 
 export default orderRouter;

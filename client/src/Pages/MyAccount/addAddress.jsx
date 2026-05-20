@@ -95,10 +95,7 @@ const AddAddress = () => {
             return false;
         }
 
-        if (formFields.pincode.trim() === "") {
-            context.alertBox("error", "Vui lòng nhập mã bưu chính");
-            return false;
-        }
+
 
         if (formFields.country.trim() === "") {
             context.alertBox("error", "Vui lòng nhập quốc gia");
@@ -110,10 +107,7 @@ const AddAddress = () => {
             return false;
         }
 
-        if (formFields.landmark.trim() === "") {
-            context.alertBox("error", "Vui lòng nhập ghi chú vị trí");
-            return false;
-        }
+
 
         if (formFields.addressType === "") {
             context.alertBox("error", "Vui lòng chọn loại địa chỉ");
@@ -198,7 +192,7 @@ const AddAddress = () => {
             <div className="col w-[100%] mb-4">
                 <TextField
                     className="w-full"
-                    label="Thành phố/Quận huyện"
+                    label="Xã/Phường"
                     variant="outlined"
                     size="small"
                     name="city"
@@ -210,7 +204,7 @@ const AddAddress = () => {
             <div className="col w-[100%] mb-4">
                 <TextField
                     className="w-full"
-                    label="Tỉnh/Thành"
+                    label="Tỉnh/Thành Phố"
                     variant="outlined"
                     size="small"
                     name="state"
@@ -219,17 +213,7 @@ const AddAddress = () => {
                 />
             </div>
 
-            <div className="col w-[100%] mb-4">
-                <TextField
-                    className="w-full"
-                    label="Mã bưu chính"
-                    variant="outlined"
-                    size="small"
-                    name="pincode"
-                    onChange={onChangeInput}
-                    value={formFields.pincode}
-                />
-            </div>
+
 
             <div className="col w-[100%] mb-4">
                 <TextField
@@ -260,7 +244,7 @@ const AddAddress = () => {
             <div className="col w-[100%] mb-4">
                 <TextField
                     className="w-full"
-                    label="Ghi chú vị trí"
+                    label="Ghi chú (Không bắt buộc)"
                     variant="outlined"
                     size="small"
                     name="landmark"

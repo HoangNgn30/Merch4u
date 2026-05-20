@@ -230,7 +230,9 @@ export const getMinigameStatusController = async (request, response) => {
 
         // Generate wheel if needed
         if (!gameData.wheel || gameData.wheel.date !== today) {
-            const excludedCouponIds = gameData.wonCoupons.map(wc => wc.couponId.toString());
+            const excludedCouponIds = (gameData.wonCoupons || [])
+                .filter(wc => wc.couponId)
+                .map(wc => wc.couponId.toString());
             const availableCoupons = await CouponModel.find({
                 isActive: true,
                 expiryDate: { $gte: new Date() }
@@ -317,7 +319,7 @@ export const claimRandomCouponController = async (request, response) => {
 
         // Check if user already has this coupon → stack quantity
         const existingWon = user.gameData.wonCoupons.find(
-            wc => wc.couponId?.toString() === winnerCoupon._id.toString()
+            wc => wc.couponId && wc.couponId.toString() === winnerCoupon._id.toString()
         );
         if (existingWon) {
             existingWon.quantity = (existingWon.quantity || 1) + 1;
@@ -331,7 +333,9 @@ export const claimRandomCouponController = async (request, response) => {
         }
 
         // Remove the won coupon from today's wheel so they don't win it again today
-        user.gameData.wheel.coupons = user.gameData.wheel.coupons.filter(c => c._id.toString() !== winnerCoupon._id.toString());
+        user.gameData.wheel.coupons = user.gameData.wheel.coupons.filter(
+            c => c && c._id && c._id.toString() !== winnerCoupon._id.toString()
+        );
         
         await user.save();
 
@@ -359,17 +363,26 @@ export const claimRandomCouponController = async (request, response) => {
 export const getUserCouponsController = async (request, response) => {
     try {
         const userId = request.userId;
-        const user = await UserModel.findById(userId).populate('gameData.wonCoupons.couponId');
+        const user = await UserModel.findById(userId).populate({
+            path: 'gameData.wonCoupons.couponId',
+            model: 'coupon'
+        });
         if (!user) {
             return response.status(404).json({ message: "Người dùng không tồn tại", error: true, success: false });
         }
 
-        const validCoupons = (user.gameData.wonCoupons || [])
-            .filter(wc => wc.couponId !== null)
-            .map(wc => ({
-                ...wc.couponId.toObject(),
-                quantity: wc.quantity || 1
-            }));
+        const validCoupons = [];
+        if (user.gameData && user.gameData.wonCoupons) {
+            for (const wc of user.gameData.wonCoupons) {
+                if (wc.couponId && typeof wc.couponId === 'object' && wc.couponId.code) {
+                    const couponObj = typeof wc.couponId.toObject === 'function' ? wc.couponId.toObject() : wc.couponId;
+                    validCoupons.push({
+                        ...couponObj,
+                        quantity: wc.quantity || 1
+                    });
+                }
+            }
+        }
 
         return response.json({
             message: "Danh sách mã giảm giá của bạn",
@@ -396,7 +409,7 @@ export const deleteUserCouponController = async (request, response) => {
             return response.status(404).json({ message: "Người dùng không tồn tại", error: true, success: false });
         }
 
-        const entry = (user.gameData.wonCoupons || []).find(wc => wc.couponId?.toString() === couponId.toString());
+        const entry = (user.gameData.wonCoupons || []).find(wc => wc.couponId && wc.couponId.toString() === couponId.toString());
         if (!entry) {
             return response.status(404).json({ message: "Không tìm thấy mã giảm giá trong kho", error: true, success: false });
         }
@@ -404,7 +417,7 @@ export const deleteUserCouponController = async (request, response) => {
         if ((entry.quantity || 1) > 1) {
             entry.quantity -= 1;
         } else {
-            user.gameData.wonCoupons = user.gameData.wonCoupons.filter(wc => wc.couponId?.toString() !== couponId.toString());
+            user.gameData.wonCoupons = user.gameData.wonCoupons.filter(wc => wc.couponId && wc.couponId.toString() !== couponId.toString());
         }
         await user.save();
 
@@ -441,7 +454,7 @@ export const useUserCouponController = async (request, response) => {
         if (!user) return response.json({ error: false, success: true });
 
         const entry = (user.gameData.wonCoupons || []).find(
-            wc => wc.couponId?.toString() === coupon._id.toString()
+            wc => wc.couponId && wc.couponId.toString() === coupon._id.toString()
         );
 
         if (entry) {
@@ -449,7 +462,7 @@ export const useUserCouponController = async (request, response) => {
                 entry.quantity -= 1;
             } else {
                 user.gameData.wonCoupons = user.gameData.wonCoupons.filter(
-                    wc => wc.couponId?.toString() !== coupon._id.toString()
+                    wc => wc.couponId && wc.couponId.toString() !== coupon._id.toString()
                 );
             }
             await user.save();
