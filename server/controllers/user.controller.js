@@ -125,12 +125,22 @@ export async function registerUserController(request, response) {
         await user.save();
 
         // Send verification email
-        await sendEmailFun({
+        const emailSent = await sendEmailFun({
             sendTo: email,
             subject: "Thư xác minh Email từ Merch4u",
             text: "",
             html: VerificationEmail(name, verifyCode)
         })
+
+        if (!emailSent) {
+            // Rollback user creation if email fails
+            await UserModel.findByIdAndDelete(user._id);
+            return response.status(500).json({
+                message: "Lỗi hệ thống gửi email. Không thể đăng ký lúc này, vui lòng thử lại sau.",
+                error: true,
+                success: false
+            })
+        }
 
 
         // Create a JWT token for verification purposes
@@ -603,13 +613,20 @@ export async function forgotPasswordController(request, response) {
 
             await user.save();
 
-            await sendEmailFun({
+            const emailSent = await sendEmailFun({
                 sendTo: email,
                 subject: "Thư gửi mã xác minh OTP từ Merch4u",
                 text: "",
                 html: VerificationEmail(user.name, verifyCode)
             })
 
+            if (!emailSent) {
+                return response.status(500).json({
+                    message: "Không thể gửi email OTP, vui lòng thử lại sau.",
+                    error: true,
+                    success: false
+                })
+            }
 
             return response.json({
                 message: "Vui lòng kiểm tra email",
