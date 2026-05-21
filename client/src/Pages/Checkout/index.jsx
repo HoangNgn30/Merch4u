@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Button, Checkbox } from "@mui/material";
+import { Button } from "@mui/material";
 import { BsFillBagCheckFill } from "react-icons/bs";
 import { MyContext } from '../../App';
 import { FaPlus } from "react-icons/fa6";
@@ -26,7 +26,7 @@ const addressTypeLabel = {
 
 const formatVnd = (value) => Number(value || 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 
-const CheckoutCartItem = ({ item, index, updateCartSize, updateCartQty, removeItem, isSelected, onToggleSelect }) => {
+const CheckoutCartItem = ({ item, index, updateCartSize, updateCartQty, removeItem }) => {
   const [sizeAnchorEl, setSizeAnchorEl] = useState(null);
   const openSize = Boolean(sizeAnchorEl);
   const [productSizes, setProductSizes] = useState([]);
@@ -61,13 +61,7 @@ const CheckoutCartItem = ({ item, index, updateCartSize, updateCartQty, removeIt
     <div className="flex flex-col gap-2 py-3 border-b border-[rgba(0,0,0,0.06)] relative group">
       {/* Top row: Image, Title, Delete */}
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Checkbox
-            checked={Boolean(isSelected)}
-            onChange={(e) => onToggleSelect(item?._id, e.target.checked)}
-            size="small"
-            className="!p-1 shrink-0"
-          />
+        <div className="flex items-center gap-3">
           <div className="img w-[50px] h-[50px] shrink-0 object-cover overflow-hidden rounded-md cursor-pointer border border-gray-100">
             <img
               src={item?.image}
@@ -151,7 +145,6 @@ const Checkout = () => {
   const [userData, setUserData] = useState(null);
   const [isChecked, setIsChecked] = useState(0);
   const [selectedAddress, setSelectedAddress] = useState("");
-  const [totalAmount, setTotalAmount] = useState();
   const [isLoading, setIsloading] = useState(false);
   const [isLoadingPayOS, setIsLoadingPayOS] = useState(false);
   const [couponCode, setCouponCode] = useState("");
@@ -160,18 +153,47 @@ const Checkout = () => {
   const [selectedItems, setSelectedItems] = useState({});
   const context = useContext(MyContext);
 
-  const history = useNavigate();
-  const location = useLocation();
-  const subTotal = Number(totalAmount || 0);
+  const [selectedItemIds, setSelectedItemIds] = useState([]);
+  const prevCartIdsRef = useRef([]);
 
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const cancel = queryParams.get('cancel');
-    if (cancel === 'true') {
-      context.alertBox("warning", "Thanh toán qua QR đã bị hủy");
-      history("/checkout", { replace: true });
+    if (context.cartData) {
+      const currentIds = context.cartData.map(item => item._id);
+      const prevIds = prevCartIdsRef.current;
+
+      setSelectedItemIds(prevSelected => {
+        const stillPresent = prevSelected.filter(id => currentIds.includes(id));
+        const brandNew = currentIds.filter(id => !prevIds.includes(id));
+
+        if (prevIds.length === 0 && stillPresent.length === 0) {
+          return currentIds;
+        }
+
+        return [...stillPresent, ...brandNew];
+      });
+
+      prevCartIdsRef.current = currentIds;
     }
-  }, [location.search]);
+  }, [context.cartData]);
+
+  const selectedCartItems = context.cartData?.filter(item => selectedItemIds.includes(item._id)) || [];
+  const subTotal = selectedCartItems.reduce((total, item) => total + (parseInt(item.price) * item.quantity), 0);
+
+  const checkoutProducts = selectedCartItems.map(item => ({
+    productId: item.productId,
+    productTitle: item.productTitle,
+    quantity: item.quantity,
+    price: item.price,
+    image: item.image,
+    subTotal: item.price * item.quantity,
+    size: item.size || "",
+    weight: item.weight || "",
+    ram: item.ram || "",
+    cartItemId: item._id
+  }));
+
+  const history = useNavigate();
+  const subTotal = Number(totalAmount || 0);
   const shippingFee = subTotal >= FREE_SHIPPING_THRESHOLD ? 0 : FIXED_SHIPPING_FEE;
   const couponDiscount = Number(appliedCoupon?.discountAmount || 0);
   const payableAmount = Math.max(0, subTotal - couponDiscount) + shippingFee;
@@ -279,16 +301,17 @@ const Checkout = () => {
 
 
   useEffect(() => {
-    if (context.cartData?.length > 0) {
-      const total = context.cartData
-        .filter(item => selectedItems[item._id] === true)
-        .map(item => parseInt(item.price) * item.quantity)
-        .reduce((total, value) => total + value, 0);
-      setTotalAmount(total);
-    } else {
-      setTotalAmount(0);
-    }
-  }, [context.cartData, selectedItems])
+    setTotalAmount(
+      context.cartData?.length !== 0 ?
+        context.cartData?.map(item => parseInt(item.price) * item.quantity)
+          .reduce((total, value) => total + value, 0) : 0);
+
+    // localStorage.setItem("totalAmount", context.cartData?.length !== 0 ?
+    //   context.cartData?.map(item => parseInt(item.price) * item.quantity)
+    //     .reduce((total, value) => total + value, 0) : 0)
+    //   ?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })
+
+  }, [context.cartData])
 
   useEffect(() => {
     setAppliedCoupon(null);
@@ -315,7 +338,7 @@ const Checkout = () => {
     if (savedCode && subTotal > 0) {
       localStorage.removeItem("appliedCouponCode");
       setCouponCode(savedCode.toUpperCase());
-      
+
       postData("/api/coupon/validate", {
         code: savedCode,
         orderTotal: subTotal
@@ -331,14 +354,104 @@ const Checkout = () => {
     }
   }, [context?.userData, subTotal]);
 
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const cancel = queryParams.get("cancel");
+    const status = queryParams.get("status");
+    const orderCode = queryParams.get("orderCode");
+
+    if (cancel === "true" && status === "CANCELLED" && orderCode) {
+      const cancelOrder = async () => {
+        try {
+          const headers = {
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+            'Content-Type': 'application/json',
+          };
+          const response = await axios.put(
+            `${VITE_API_URL}/api/order/cancel-by-code/${orderCode}`,
+            {},
+            { headers }
+          );
+          if (response?.data?.success) {
+            context.alertBox("warning", "Thanh toán PayOS đã bị hủy. Đơn hàng đã được chuyển sang trạng thái đã hủy.");
+          } else {
+            console.error("Failed to cancel order:", response?.data?.message);
+          }
+        } catch (err) {
+          console.error("Error cancelling order on backend:", err);
+        } finally {
+          // Clear query params so refresh doesn't trigger cancellation again
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      };
+      cancelOrder();
+    }
+  }, []);
 
 
 
+
+
+  const onApprovePayment = async (data) => {
+    if (selectedCartItems.length === 0) {
+      context.alertBox("error", "Vui lòng chọn ít nhất một sản phẩm để thanh toán");
+      return;
+    }
+
+    const user = context?.userData;
+
+    const info = {
+      userId: user?._id,
+      products: checkoutProducts,
+      payment_status: "COMPLETE",
+      delivery_address: selectedAddress,
+      totalAmount: payableAmount,
+      shippingFee: shippingFee,
+      couponCode: appliedCoupon?.coupon?.code || "",
+      couponDiscount: couponDiscount,
+      date: new Date().toLocaleString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+      })
+    };
+
+    // Capture order on the server
+    try {
+      const headers = {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        'Content-Type': 'application/json',
+      };
+
+      const response = await axios.post(
+        VITE_API_URL + "/api/order/capture-order-paypal",
+        {
+          ...info,
+          paymentId: data.orderID
+        },
+        { headers }
+      );
+
+      if (response?.data?.success) {
+        sessionStorage.setItem("orderSuccessMessage", "Đơn hàng đã thanh toán thành công qua PayPal!");
+        if (context?.getCartItems) {
+          await context.getCartItems();
+        }
+        history("/order/success?payment=paypal&status=PAID");
+      } else {
+        context.alertBox("error", response?.data?.message || "Thanh toán PayPal capture thất bại");
+      }
+    } catch (err) {
+      console.error("Error capturing PayPal payment:", err);
+      context.alertBox("error", err?.response?.data?.message || err?.message || "Đã xảy ra lỗi khi hoàn tất thanh toán PayPal");
+    }
+  };
 
   useEffect(() => {
     const renderPayPalButtons = () => {
       const container = document.getElementById("paypal-button-container");
       if (container) container.innerHTML = "";
+      else return;
 
       window.paypal
         .Buttons(
@@ -347,6 +460,10 @@ const Checkout = () => {
               shape: 'pill',
             },
             createOrder: async () => {
+              if (selectedCartItems.length === 0) {
+                context.alertBox("error", "Vui lòng chọn ít nhất một sản phẩm để thanh toán");
+                throw new Error("No products selected");
+              }
 
               // Create order on the server
 
@@ -419,7 +536,7 @@ const Checkout = () => {
 
     const info = {
       userId: user?._id,
-      products: getSelectedProductsPayload(),
+      products: context?.cartData,
       payment_status: "COMPLETE",
       delivery_address: selectedAddress,
       totalAmount: payableAmount,
@@ -437,8 +554,8 @@ const Checkout = () => {
     // Capture order on the server
 
     const headers = {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, 
-      'Content-Type': 'application/json', 
+      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      'Content-Type': 'application/json',
     }
 
     const response = await axios.post(
@@ -453,15 +570,9 @@ const Checkout = () => {
     if (response?.data?.success) {
       context.alertBox("success", response?.data?.message);
       history("/order/success");
-      
-      const selectedIds = context.cartData
-        .filter(item => selectedItems[item._id] === true)
-        .map(item => item._id);
-      
-      const deletePromises = selectedIds.map(id => deleteData(`/api/cart/delete-cart-item/${id}`));
-      Promise.all(deletePromises).then(() => {
+      deleteData(`/api/cart/emptyCart/${context?.userData?._id}`).then((res) => {
         context?.getCartItems();
-      });
+      })
       context.alertBox("success", "Đơn hàng đã thanh toán thành công!");
     }
 
@@ -514,21 +625,18 @@ const Checkout = () => {
 
 
   const cashOnDelivery = () => {
-
-    const user = context?.userData
-    
-    const selectedProds = getSelectedProductsPayload();
-    if (selectedProds.length === 0) {
+    if (selectedCartItems.length === 0) {
       context.alertBox("error", "Vui lòng chọn ít nhất một sản phẩm để thanh toán");
       return;
     }
-    
+
+    const user = context?.userData
     setIsloading(true);
 
     if (userData?.address_details?.length !== 0) {
       const payLoad = {
         userId: user?._id,
-        products: selectedProds,
+        products: context?.cartData,
         paymentId: '',
         payment_status: "CASH ON DELIVERY",
         delivery_address: selectedAddress,
@@ -545,19 +653,13 @@ const Checkout = () => {
 
 
       postData(`/api/order/create`, payLoad).then((res) => {
-          if (res?.error === false) {
-            context.alertBox("success", res?.message || "Đơn hàng đã được đặt thành công!");
-            
-            const selectedIds = context.cartData
-              .filter(item => selectedItems[item._id] === true)
-              .map(item => item._id);
-            
-            const deletePromises = selectedIds.map(id => deleteData(`/api/cart/delete-cart-item/${id}`));
-            Promise.all(deletePromises).then(() => {
-              context?.getCartItems();
-              setIsloading(false);
-            });
-            history("/order/success");
+        if (res?.error === false) {
+          context.alertBox("success", res?.message || "Đơn hàng đã được đặt thành công!");
+          deleteData(`/api/cart/emptyCart/${user?._id}`).then(() => {
+            context?.getCartItems();
+            setIsloading(false);
+          });
+          history("/order/success");
         } else {
           context.alertBox("error", res?.message || "Đặt hàng thất bại!");
           setIsloading(false);
@@ -574,63 +676,68 @@ const Checkout = () => {
 
 
   const payWithPayOS = async () => {
-      const user = context?.userData;
+    if (selectedCartItems.length === 0) {
+      context.alertBox("error", "Vui lòng chọn ít nhất một sản phẩm để thanh toán");
+      return;
+    }
 
-      const selectedProds = getSelectedProductsPayload();
-      if (selectedProds.length === 0) {
-        context.alertBox("error", "Vui lòng chọn ít nhất một sản phẩm để thanh toán");
-        return;
+    const user = context?.userData;
+
+    const selectedProds = getSelectedProductsPayload();
+    if (selectedProds.length === 0) {
+      context.alertBox("error", "Vui lòng chọn ít nhất một sản phẩm để thanh toán");
+      return;
+    }
+
+    if (userData?.address_details?.length === 0 || !selectedAddress) {
+      context.alertBox("error", "Vui lòng chọn địa chỉ giao hàng");
+      return;
+    }
+
+    setIsLoadingPayOS(true);
+
+    try {
+      const orderData = {
+        userId: user?._id,
+        products: context?.cartData,
+        delivery_address: selectedAddress,
+        totalAmt: payableAmount,
+        shippingFee: shippingFee,
+        couponCode: appliedCoupon?.coupon?.code || "",
+        couponDiscount: couponDiscount,
+        clientUrl: window.location.origin, // URL callback động cho PayOS
+        date: new Date().toLocaleString("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+        })
+      };
+
+      const headers = {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        'Content-Type': 'application/json',
       }
 
-      if (userData?.address_details?.length === 0 || !selectedAddress) {
-        context.alertBox("error", "Vui lòng chọn địa chỉ giao hàng");
-        return;
-      }
 
-      setIsLoadingPayOS(true);
-
-      try {
-        const orderData = {
-          userId: user?._id,
-          products: selectedProds,
-          delivery_address: selectedAddress,
-          totalAmt: payableAmount,
-          shippingFee: shippingFee,
-          couponCode: appliedCoupon?.coupon?.code || "",
-          couponDiscount: couponDiscount,
-          clientUrl: window.location.origin, // URL callback động cho PayOS
-          date: new Date().toLocaleString("en-US", {
-            month: "short",
-            day: "2-digit",
-            year: "numeric",
-          })
-        };
-
-        const headers = {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-          'Content-Type': 'application/json',
-        }
+      const response = await axios.post(
+        VITE_API_URL + "/api/order/create-order-payos",
+        orderData,
+        { headers }
+      );
 
 
-        const response = await axios.post(
-          VITE_API_URL + "/api/order/create-order-payos",
-          orderData,
-          { headers }
-        );
-
-
-        if (response.data.success && response.data.checkoutUrl) {
-          window.location.href = response.data.checkoutUrl;
-        } else {
-          context.alertBox("error", response.data.message || "Failed to create PayOS order");
-          setIsLoadingPayOS(false);
-        }
-      } catch (error) {
-        console.error("PayOS Error:", error);
-        context.alertBox("error", "Cannot connect to server for payment");
+      if (response.data.success && response.data.checkoutUrl) {
+        window.location.href = response.data.checkoutUrl;
+      } else {
+        context.alertBox("error", response.data.message || "Failed to create PayOS order");
         setIsLoadingPayOS(false);
       }
+    } catch (error) {
+      console.error("PayOS Error:", error);
+      context.alertBox("error", "Cannot connect to server for payment");
+      setIsLoadingPayOS(false);
     }
+  }
 
 
   if (!context?.cartData || context?.cartData?.length === 0) {
@@ -696,10 +803,10 @@ const Checkout = () => {
                               address?.state,
                               address?.country
                             ].filter(Boolean).join(", ") +
-                             (address?.landmark ? ` (${address?.landmark})` : "")}
+                              (address?.landmark ? ` (${address?.landmark})` : "")}
                           </p>
 
-   
+
                           <p className="mb-0 font-[500]">{userData?.mobile || address?.mobile}</p>
                         </div>
 
@@ -719,11 +826,11 @@ const Checkout = () => {
                         <img src="/map.png" width="100" />
                         <h2 className="text-center">Chưa có địa chỉ nào được lưu!</h2>
                         <p className="mt-0">Vui lòng thêm địa chỉ giao hàng.</p>
-                        <Button className="btn-org" 
-                        onClick={() => {
-                          context?.setOpenAddressPanel(true);
-                          context?.setAddressMode("add");
-                        }}>THÊM ĐỊA CHỈ</Button>
+                        <Button className="btn-org"
+                          onClick={() => {
+                            context?.setOpenAddressPanel(true);
+                            context?.setAddressMode("add");
+                          }}>THÊM ĐỊA CHỈ</Button>
                       </div>
                     </>
 
@@ -755,8 +862,6 @@ const Checkout = () => {
                         updateCartSize={updateCartSize}
                         updateCartQty={updateCartQty}
                         removeItem={removeItem}
-                        isSelected={selectedItems[item?._id]}
-                        onToggleSelect={handleToggleSelect}
                       />
                     )
                   })
@@ -806,12 +911,12 @@ const Checkout = () => {
                     <p className="text-[13px] font-[600] mb-2 text-blue-800">Mã giảm giá khả dụng của bạn:</p>
                     <div className="flex flex-wrap gap-2">
                       {myCoupons.map((c, idx) => (
-                        <Button 
-                          key={idx} 
-                          variant="outlined" 
-                          size="small" 
+                        <Button
+                          key={idx}
+                          variant="outlined"
+                          size="small"
                           className="!rounded-md !border-dashed !text-blue-700 !border-blue-400 hover:!bg-blue-100"
-                          onClick={() => { 
+                          onClick={() => {
                             setCouponCode(c.code);
                             postData("/api/coupon/validate", {
                               code: c.code,
@@ -843,13 +948,19 @@ const Checkout = () => {
               <div className="flex items-center flex-col gap-3 mb-2">
 
 
-                <div id="paypal-button-container" className={`${userData?.address_details?.length === 0 ? 'pointer-events-none' : ''}`}></div>
-                
-                <Button 
-                  type="button" 
-                  className="!bg-[#0052cc] !text-white hover:!bg-[#003d99] !font-[600] !capitalize btn-lg w-full flex gap-2 items-center" 
+                {selectedCartItems.length === 0 ? (
+                  <div className="w-full text-center py-3.5 px-4 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-md font-[500] my-2">
+                    Vui lòng chọn ít nhất 1 sản phẩm để thanh toán
+                  </div>
+                ) : (
+                  <div id="paypal-button-container" className={`${userData?.address_details?.length === 0 ? 'pointer-events-none' : ''}`}></div>
+                )}
+
+                <Button
+                  type="button"
+                  className="!bg-[#0052cc] !text-white hover:!bg-[#003d99] !font-[600] !capitalize btn-lg w-full flex gap-2 items-center"
                   onClick={payWithPayOS}
-                  disabled={isLoadingPayOS || userData?.address_details?.length === 0}
+                  disabled={isLoadingPayOS || userData?.address_details?.length === 0 || selectedCartItems.length === 0}
                 >
                   {
                     isLoadingPayOS === true ? <CircularProgress size={24} color="inherit" /> :
@@ -861,7 +972,12 @@ const Checkout = () => {
                 </Button>
 
 
-                <Button type="button" className="btn-dark btn-lg w-full flex gap-2 items-center" onClick={cashOnDelivery}>
+                <Button
+                  type="button"
+                  className="btn-dark btn-lg w-full flex gap-2 items-center"
+                  onClick={cashOnDelivery}
+                  disabled={isLoading || userData?.address_details?.length === 0 || selectedCartItems.length === 0}
+                >
                   {
                     isLoading === true ? <CircularProgress /> :
                       <>

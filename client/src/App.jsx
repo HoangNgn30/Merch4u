@@ -264,7 +264,7 @@ function App() {
         if (res?.response?.data?.message === "You have not login") {
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
-          alertBox("error", "Your session is closed please login again");
+          alertBox("error", "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
 
 
           //window.location.href = "/login"

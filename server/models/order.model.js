@@ -25,10 +25,16 @@ const orderSchema = new mongoose.Schema({
             subTotal: {
                 type: Number
             },
-            cartItemId: {
+            size: {
                 type: String
             },
-            size: {
+            weight: {
+                type: String
+            },
+            ram: {
+                type: String
+            },
+            cartItemId: {
                 type: String
             }
         }
@@ -53,13 +59,13 @@ const orderSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
-    payment_status : {
-        type : String,
-        default : ""
+    payment_status: {
+        type: String,
+        default: ""
     },
-    order_status : {
-        type : String,
-        default : "pending"
+    order_status: {
+        type: String,
+        default: "pending"
     },
     cancelledAt: {
         type: Date,

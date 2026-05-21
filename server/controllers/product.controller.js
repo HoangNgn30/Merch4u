@@ -1204,7 +1204,8 @@ export async function sortBy(request, response) {
 export async function searchProductController(request, response) {
     try {
 
-        const {query, page, limit } = request.body;
+        const { query, page, limit } = request.body;
+        const normalizedQuery = String(query || "").trim().replace(/\s+/g, " ");
 
         if (!query) {
             return response.status(400).json({
@@ -1215,23 +1216,34 @@ export async function searchProductController(request, response) {
         }
 
 
-        const pageNum = parseInt(page) || 1;
-        const limitNum = parseInt(limit) || 10;
+        const pageNum = Math.max(parseInt(page) || 1, 1);
+        const limitNum = Math.min(Math.max(parseInt(limit) || 10, 1), 50);
+
+        const words = normalizedQuery.split(/\s+/).filter(Boolean);
+        if (words.length === 0) {
+            return response.status(200).json({
+                error: false,
+                success: true,
+                products: [],
+                total: 0,
+                page: pageNum,
+                totalPages: 0
+            });
+        }
+
+        const escapeRegExp = (val) => String(val).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
         const searchQuery = {
-            $or: [
-                { name: { $regex: query, $options: "i" } },
-                { brand: { $regex: query, $options: "i" } },
-                { catName: { $regex: query, $options: "i" } },
-                { subCat: { $regex: query, $options: "i" } },
-                { thirdsubCat: { $regex: query, $options: "i" } },
-            ],
+            $and: words.map((word) => ({
+                name: { $regex: escapeRegExp(word), $options: "i" }
+            }))
         };
 
         const total = await ProductModel.countDocuments(searchQuery);
-
         const products = await ProductModel.find(searchQuery)
             .populate("category")
+            .collation({ locale: "vi", strength: 1 })
+            .sort({ name: 1 })
             .skip((pageNum - 1) * limitNum)
             .limit(limitNum);
 
@@ -1242,7 +1254,7 @@ export async function searchProductController(request, response) {
             total: total,
             page: pageNum,
             totalPages: Math.ceil(total / limitNum)
-        })
+        });
 
 
     } catch (error) {

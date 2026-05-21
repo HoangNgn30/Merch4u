@@ -1,4 +1,4 @@
-import React,{useContext, useEffect, useState} from "react";
+import React, { useContext, useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import { IoMdEye } from "react-icons/io";
@@ -18,49 +18,47 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isPasswordShow, setIsPasswordShow] = useState(false);
   const [formFields, setFormsFields] = useState({
-    email:'',
-    password:''
+    email: '',
+    password: ''
   });
 
-  const context  = useContext(MyContext);
+  const context = useContext(MyContext);
   const history = useNavigate();
 
- 
-  useEffect(()=>{
-    window.scrollTo(0,0)
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
     const token = localStorage.getItem('accessToken');
 
     if (token !== undefined && token !== null && token !== "") {
       history("/")
     }
 
-  },[]);
+  }, []);
 
-  const forgotPassword =()=>{
-  
-          if(formFields.email===""){
-            context.alertBox("error", "Vui lòng nhập email");
-            return false;
-          }
-          else{
-            context.alertBox("success", `Mã OTP đã được gửi đến ${formFields.email}`);
-            localStorage.setItem("userEmail", formFields.email);
-            localStorage.setItem("actionType", 'forgot-password');
-
-            postData("/api/user/forgot-password", {
-              email: formFields.email,
-            }).then((res) => {
-              if (res?.error === false) {
-                context.alertBox("success", res?.message);
-                history("/verify")
-              } else {
-                context.alertBox("error", res?.message);
-              }
-            })
-
-
-          }
-    
+  const forgotPassword = () => {
+    if (formFields.email === "") {
+      context.alertBox("error", "Vui lòng nhập email");
+      return false;
+    } else {
+      setIsLoading(true);
+      postData("/api/user/forgot-password", {
+        email: formFields.email,
+      }).then((res) => {
+        setIsLoading(false);
+        if (res?.error === false) {
+          context.alertBox("success", res?.message);
+          localStorage.setItem("userEmail", formFields.email);
+          localStorage.setItem("actionType", 'forgot-password');
+          history("/verify");
+        } else {
+          context.alertBox("error", res?.message || "Gửi mã OTP thất bại.");
+        }
+      }).catch((err) => {
+        setIsLoading(false);
+        context.alertBox("error", "Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại.");
+      });
+    }
   }
 
   const onChangeInput = (e) => {
@@ -74,108 +72,105 @@ const Login = () => {
   }
 
 
-    const valideValue = Object.values(formFields).every(el => el)
-  
-    const handleSubmit = (e) => {
-      e.preventDefault();
-  
-      setIsLoading(true);
-  
-      if (formFields.email === "") {
-        context.alertBox("error", "Vui lòng nhập email");
-        setIsLoading(false);
-        return false
-      }
-  
-  
-      if (formFields.password === "") {
-        context.alertBox("error", "Vui lòng nhập mật khẩu");
-        setIsLoading(false);
-        return false
-      }
-  
-  
-      postData("/api/user/login", formFields, { withCredentials: true }).then((res) => {
-        console.log(res)
-  
-        if (res?.error !== true) {
-          setIsLoading(false);
-          context.alertBox("success", res?.message);
-          setFormsFields({
-            email: "",
-            password: ""
-          })
+  const valideValue = Object.values(formFields).every(el => el)
 
-          localStorage.setItem("accessToken",res?.data?.accesstoken);
-          localStorage.setItem("refreshToken",res?.data?.refreshToken);
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-          context.setIsLogin(true);
-  
-          history("/")
-        } else {
-          context.alertBox("error", res?.message);
-          setIsLoading(false);
-        }
-  
-      })
-  
-  
+    setIsLoading(true);
+
+    if (formFields.email === "") {
+      context.alertBox("error", "Vui lòng nhập email");
+      setIsLoading(false);
+      return false
     }
 
 
+    if (formFields.password === "") {
+      context.alertBox("error", "Vui lòng nhập mật khẩu");
+      setIsLoading(false);
+      return false
+    }
 
-      const authWithGoogle = () => {
-    
-        signInWithPopup(auth, googleProvider)
-          .then((result) => {
-            // This gives you a Google Access Token. You can use it to access the Google API.
-            const credential = GoogleAuthProvider.credentialFromResult(result);
-            const token = credential.accessToken;
-            // The signed-in user info.
-            const user = result.user;
-    
-            const fields = {
-              name: user.providerData[0].displayName,
-              email: user.providerData[0].email,
-              password: null,
-              avatar: user.providerData[0].photoURL,
-              mobile: user.providerData[0].phoneNumber,
-              role: "USER"
-            };
-    
-    
-            postData("/api/user/authWithGoogle", fields).then((res) => {
-    
-              if (res?.error !== true) {
-                setIsLoading(false);
-                context.alertBox("success", res?.message);
-                localStorage.setItem("userEmail", fields.email)
-                localStorage.setItem("accessToken", res?.data?.accesstoken);
-                localStorage.setItem("refreshToken", res?.data?.refreshToken);
-    
-                context.setIsLogin(true);
-    
-                history("/")
-              } else {
-                context.alertBox("error", res?.message);
-                setIsLoading(false);
-              }
-    
-            })
-    
-            console.log(user)
-            // IdP data available using getAdditionalUserInfo(result)
-            // ...
-          }).catch((error) => {
-            setIsLoading(false);
-            const errorMessage = error?.message || "Đã xảy ra lỗi khi đăng nhập bằng Google";
-            context.alertBox("error", errorMessage);
-            console.error("Google Auth Error:", error?.code, error?.message);
-          });
-    
-    
+
+    postData("/api/user/login", formFields, { withCredentials: true }).then((res) => {
+      console.log(res)
+
+      if (res?.error !== true) {
+        setIsLoading(false);
+        context.alertBox("success", res?.message);
+        setFormsFields({
+          email: "",
+          password: ""
+        })
+
+        localStorage.setItem("accessToken", res?.data?.accesstoken);
+        localStorage.setItem("refreshToken", res?.data?.refreshToken);
+
+        context.setIsLogin(true);
+
+        history("/")
+      } else {
+        context.alertBox("error", res?.message);
+        setIsLoading(false);
       }
-    
+
+    })
+
+
+  }
+
+
+
+  const authWithGoogle = () => {
+
+    signInWithPopup(auth, googleProvider)
+      .then((result) => {
+        // This gives you a Google Access Token. You can use it to access the Google API.
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        const token = credential.accessToken;
+        // The signed-in user info.
+        const user = result.user;
+
+        const fields = {
+          name: user.providerData[0].displayName,
+          email: user.providerData[0].email,
+          password: null,
+          avatar: user.providerData[0].photoURL,
+          mobile: user.providerData[0].phoneNumber,
+          role: "USER"
+        };
+
+
+        postData("/api/user/authWithGoogle", fields).then((res) => {
+
+          if (res?.error !== true) {
+            setIsLoading(false);
+            context.alertBox("success", res?.message);
+            localStorage.setItem("userEmail", fields.email)
+            localStorage.setItem("accessToken", res?.data?.accesstoken);
+            localStorage.setItem("refreshToken", res?.data?.refreshToken);
+
+            context.setIsLogin(true);
+
+            history("/")
+          } else {
+            context.alertBox("error", res?.message);
+            setIsLoading(false);
+          }
+
+        })
+      }).catch((error) => {
+
+        setIsLoading(false);
+        const errorMessage = error?.message || "Đã xảy ra lỗi khi đăng nhập bằng Google";
+        context.alertBox("error", errorMessage);
+        console.error("Google Auth Error:", error?.code, error?.message);
+      });
+
+
+  }
+
 
   return (
     <section className="section py-5 sm:py-10">
@@ -185,7 +180,7 @@ const Login = () => {
             Đăng nhập tài khoản
           </h3>
 
-          <form className="w-full mt-5"  onSubmit={handleSubmit}>
+          <form className="w-full mt-5" onSubmit={handleSubmit}>
             <div className="form-group w-full mb-5">
               <TextField
                 type="email"
@@ -202,7 +197,7 @@ const Login = () => {
 
             <div className="form-group w-full mb-5 relative">
               <TextField
-                type={isPasswordShow===false ? 'password' : 'text'}
+                type={isPasswordShow === false ? 'password' : 'text'}
                 id="password"
                 label="Mật khẩu"
                 variant="outlined"
@@ -212,13 +207,13 @@ const Login = () => {
                 disabled={isLoading === true ? true : false}
                 onChange={onChangeInput}
               />
-              <Button className="!absolute top-[10px] right-[10px] z-50 !w-[35px] !h-[35px] !min-w-[35px] !rounded-full !text-black" onClick={()=>{
+              <Button className="!absolute top-[10px] right-[10px] z-50 !w-[35px] !h-[35px] !min-w-[35px] !rounded-full !text-black" onClick={() => {
                 setIsPasswordShow(!isPasswordShow)
               }}>
-              {
-                isPasswordShow===false ? <IoMdEye className="text-[20px] opacity-75"/> :
-                <IoMdEyeOff className="text-[20px] opacity-75"/>
-              }
+                {
+                  isPasswordShow === false ? <IoMdEye className="text-[20px] opacity-75" /> :
+                    <IoMdEyeOff className="text-[20px] opacity-75" />
+                }
               </Button>
             </div>
 
@@ -226,15 +221,15 @@ const Login = () => {
             <a className="link cursor-pointer text-[14px] font-[600]" onClick={forgotPassword}>Quên mật khẩu?</a>
 
             <div className="flex items-center w-full mt-3 mb-3">
-            <Button type="submit" disabled={!valideValue} className="btn-org btn-lg w-full flex gap-3">
-              {
-                isLoading === true ? <CircularProgress color="inherit" />
-                  :
-                  'Đăng nhập'
-              }
+              <Button type="submit" disabled={!valideValue} className="btn-org btn-lg w-full flex gap-3">
+                {
+                  isLoading === true ? <CircularProgress color="inherit" />
+                    :
+                    'Đăng nhập'
+                }
 
-            </Button>
-          </div>
+              </Button>
+            </div>
 
             <p className="text-center">Chưa có tài khoản? <Link className="link text-[14px] font-[600] text-primary" to="/register"> Đăng ký</Link></p>
 
@@ -242,8 +237,8 @@ const Login = () => {
             <p className="text-center font-[500]">Hoặc tiếp tục bằng tài khoản mạng xã hội</p>
 
             <Button className="flex gap-3 w-full !bg-[#f1f1f1] btn-lg !text-black"
-            onClick={authWithGoogle}>
-            <FcGoogle className="text-[20px]"/> Đăng nhập bằng Google</Button>
+              onClick={authWithGoogle}>
+              <FcGoogle className="text-[20px]" /> Đăng nhập bằng Google</Button>
 
           </form>
         </div>

@@ -206,15 +206,18 @@ const Login = () => {
           } else {
             context.alertBox("error", res?.message);
             setIsLoading(false);
+            setLoadingGoogle(false);
           }
 
         })
       }).catch((error) => {
+
         setLoadingGoogle(false);
         setIsLoading(false);
         const errorMessage = error?.message || "Đã xảy ra lỗi khi đăng nhập bằng Google";
         context.alertBox("error", errorMessage);
         console.error("Google Auth Error:", error?.code, error?.message);
+
       });
 
 

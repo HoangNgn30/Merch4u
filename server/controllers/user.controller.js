@@ -130,7 +130,11 @@ export async function registerUserController(request, response) {
             subject: "Thư xác minh Email từ Merch4u",
             text: "",
             html: VerificationEmail(name, verifyCode)
-        })
+        });
+
+        if (!emailSent) {
+            console.warn(`[DEBUG - SMTP FAILURE] Gửi email xác minh đăng ký thất bại đến ${email}. Mã OTP xác thực là: ${verifyCode}`);
+        }
 
         if (!emailSent) {
             // Rollback user creation if email fails
@@ -479,7 +483,7 @@ export async function userAvatarController(request, response) {
             const avatar_image = urlArr[urlArr.length - 1];
             const imageName = avatar_image.split(".")[0];
             if (imageName) {
-                await cloudinary.uploader.destroy(imageName).catch(() => {});
+                await cloudinary.uploader.destroy(imageName).catch(() => { });
             }
         }
 
@@ -618,9 +622,11 @@ export async function forgotPasswordController(request, response) {
                 subject: "Thư gửi mã xác minh OTP từ Merch4u",
                 text: "",
                 html: VerificationEmail(user.name, verifyCode)
-            })
+            });
 
             if (!emailSent) {
+
+
                 return response.status(500).json({
                     message: "Không thể gửi email OTP, vui lòng thử lại sau.",
                     error: true,
@@ -629,14 +635,12 @@ export async function forgotPasswordController(request, response) {
             }
 
             return response.json({
-                message: "Vui lòng kiểm tra email",
+                message: "Mã OTP đã được gửi thành công, vui lòng kiểm tra email của bạn.",
                 error: false,
                 success: true
             })
 
         }
-
-
 
     } catch (error) {
         return response.status(500).json({
@@ -912,15 +916,15 @@ export async function userDetails(request, response) {
 export async function addReview(request, response) {
     try {
 
-        const {image, userName, review, rating, userId, productId} = request.body;
+        const { image, userName, review, rating, userId, productId } = request.body;
 
         const userReview = new ReviewModel({
-            image:image,
-            userName:userName,
-            review:review,
-            rating:rating,
-            userId:userId,
-            productId:productId
+            image: image,
+            userName: userName,
+            review: review,
+            rating: rating,
+            userId: userId,
+            productId: productId
         })
 
 
@@ -931,7 +935,7 @@ export async function addReview(request, response) {
             error: false,
             success: true
         })
-        
+
     } catch (error) {
         return response.status(500).json({
             message: "Đã xảy ra lỗi",
@@ -946,12 +950,12 @@ export async function getReviews(request, response) {
     try {
 
         const productId = request.query.productId;
-       
 
-        const reviews = await ReviewModel.find({productId:productId});
+
+        const reviews = await ReviewModel.find({ productId: productId });
         console.log(reviews)
 
-        if(!reviews){
+        if (!reviews) {
             return response.status(400).json({
                 error: true,
                 success: false
@@ -961,9 +965,9 @@ export async function getReviews(request, response) {
         return response.status(200).json({
             error: false,
             success: true,
-            reviews:reviews
+            reviews: reviews
         })
-        
+
     } catch (error) {
         return response.status(500).json({
             message: "Đã xảy ra lỗi",
@@ -978,11 +982,11 @@ export async function getReviews(request, response) {
 
 //get all reviews
 export async function getAllReviews(request, response) {
-    try {      
+    try {
 
         const reviews = await ReviewModel.find();
 
-        if(!reviews){
+        if (!reviews) {
             return response.status(400).json({
                 error: true,
                 success: false
@@ -992,9 +996,9 @@ export async function getAllReviews(request, response) {
         return response.status(200).json({
             error: false,
             success: true,
-            reviews:reviews
+            reviews: reviews
         })
-        
+
     } catch (error) {
         return response.status(500).json({
             message: "Đã xảy ra lỗi",
@@ -1020,7 +1024,7 @@ export async function getAllUsers(request, response) {
             .skip((pageNumber - 1) * limitNumber)
             .limit(limitNumber);
 
-        if(!users){
+        if (!users) {
             return response.status(400).json({
                 error: true,
                 success: false
@@ -1030,13 +1034,13 @@ export async function getAllUsers(request, response) {
         return response.status(200).json({
             error: false,
             success: true,
-            users:users,
+            users: users,
             total: total,
             page: pageNumber,
             totalPages: Math.ceil(total / limitNumber),
             totalUsersCount: total
         })
-        
+
     } catch (error) {
         return response.status(500).json({
             message: "Đã xảy ra lỗi",

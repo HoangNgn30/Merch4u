@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import Rating from "@mui/material/Rating";
 import { IoCloseSharp } from "react-icons/io5";
@@ -9,15 +9,22 @@ const MyListItems = (props) => {
 
   const context = useContext(MyContext);
 
-  const removeItem=(id)=>{
+  const removeItem = (id) => {
     context?.showConfirmBox(
       "Xóa khỏi danh sách yêu thích?",
       "Sản phẩm này sẽ được xóa khỏi danh sách yêu thích của bạn.",
       () => {
-        deleteData(`/api/myList/${id}`).then((res)=>{
-          context?.alertBox("success", "Đã xóa sản phẩm khỏi danh sách yêu thích");
-          context?.getMyListData();
-         
+        deleteData(`/api/myList/${id}`).then((res) => {
+
+          if (res?.error === false) {
+            context?.alertBox("success", res?.message || "Đã xóa sản phẩm khỏi danh sách yêu thích");
+            context?.getMyListData();
+          } else {
+            context?.alertBox("error", res?.message || "Không thể xóa sản phẩm khỏi danh sách yêu thích");
+          }
+
+        }).catch(() => {
+          context?.alertBox("error", "Không thể xóa sản phẩm khỏi danh sách yêu thích");
         })
       }
     )
@@ -35,10 +42,10 @@ const MyListItems = (props) => {
       </div>
 
       <div className="info w-full md:w-[85%] relative">
-        <IoCloseSharp className="cursor-pointer absolute top-[0px] right-[0px] text-[22px] link transition-all" onClick={()=>removeItem(props?.item?._id)} />
+        <IoCloseSharp className="cursor-pointer absolute top-[0px] right-[0px] text-[22px] link transition-all" onClick={() => removeItem(props?.item?._id)} />
         <span className="text-[13px]">{props?.item?.brand}</span>
         <h3 className="text-[13px] sm:text-[15px]">
-          <Link to={`/product/${props?.item?.productId}`} className="link">{props?.item?.productTitle?.substr(0,80)+'...'}</Link>
+          <Link to={`/product/${props?.item?.productId}`} className="link">{props?.item?.productTitle?.substr(0, 80) + '...'}</Link>
         </h3>
 
         <Rating name="size-small" value={props?.item?.rating} size="small" readOnly />

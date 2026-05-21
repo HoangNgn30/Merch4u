@@ -193,10 +193,12 @@ const SignUp = () => {
                         context.alertBox("error", res?.message);
                         setLoadingGoogle(false);
                         setIsLoading(false);
+                        setLoadingGoogle(false);
                     }
 
                 })
             }).catch((error) => {
+
                 setLoadingGoogle(false);
                 setIsLoading(false);
                 const errorMessage = error?.message || "Đã xảy ra lỗi khi đăng ký bằng Google";
