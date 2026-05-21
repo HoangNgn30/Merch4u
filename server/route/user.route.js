@@ -11,7 +11,7 @@ userRouter.post('/login',loginUserController)
 userRouter.post('/authWithGoogle',authWithGoogle)
 userRouter.get('/logout',auth,logoutController);
 userRouter.put('/user-avatar',auth,upload.array('avatar'),userAvatarController);
-userRouter.delete('/deteleImage',auth,removeImageFromCloudinary);
+userRouter.delete('/deteleImage',auth,authRole('ADMIN'),removeImageFromCloudinary);
 userRouter.put('/:id',auth,updateUserDetails);
 userRouter.post('/forgot-password',forgotPasswordController)
 userRouter.post('/verify-forgot-password-otp',verifyForgotPasswordOtp)

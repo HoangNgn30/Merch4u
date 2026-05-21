@@ -8,6 +8,7 @@ const normalizeMobile = (mobile) => String(mobile || "").trim();
 
 export const addAddressController = async (request, response) => {
     try {
+        const userId = request.userId;
         const {
             address_line1,
             city,
@@ -15,7 +16,6 @@ export const addAddressController = async (request, response) => {
             pincode,
             country,
             mobile,
-            userId,
             landmark,
             addressType,
         } = request.body;
@@ -70,7 +70,7 @@ export const addAddressController = async (request, response) => {
 
 export const getAddressController = async (request, response) => {
     try {
-        const address = await AddressModel.find({ userId: request?.query?.userId });
+        const address = await AddressModel.find({ userId: request.userId });
 
         if (!address) {
             return response.status(404).json({
@@ -140,7 +140,7 @@ export const deleteAddressController = async (request, response) => {
 export const getSingleAddressController = async (request, response) => {
     try {
         const id = request.params.id;
-        const address = await AddressModel.findOne({ _id: id });
+        const address = await AddressModel.findOne({ _id: id, userId: request.userId });
 
         if (!address) {
             return response.status(404).json({
@@ -188,8 +188,8 @@ export async function editAddress(request, response) {
             });
         }
 
-        const address = await AddressModel.findByIdAndUpdate(
-            id,
+        const address = await AddressModel.findOneAndUpdate(
+            { _id: id, userId: request.userId },
             {
                 address_line1,
                 city,

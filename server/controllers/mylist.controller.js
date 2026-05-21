@@ -61,28 +61,16 @@ export const addToMyListController = async (request, response) => {
 
 export const deleteToMyListController = async (request, response) => {
     try {
-
-        const myListItem = await MyListModel.findById(request.params.id);
-
-        if(!myListItem){
-            return response.status(404).json({
-                error:true,
-                success:false,
-                message:"Không tìm thấy mục với mã đã cung cấp"
-            })
-        }
-
-
-        const deletedItem = await MyListModel.findByIdAndDelete(request.params.id);
+        const userId = request.userId;
+        const deletedItem = await MyListModel.findOneAndDelete({ _id: request.params.id, userId });
 
         if(!deletedItem){
             return response.status(404).json({
                 error:true,
                 success:false,
-                message:"Không thể xóa mục"
+                message:"Không tìm thấy mục hoặc bạn không có quyền xóa"
             })
         }
-
 
         return response.status(200).json({
             error:false,

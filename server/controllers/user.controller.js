@@ -1,6 +1,7 @@
 import UserModel from '../models/user.model.js'
 import bcryptjs from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import crypto from 'crypto'
 import sendEmailFun from '../config/sendEmail.js';
 import VerificationEmail from '../utils/verifyEmailTemplate.js';
 import generatedAccessToken from '../utils/generatedAccessToken.js';
@@ -27,6 +28,43 @@ const normalizePhoneForProfile = (mobile) => {
 };
 
 const buildPublicUserSelect = "-password -refresh_token -access_token -otp -otpExpires";
+
+// --- Firebase ID Token Verification ---
+const FIREBASE_PROJECT_ID = "merchshop-725e6";
+let _cachedGoogleCerts = null;
+let _cachedGoogleCertsExpiry = 0;
+
+async function fetchGooglePublicKeys() {
+    if (_cachedGoogleCerts && Date.now() < _cachedGoogleCertsExpiry) {
+        return _cachedGoogleCerts;
+    }
+    const resp = await fetch("https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com");
+    if (!resp.ok) throw new Error("Không thể tải public keys của Google");
+    const cacheControl = resp.headers.get("cache-control") || "";
+    const maxAgeMatch = cacheControl.match(/max-age=(\d+)/);
+    _cachedGoogleCertsExpiry = Date.now() + (maxAgeMatch ? Number(maxAgeMatch[1]) * 1000 : 3600000);
+    _cachedGoogleCerts = await resp.json();
+    return _cachedGoogleCerts;
+}
+
+async function verifyFirebaseToken(idToken) {
+    // Decode header to find kid
+    const headerB64 = idToken.split(".")[0];
+    const header = JSON.parse(Buffer.from(headerB64, "base64url").toString());
+    const kid = header.kid;
+    if (!kid) throw new Error("Token thiếu kid trong header");
+
+    const certs = await fetchGooglePublicKeys();
+    const cert = certs[kid];
+    if (!cert) throw new Error("Không tìm thấy public key phù hợp");
+
+    const decoded = jwt.verify(idToken, cert, {
+        algorithms: ["RS256"],
+        issuer: `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`,
+        audience: FIREBASE_PROJECT_ID,
+    });
+    return decoded;
+}
 
 const canDeleteTargetUser = (requester, targetUser) => {
     if (!requester || !targetUser) return false;
@@ -133,7 +171,7 @@ export async function registerUserController(request, response) {
         });
 
         if (!emailSent) {
-            console.warn(`[DEBUG - SMTP FAILURE] Gửi email xác minh đăng ký thất bại đến ${email}. Mã OTP xác thực là: ${verifyCode}`);
+            console.warn(`[DEBUG - SMTP FAILURE] Gửi email xác minh đăng ký thất bại đến ${email}.`);
         }
 
         if (!emailSent) {
@@ -210,9 +248,44 @@ export async function verifyEmailController(request, response) {
 
 
 export async function authWithGoogle(request, response) {
-    const { name, email, password, avatar, mobile, role } = request.body;
+    const { idToken, role } = request.body;
 
     try {
+        // --- Xác thực Firebase ID Token ---
+        if (!idToken) {
+            return response.status(400).json({
+                message: "Thiếu mã xác thực Google (idToken)",
+                error: true,
+                success: false
+            })
+        }
+
+        let decoded;
+        try {
+            decoded = await verifyFirebaseToken(idToken);
+        } catch (err) {
+            console.error("Firebase token verification failed:", err.message);
+            return response.status(401).json({
+                message: "Xác thực Google không hợp lệ hoặc đã hết hạn",
+                error: true,
+                success: false
+            })
+        }
+
+        // Lấy thông tin người dùng an toàn từ token đã xác thực
+        const email = decoded.email;
+        const name = decoded.name || decoded.email;
+        const avatar = decoded.picture || "";
+        const mobile = decoded.phone_number || "";
+
+        if (!email) {
+            return response.status(400).json({
+                message: "Token Google không chứa email",
+                error: true,
+                success: false
+            })
+        }
+
         const existingUser = await UserModel.findOne({ email: email });
         const requestedRole = resolveSelfRegistrationRole(role);
 
@@ -683,9 +756,7 @@ export async function verifyForgotPasswordOtp(request, response) {
         }
 
 
-        const currentTime = new Date().toISOString()
-
-        if (user.otpExpires < currentTime) {
+        if (user.otpExpires < Date.now()) {
             return response.status(400).json({
                 message: "Mã OTP đã hết hạn",
                 error: true,
@@ -699,10 +770,18 @@ export async function verifyForgotPasswordOtp(request, response) {
 
         await user.save();
 
+        // Sinh resetToken ngắn hạn (10 phút) để bảo vệ bước đổi mật khẩu
+        const resetToken = jwt.sign(
+            { email: user.email, scope: "reset_password" },
+            process.env.JSON_WEB_TOKEN_SECRET_KEY,
+            { expiresIn: "10m" }
+        );
+
         return response.status(200).json({
             message: "Xác nhận mã OTP thành công!",
             error: false,
-            success: true
+            success: true,
+            token: resetToken
         })
     } catch (error) {
         return response.status(500).json({
@@ -785,12 +864,40 @@ export async function resetpassword(request, response) {
 //change password
 export async function changePasswordController(request, response) {
     try {
-        const { email, newPassword, confirmPassword } = request.body;
+        const { email, newPassword, confirmPassword, token } = request.body;
         if (!email || !newPassword || !confirmPassword) {
             return response.status(400).json({
                 error: true,
                 success: false,
                 message: "Vui lòng điền vào trường bắt buộc: email, Mật khẩu mới, Xác nhận mật khẩu."
+            })
+        }
+
+        // Xác thực resetToken để đảm bảo người dùng đã qua bước OTP
+        if (!token) {
+            return response.status(403).json({
+                message: "Phiên xác thực đã hết hạn. Vui lòng thực hiện lại quá trình quên mật khẩu.",
+                error: true,
+                success: false
+            })
+        }
+
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JSON_WEB_TOKEN_SECRET_KEY);
+        } catch (err) {
+            return response.status(403).json({
+                message: "Mã xác thực không hợp lệ hoặc đã hết hạn. Vui lòng thực hiện lại.",
+                error: true,
+                success: false
+            })
+        }
+
+        if (decoded.scope !== "reset_password" || decoded.email !== email) {
+            return response.status(403).json({
+                message: "Mã xác thực không hợp lệ cho email này.",
+                error: true,
+                success: false
             })
         }
 
@@ -915,12 +1022,22 @@ export async function userDetails(request, response) {
 //review controller
 export async function addReview(request, response) {
     try {
+        const userId = request.userId;
+        const { review, rating, productId } = request.body;
 
-        const { image, userName, review, rating, userId, productId } = request.body;
+        // Lấy thông tin người dùng thực tế từ DB để chống giả mạo tên/ảnh
+        const user = await UserModel.findById(userId).select("name avatar");
+        if (!user) {
+            return response.status(404).json({
+                message: "Không tìm thấy người dùng",
+                error: true,
+                success: false
+            })
+        }
 
         const userReview = new ReviewModel({
-            image: image,
-            userName: userName,
+            image: user.avatar || "",
+            userName: user.name,
             review: review,
             rating: rating,
             userId: userId,
