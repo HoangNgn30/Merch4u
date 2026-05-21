@@ -128,11 +128,6 @@ const Footer = () => {
                   </li>
                   <li className="list-none text-[14px] w-full mb-2">
                     <Link to="/" className="link">
-                      Sơ Đồ Web
-                    </Link>
-                  </li>
-                  <li className="list-none text-[14px] w-full mb-2">
-                    <Link to="/" className="link">
                       Cửa Hàng
                     </Link>
                   </li>
