@@ -1,10 +1,17 @@
 import axios from "axios";
 const apiUrl = import.meta.env.VITE_API_URL;
 
+const getFullUrl = (url) => {
+    if (!apiUrl) return url;
+    const base = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+    const path = url.startsWith('/') ? url : '/' + url;
+    return `${base}${path}`;
+};
+
 export const postData = async (url, formData) => {
     try {
         
-        const response = await fetch(apiUrl + url, {
+        const response = await fetch(getFullUrl(url), {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, // Include your API key in the Authorization header
@@ -42,11 +49,17 @@ export const fetchDataFromApi = async (url) => {
         
         } 
 
-        const { data } = await axios.get(apiUrl + url,params)
+        const { data } = await axios.get(getFullUrl(url),params)
         return data;
     } catch (error) {
-        console.log(error);
-        return error;
+        console.error("API Error in fetchDataFromApi:", error);
+        return {
+            error: true,
+            success: false,
+            message: error?.response?.data?.message || error?.message || "Đã xảy ra lỗi kết nối",
+            isAxiosError: true,
+            response: error?.response
+        };
     }
 }
 
@@ -61,7 +74,7 @@ export const uploadImage = async (url, updatedData ) => {
     } 
 
     var response;
-    await axios.put(apiUrl + url,updatedData, params).then((res)=>{
+    await axios.put(getFullUrl(url),updatedData, params).then((res)=>{
         response=res;
         
     })
@@ -80,7 +93,7 @@ export const uploadImages = async (url, formData ) => {
     } 
 
     var response;
-    await axios.post(apiUrl + url,formData, params).then((res)=>{
+    await axios.post(getFullUrl(url),formData, params).then((res)=>{
         response=res;
         
     })
@@ -100,7 +113,7 @@ export const editData = async (url, updatedData ) => {
     } 
 
     var response;
-    await axios.put(apiUrl + url,updatedData, params).then((res)=>{
+    await axios.put(getFullUrl(url),updatedData, params).then((res)=>{
         response=res;
         
     }).catch((error) => {
@@ -121,7 +134,7 @@ export const deleteImages = async (url) => {
             'Content-Type': 'application/json',
         },
     };
-    const response = await axios.delete(apiUrl + url, params);
+    const response = await axios.delete(getFullUrl(url), params);
     return response?.data;
 }
 
@@ -134,7 +147,7 @@ export const deleteData = async (url ) => {
           },
     
     } 
-    const { data } = await axios.delete(apiUrl + url, params)
+    const { data } = await axios.delete(getFullUrl(url), params)
     return data;
 }
 
@@ -146,6 +159,6 @@ export const deleteMultipleData = async (url, body) => {
         },
         data: body
     }
-    const { data } = await axios.delete(apiUrl + url, config)
+    const { data } = await axios.delete(getFullUrl(url), config)
     return data;
 }

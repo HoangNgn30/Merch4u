@@ -27,6 +27,8 @@ const corsOptions = {
     origin: [
         process.env.CLIENT_URL,
         process.env.ADMIN_URL,
+        'https://merch4u.vercel.app',
+        'https://merch4u-i5ru.vercel.app',
         'http://localhost:5173',
         'http://localhost:5174'
     ].filter(Boolean),

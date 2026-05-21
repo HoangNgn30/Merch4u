@@ -254,9 +254,6 @@ function App() {
     } else {
       if (isLogin) setIsLogin(false);
     }
-    
-    // Xóa email rác nếu có
-    localStorage.removeItem("userEmail");
   }, [isLogin]);
 
 

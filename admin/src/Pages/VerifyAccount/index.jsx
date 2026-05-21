@@ -21,9 +21,13 @@ const VerifyAccount = () => {
 
   useEffect(() => {
     fetchDataFromApi("/api/logo").then((res) => {
-      localStorage.setItem('logo', res?.logo[0]?.logo)
-    })
-  }, [])
+      if (res?.logo && res.logo.length > 0) {
+        localStorage.setItem('logo', res.logo[0]?.logo);
+      }
+    }).catch((err) => {
+      console.error("Failed to fetch logo:", err);
+    });
+  }, []);
 
   const handleOtpChange = (value) => {
     setOtp(value);

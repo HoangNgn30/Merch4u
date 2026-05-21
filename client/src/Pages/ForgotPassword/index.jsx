@@ -73,7 +73,10 @@ const ForgotPassword = () => {
       }
       else {
         context.alertBox("error", res?.message);
+        setIsLoading(false);
       }
+    }).catch(() => {
+        setIsLoading(false);
     })
 
 

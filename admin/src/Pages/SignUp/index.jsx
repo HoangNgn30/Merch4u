@@ -5,7 +5,6 @@ import { CgLogIn } from "react-icons/cg";
 import { FaRegUser } from "react-icons/fa6";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { FcGoogle } from "react-icons/fc";
-import { BsFacebook } from "react-icons/bs";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import { FaRegEye } from "react-icons/fa";
@@ -22,6 +21,9 @@ import { firebaseApp } from "../../firebase";
 import { useEffect } from "react";
 const auth = getAuth(firebaseApp);
 const googleProvider = new GoogleAuthProvider();
+const ADMIN_ACCESS_ROLES = ["ADMIN", "SUPERBOSS"];
+
+const canAccessAdmin = (user) => ADMIN_ACCESS_ROLES.includes(user?.role) && (user?.accountStatus || "active") === "active";
 
 const SignUp = () => {
     const [loadingGoogle, setLoadingGoogle] = React.useState(false);
@@ -41,8 +43,12 @@ const SignUp = () => {
 
     useEffect(() => {
         fetchDataFromApi("/api/logo").then((res) => {
-            localStorage.setItem('logo', res?.logo[0]?.logo)
-        })
+            if (res?.logo && res.logo.length > 0) {
+                localStorage.setItem('logo', res.logo[0]?.logo);
+            }
+        }).catch((err) => {
+            console.error("Failed to fetch logo:", err);
+        });
     }, [])
 
     const onChangeInput = (e) => {
@@ -151,7 +157,7 @@ const SignUp = () => {
                 };
 
 
-                postData("/api/user/authWithGoogle", fields).then((res) => {
+                postData("/api/user/authWithGoogle", fields).then(async (res) => {
 
                     if (res?.error !== true) {
                         if (res?.requiresApproval) {
@@ -162,27 +168,42 @@ const SignUp = () => {
                             return;
                         }
 
-                        setLoadingGoogle(false);
-                        setIsLoading(false);
-                        context.alertBox("success", res?.message);
-                        localStorage.setItem("userEmail", fields.email)
                         localStorage.setItem("accessToken", res?.data?.accesstoken);
                         localStorage.setItem("refreshToken", res?.data?.refreshToken);
 
+                        // Server authWithGoogle API đã kiểm tra quyền
+                        // Fetch user-details chỉ để populate thông tin hiển thị
+                        const userDetails = await fetchDataFromApi("/api/user/user-details");
+                        const userData = (userDetails && !userDetails?.isAxiosError && !(userDetails instanceof Error))
+                            ? userDetails?.data
+                            : null;
+
+                        setLoadingGoogle(false);
+                        setIsLoading(false);
+                        context.alertBox("success", res?.message);
+                        localStorage.setItem("userEmail", fields.email);
+
+                        if (userData) {
+                            context.setUserData(userData);
+                        }
                         context.setIsLogin(true);
 
                         history("/")
                     } else {
                         context.alertBox("error", res?.message);
+                        setLoadingGoogle(false);
                         setIsLoading(false);
                         setLoadingGoogle(false);
                     }
 
                 })
             }).catch((error) => {
-                console.error("Google Auth Error:", error);
-                context.alertBox("error", `Lỗi đăng ký Google: ${error.message}`);
+
                 setLoadingGoogle(false);
+                setIsLoading(false);
+                const errorMessage = error?.message || "Đã xảy ra lỗi khi đăng ký bằng Google";
+                context.alertBox("error", errorMessage);
+                console.error("Google Auth Error:", error?.code, error?.message);
             });
 
 
