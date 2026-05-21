@@ -233,7 +233,10 @@ Tôi có thể giúp sếp thống kê doanh thu, kiểm tra đơn hàng gần �
             const headers = { "Content-Type": "application/json" };
             if (token) headers.Authorization = `Bearer ${token}`;
 
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ai/admin-chat`, {
+            const apiUrl = import.meta.env.VITE_API_URL;
+            const cleanApiUrl = apiUrl?.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+
+            const response = await fetch(`${cleanApiUrl}/api/ai/admin-chat`, {
                 method: "POST",
                 headers,
                 body: JSON.stringify({ message: text, sessionId }),

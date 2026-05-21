@@ -2,10 +2,17 @@ import axios from "axios";
 const apiUrl = import.meta.env.VITE_API_URL;
 export const API_URL = apiUrl;
 
+const getFullUrl = (url) => {
+    if (!apiUrl) return url;
+    const base = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+    const path = url.startsWith('/') ? url : '/' + url;
+    return `${base}${path}`;
+};
+
 export const postData = async (url, formData) => {
     try {
         
-        const response = await fetch(apiUrl + url, {
+        const response = await fetch(getFullUrl(url), {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, // Include your API key in the Authorization header
@@ -43,7 +50,7 @@ export const fetchDataFromApi = async (url) => {
         
         } 
 
-        const { data } = await axios.get(apiUrl + url,params)
+        const { data } = await axios.get(getFullUrl(url),params)
         return data;
     } catch (error) {
         console.log(error);
@@ -62,7 +69,7 @@ export const uploadImage = async (url, updatedData ) => {
     } 
 
     var response;
-    await axios.put(apiUrl + url,updatedData, params).then((res)=>{
+    await axios.put(getFullUrl(url),updatedData, params).then((res)=>{
         response=res;
         
     })
@@ -83,7 +90,7 @@ export const editData = async (url, updatedData ) => {
     } 
 
     var response;
-    await axios.put(apiUrl + url,updatedData, params).then((res)=>{
+    await axios.put(getFullUrl(url),updatedData, params).then((res)=>{
         response=res;
         
     }).catch((error) => {
@@ -102,6 +109,6 @@ export const deleteData = async (url ) => {
           },
     
     } 
-    const { data } = await axios.delete(apiUrl +url,params)
+    const { data } = await axios.delete(getFullUrl(url),params)
     return data;
 }

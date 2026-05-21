@@ -1,7 +1,7 @@
 import "./App.css";
 import "./responsive.css";
 import React from 'react';
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import Dashboard from "./Pages/Dashboard";
 import AdminShell from "./Components/AdminShell";
 import { createContext, useState } from "react";
@@ -31,9 +31,19 @@ import ManageLogo from "./Pages/ManageLogo";
 import LoadingBar from "react-top-loading-bar";
 
 const MyContext = createContext();
+
+const ProtectedRoute = ({ children, isLogin }) => {
+  if (!isLogin) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
 function App() {
   const [isSidebarOpen, setisSidebarOpen] = useState(true);
-  const [isLogin, setIsLogin] = useState(false);
+  const [isLogin, setIsLogin] = useState(() => {
+    const token = localStorage.getItem('accessToken');
+    return token !== undefined && token !== null && token !== "";
+  });
   const [userData, setUserData] = useState(null);
   const [address, setAddress] = useState([]);
   const [catData, setCatData] = useState([]);
@@ -82,11 +92,11 @@ function App() {
       path: "/",
       exact: true,
       element: (
-        <>
+        <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
                 <Dashboard />
           </AdminShell>
-        </>
+        </ProtectedRoute>
       ),
     },
     {
@@ -138,88 +148,88 @@ function App() {
       path: "/products",
       exact: true,
       element: (
-        <>
+        <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
                 <Products />
           </AdminShell>
-        </>
+        </ProtectedRoute>
       ),
     },
     {
       path: "/homeSlider/list",
       exact: true,
       element: (
-        <>
+        <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
                 <HomeSliderBanners />
           </AdminShell>
-        </>
+        </ProtectedRoute>
       ),
     },
     {
       path: "/category/list",
       exact: true,
       element: (
-        <>
+        <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
                 <CategoryList />
           </AdminShell>
-        </>
+        </ProtectedRoute>
       ),
     },
     {
       path: "/subCategory/list",
       exact: true,
       element: (
-        <>
+        <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
                 <SubCategoryList />
           </AdminShell>
-        </>
+        </ProtectedRoute>
       ),
     },
     {
       path: "/users",
       exact: true,
       element: (
-        <>
+        <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
                 <Users />
           </AdminShell>
-        </>
+        </ProtectedRoute>
       ),
     },
     {
       path: "/orders",
       exact: true,
       element: (
-        <>
+        <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
                 <Orders />
           </AdminShell>
-        </>
+        </ProtectedRoute>
       ),
     },
     {
       path: "/profile",
       exact: true,
       element: (
-        <>
+        <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
                 <Profile />
           </AdminShell>
-        </>
+        </ProtectedRoute>
       ),
     },
     {
       path: "/product/:id",
       exact: true,
       element: (
-        <>
+        <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
                 <ProductDetails />
           </AdminShell>
-        </>
+        </ProtectedRoute>
       ),
     },
 
@@ -227,44 +237,44 @@ function App() {
       path: "/coupons",
       exact: true,
       element: (
-        <>
+        <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
                 <Coupons />
           </AdminShell>
-        </>
+        </ProtectedRoute>
       ),
     },
     {
       path: "/rightBanner/list",
       exact: true,
       element: (
-        <>
+        <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
                 <RightBannerList />
           </AdminShell>
-        </>
+        </ProtectedRoute>
       ),
     },
     {
       path: "/blog/List",
       exact: true,
       element: (
-        <>
+        <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
                 <BlogList />
           </AdminShell>
-        </>
+        </ProtectedRoute>
       ),
     },
     {
       path: "/logo/manage",
       exact: true,
       element: (
-        <>
+        <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
                 <ManageLogo />
           </AdminShell>
-        </>
+        </ProtectedRoute>
       ),
     },
   ]);
@@ -300,29 +310,32 @@ function App() {
 
 
   useEffect(() => {
-
     const token = localStorage.getItem('accessToken');
 
-    if (token !== undefined && token !== null && token !== "") {
-      setIsLogin(true);
-
+    if (token) {
       fetchDataFromApi(`/api/user/user-details`).then((res) => {
-        setUserData(res.data);
-        if (res?.response?.data?.message === "You have not login") {
+        if (res?.response?.data?.message === "You have not login" || res?.error === true) {
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
           setIsLogin(false);
-          alertBox("error", "Your session is closed please login again")
-
-          //window.location.href = "/login"
+          setUserData(null);
+          alertBox("error", "Phiên làm việc hết hạn, vui lòng đăng nhập lại");
+        } else {
+          setUserData(res?.data);
+          setIsLogin(true);
         }
-      })
-
+      }).catch((err) => {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        setIsLogin(false);
+        setUserData(null);
+        console.error("Token verification error:", err);
+      });
     } else {
       setIsLogin(false);
+      setUserData(null);
     }
-
-  }, [isLogin])
+  }, [isLogin]);
 
 
   useEffect(() => {

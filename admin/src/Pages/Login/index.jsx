@@ -5,7 +5,6 @@ import { CgLogIn } from "react-icons/cg";
 import { FaRegUser } from "react-icons/fa6";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { FcGoogle } from "react-icons/fc";
-import { BsFacebook } from "react-icons/bs";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import { FaRegEye } from "react-icons/fa";
@@ -110,17 +109,15 @@ const Login = () => {
         localStorage.setItem("accessToken", res?.data?.accesstoken);
         localStorage.setItem("refreshToken", res?.data?.refreshToken);
 
+        // Server login API đã kiểm tra role, accountStatus, email verification
+        // Nếu login thành công (error !== true) => tài khoản hợp lệ
+        // Fetch user-details chỉ để populate thông tin hiển thị
         const userDetails = await fetchDataFromApi("/api/user/user-details");
 
-        if (!canAccessAdmin(userDetails?.data)) {
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
-          context.setIsLogin(false);
-          context.setUserData(null);
-          context.alertBox("error", "Tài khoản không có quyền truy cập trang quản trị");
-          setIsLoading(false);
-          return;
-        }
+        // Kiểm tra xem fetch có thành công không (fetchDataFromApi trả error object nếu lỗi)
+        const userData = (userDetails && !userDetails?.isAxiosError && !(userDetails instanceof Error))
+          ? userDetails?.data
+          : null;
 
         setIsLoading(false);
         context.alertBox("success", res?.message);
@@ -129,7 +126,9 @@ const Login = () => {
           password: ""
         })
 
-        context.setUserData(userDetails.data);
+        if (userData) {
+          context.setUserData(userData);
+        }
         context.setIsLogin(true);
 
         history("/")
@@ -182,25 +181,21 @@ const Login = () => {
             localStorage.setItem("accessToken", res?.data?.accesstoken);
             localStorage.setItem("refreshToken", res?.data?.refreshToken);
 
+            // Server authWithGoogle API đã kiểm tra quyền
+            // Fetch user-details chỉ để populate thông tin hiển thị
             const userDetails = await fetchDataFromApi("/api/user/user-details");
-
-            if (!canAccessAdmin(userDetails?.data)) {
-              localStorage.removeItem("accessToken");
-              localStorage.removeItem("refreshToken");
-              context.setIsLogin(false);
-              context.setUserData(null);
-              context.alertBox("error", "Tài khoản không có quyền truy cập trang quản trị");
-              setLoadingGoogle(false);
-              setIsLoading(false);
-              return;
-            }
+            const userData = (userDetails && !userDetails?.isAxiosError && !(userDetails instanceof Error))
+              ? userDetails?.data
+              : null;
 
             setLoadingGoogle(false);
             setIsLoading(false);
             context.alertBox("success", res?.message);
             localStorage.setItem("userEmail", fields.email)
 
-            context.setUserData(userDetails.data);
+            if (userData) {
+              context.setUserData(userData);
+            }
             context.setIsLogin(true);
 
             history("/")
@@ -210,19 +205,12 @@ const Login = () => {
           }
 
         })
-
-        console.log(user)
-        // IdP data available using getAdditionalUserInfo(result)
-        // ...
       }).catch((error) => {
-        // Handle Errors here.
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        // The email of the user's account used.
-        const email = error.customData.email;
-        // The AuthCredential type that was used.
-        const credential = GoogleAuthProvider.credentialFromError(error);
-        // ...
+        setLoadingGoogle(false);
+        setIsLoading(false);
+        const errorMessage = error?.message || "Đã xảy ra lỗi khi đăng nhập bằng Google";
+        context.alertBox("error", errorMessage);
+        console.error("Google Auth Error:", error?.code, error?.message);
       });
 
 

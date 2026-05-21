@@ -103,7 +103,9 @@ const AccessControl = () => {
             `Bạn có chắc muốn xóa tài khoản ${user?.email}?`,
             async () => {
                 setActionLoading(user._id);
-                const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user/deleteUser/${user._id}`, {
+                const apiUrl = import.meta.env.VITE_API_URL;
+                const cleanApiUrl = apiUrl?.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+                const response = await fetch(`${cleanApiUrl}/api/user/deleteUser/${user._id}`, {
                     method: "DELETE",
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("accessToken")}`,

@@ -15,7 +15,8 @@ import { IoCloseSharp } from "react-icons/io5";
 import { QtyBox } from "../../components/QtyBox";
 
 const VITE_APP_PAYPAL_CLIENT_ID = import.meta.env.VITE_APP_PAYPAL_CLIENT_ID;
-const VITE_API_URL = import.meta.env.VITE_API_URL;
+const rawApiUrl = import.meta.env.VITE_API_URL;
+const VITE_API_URL = rawApiUrl?.endsWith('/') ? rawApiUrl.slice(0, -1) : rawApiUrl;
 const FIXED_SHIPPING_FEE = 50000;
 const FREE_SHIPPING_THRESHOLD = 1000000;
 const addressTypeLabel = {
