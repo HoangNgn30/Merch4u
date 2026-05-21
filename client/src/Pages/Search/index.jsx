@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { Sidebar } from "../../components/Sidebar";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import ProductItem from "../../components/ProductItem";
@@ -12,7 +12,8 @@ import Pagination from "@mui/material/Pagination";
 import ProductLoadingGrid from "../../components/ProductLoading/productLoadingGrid";
 import { postData } from "../../utils/api";
 import { MyContext } from "../../App";
-import AIRecommendations from "../../components/AIRecommendations";
+
+const SEARCH_PAGE_LIMIT = 24;
 
 const SearchPage = () => {
   const [itemView, setItemView] = useState("grid");
@@ -26,11 +27,68 @@ const SearchPage = () => {
 
   const [selectedSortVal, setSelectedSortVal] = useState("Tên, A đến Z");
 
+  const skipSearchPageFetchRef = useRef(false);
+
   const context = useContext(MyContext);
+  const activeSearchData = context?.searchData && !Array.isArray(context?.searchData)
+    ? context.searchData
+    : null;
+  const activeSearchQuery = activeSearchData?.query || "";
+  const activeSearchPage = activeSearchData?.page || 1;
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [])
+
+  useEffect(() => {
+    if (!activeSearchData) return;
+
+    setProductsData(activeSearchData);
+    setTotalPages(activeSearchData?.totalPages || 1);
+    setIsLoading(false);
+
+    if (activeSearchPage !== page) {
+      skipSearchPageFetchRef.current = true;
+      setPage(activeSearchPage);
+    }
+  }, [activeSearchData]);
+
+  useEffect(() => {
+    if (!activeSearchQuery) return;
+
+    if (skipSearchPageFetchRef.current) {
+      skipSearchPageFetchRef.current = false;
+      return;
+    }
+
+    if (activeSearchPage === page) return;
+
+    let isActive = true;
+    setIsLoading(true);
+
+    postData("/api/product/search/get", {
+      query: activeSearchQuery,
+      page,
+      limit: SEARCH_PAGE_LIMIT,
+    }).then((res) => {
+      if (!isActive) return;
+
+      const nextSearchData = {
+        ...(res || {}),
+        query: activeSearchQuery,
+      };
+
+      context?.setSearchData(nextSearchData);
+      setProductsData(nextSearchData);
+      setTotalPages(nextSearchData?.totalPages || 1);
+      setIsLoading(false);
+      window.scrollTo(0, 0);
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [page, activeSearchPage, activeSearchQuery]);
 
 
   const open = Boolean(anchorEl);
@@ -223,8 +281,6 @@ const SearchPage = () => {
         </div>
       </div>
 
-      {/* AI Gợi ý cá nhân hóa */}
-      <AIRecommendations title="✨ Có thể bạn cũng thích" />
     </section>
   );
 };

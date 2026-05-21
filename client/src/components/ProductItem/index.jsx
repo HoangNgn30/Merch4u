@@ -27,10 +27,17 @@ const ProductItem = (props) => {
   const [isShowTabs, setIsShowTabs] = useState(false);
   const [selectedTabName, setSelectedTabName] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMyListLoading, setIsMyListLoading] = useState(false);
 
   const [sizes, setSizes] = useState(props?.item?.size || []);
 
   const context = useContext(MyContext);
+
+  const findMyListItem = (productId) => {
+    return context?.myListData?.find((item) =>
+      String(item?.productId) === String(productId)
+    );
+  };
 
   useEffect(() => {
     if (props?.item?.size) {
@@ -116,9 +123,7 @@ const ProductItem = (props) => {
       cartItem.productId.includes(props?.item?._id)
     )
 
-    const myListItem = context?.myListData?.filter((item) =>
-      item.productId.includes(props?.item?._id)
-    )
+    const myListItem = findMyListItem(props?.item?._id);
 
     if (item?.length !== 0) {
       setCartItem(item)
@@ -129,13 +134,13 @@ const ProductItem = (props) => {
     }
 
 
-    if (myListItem?.length !== 0) {
+    if (myListItem) {
       setIsAddedInMyList(true);
     } else {
       setIsAddedInMyList(false)
     }
 
-  }, [context?.cartData]);
+  }, [context?.cartData, context?.myListData, props?.item?._id]);
 
 
   const minusQty = () => {
@@ -190,10 +195,31 @@ const ProductItem = (props) => {
   }
 
 
-  const handleAddToMyList = (item) => {
-    if (context?.userData === null) {
-      context?.alertBox("error", "you are not login please login first");
+  const handleToggleMyList = (item) => {
+    if (!context?.isLogin || context?.userData === null) {
+      context?.alertBox("error", "Vui lòng đăng nhập trước");
       return false
+    }
+
+    const myListItem = findMyListItem(item?._id);
+    setIsMyListLoading(true);
+
+    if (myListItem?._id) {
+      deleteData(`/api/myList/${myListItem._id}`).then((res) => {
+        if (res?.error === false) {
+          context?.alertBox("success", res?.message || "Đã xóa sản phẩm khỏi danh sách yêu thích");
+          setIsAddedInMyList(false);
+          context?.getMyListData();
+        } else {
+          context?.alertBox("error", res?.message || "Không thể xóa sản phẩm khỏi danh sách yêu thích");
+        }
+      }).catch(() => {
+        context?.alertBox("error", "Không thể xóa sản phẩm khỏi danh sách yêu thích");
+      }).finally(() => {
+        setIsMyListLoading(false);
+      });
+
+      return;
     }
 
     else {
@@ -218,6 +244,10 @@ const ProductItem = (props) => {
         } else {
           context?.alertBox("error", res?.message);
         }
+      }).catch(() => {
+        context?.alertBox("error", "Không thể thêm sản phẩm vào danh sách yêu thích");
+      }).finally(() => {
+        setIsMyListLoading(false);
       })
 
     }
@@ -333,10 +363,14 @@ const ProductItem = (props) => {
 
 
 
-          <button className="flex items-center justify-center w-[35px] h-[35px] rounded-full bg-white shadow-md hover:bg-primary text-gray-800 hover:text-white group transition-colors"
-            onClick={() => handleAddToMyList(props?.item)}
+          <button
+            className="flex items-center justify-center w-[35px] h-[35px] rounded-full bg-white shadow-md hover:bg-primary text-gray-800 hover:text-white group transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+            onClick={() => handleToggleMyList(props?.item)}
+            disabled={isMyListLoading}
+            title={isAddedInMyList ? "Bỏ khỏi yêu thích" : "Thêm vào yêu thích"}
           >
             {
+              isMyListLoading === true ? <CircularProgress color="inherit" size={16} /> :
               isAddedInMyList === true ? <IoMdHeart size={18} className="text-primary group-hover:text-white" /> :
                 <FaRegHeart size={18} />
 

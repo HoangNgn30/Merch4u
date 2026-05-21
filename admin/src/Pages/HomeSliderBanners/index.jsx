@@ -87,7 +87,7 @@ export const HomeSliderBanners = () => {
                 }
             )
         } else {
-            context.alertBox("error", "Only admin can delete data");
+            context.alertBox("error", "Chỉ admin mới có quyền xóa dữ liệu");
         }
     }
 
@@ -103,7 +103,7 @@ export const HomeSliderBanners = () => {
                 }
             });
         } else {
-            context.alertBox("error", "Only admin can toggle status");
+            context.alertBox("error", "Chỉ admin mới có quyền thay đổi trạng thái");
         }
     }
 

@@ -14,6 +14,13 @@ export const OrderSuccess = () => {
         const queryParams = new URLSearchParams(location.search);
         const orderCode = queryParams.get('orderCode');
         const status = queryParams.get('status');
+        const payment = queryParams.get('payment');
+        const savedMessage = sessionStorage.getItem("orderSuccessMessage");
+
+        if (savedMessage) {
+            context.alertBox("success", savedMessage);
+            sessionStorage.removeItem("orderSuccessMessage");
+        }
 
         if (orderCode && status === 'PAID') {
             setIsVerifying(true);
@@ -28,6 +35,10 @@ export const OrderSuccess = () => {
                 console.error("Verify Error:", err);
                 setIsVerifying(false);
             });
+        } else if (payment === 'paypal' && status === 'PAID') {
+            if (context?.getCartItems) {
+                context.getCartItems();
+            }
         }
     }, [location.search]);
 

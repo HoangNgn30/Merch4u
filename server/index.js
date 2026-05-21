@@ -108,3 +108,5 @@ connectDB().then(() => {
         console.log("Server is running", process.env.PORT);
     })
 })
+// Force restart nodemon
+

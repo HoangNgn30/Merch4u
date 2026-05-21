@@ -7,8 +7,7 @@ import { FaRegHeart } from "react-icons/fa";
 import { IoGitCompareOutline } from "react-icons/io5";
 import { MyContext } from "../../App";
 import CircularProgress from '@mui/material/CircularProgress';
-import { postData } from "../../utils/api";
-import { FaCheckDouble } from "react-icons/fa";
+import { deleteData, postData } from "../../utils/api";
 import { IoMdHeart } from "react-icons/io";
 import { resolveProductStatus } from "../ProductStatusBadges";
 
@@ -18,12 +17,18 @@ export const ProductDetailsComponent = (props) => {
   const [selectedTabName, setSelectedTabName] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [tabError, setTabError] = useState(false);
-  const [isAdded, setIsAdded] = useState(false);
   const [isAddedInMyList, setIsAddedInMyList] = useState(false);
+  const [isMyListLoading, setIsMyListLoading] = useState(false);
 
   const context = useContext(MyContext);
   const productStatus = resolveProductStatus(props?.item);
   const isSoldOut = productStatus === "sold-out";
+
+  const findMyListItem = (productId) => {
+    return context?.myListData?.find((item) =>
+      String(item?.productId) === String(productId)
+    );
+  };
 
   const handleSelecteQty = (qty) => {
     setQuantity(qty);
@@ -35,30 +40,15 @@ export const ProductDetailsComponent = (props) => {
   }
 
   useEffect(() => {
-    const item = context?.cartData?.filter((cartItem) =>
-      cartItem.productId.includes(props?.item?._id)
-    )
+    const myListItem = findMyListItem(props?.item?._id);
 
-    if (item?.length !== 0) {
-      setIsAdded(true)
-    } else {
-      setIsAdded(false)
-    }
-
-  }, [context?.cartData, props?.item?._id])
-
-  useEffect(() => {
-    const myListItem = context?.myListData?.filter((item) =>
-      item.productId.includes(props?.item?._id)
-    )
-
-    if (myListItem?.length !== 0) {
+    if (myListItem) {
       setIsAddedInMyList(true);
     } else {
       setIsAddedInMyList(false)
     }
 
-  }, [context?.myListData])
+  }, [context?.myListData, props?.item?._id])
 
   const addToCart = (product, userId, quantity) => {
 
@@ -99,7 +89,6 @@ export const ProductDetailsComponent = (props) => {
             context?.getCartItems();
             setTimeout(() => {
               setIsLoading(false);
-              setIsAdded(true)
             }, 500);
 
           } else {
@@ -123,7 +112,6 @@ export const ProductDetailsComponent = (props) => {
           context?.getCartItems();
           setTimeout(() => {
             setIsLoading(false);
-            setIsAdded(true)
           }, 500);
 
         } else {
@@ -137,10 +125,31 @@ export const ProductDetailsComponent = (props) => {
     }
   }
 
-  const handleAddToMyList = (item) => {
-    if (context?.userData === null) {
+  const handleToggleMyList = (item) => {
+    if (!context?.isLogin || context?.userData === null) {
       context?.alertBox("error", "Vui lòng đăng nhập trước");
       return false
+    }
+
+    const myListItem = findMyListItem(item?._id);
+    setIsMyListLoading(true);
+
+    if (myListItem?._id) {
+      deleteData(`/api/myList/${myListItem._id}`).then((res) => {
+        if (res?.error === false) {
+          context?.alertBox("success", res?.message || "Đã xóa sản phẩm khỏi danh sách yêu thích");
+          setIsAddedInMyList(false);
+          context?.getMyListData();
+        } else {
+          context?.alertBox("error", res?.message || "Không thể xóa sản phẩm khỏi danh sách yêu thích");
+        }
+      }).catch(() => {
+        context?.alertBox("error", "Không thể xóa sản phẩm khỏi danh sách yêu thích");
+      }).finally(() => {
+        setIsMyListLoading(false);
+      });
+
+      return;
     }
 
     else {
@@ -164,6 +173,10 @@ export const ProductDetailsComponent = (props) => {
         } else {
           context?.alertBox("error", res?.message);
         }
+      }).catch(() => {
+        context?.alertBox("error", "Không thể thêm sản phẩm vào danh sách yêu thích");
+      }).finally(() => {
+        setIsMyListLoading(false);
       })
 
     }
@@ -263,25 +276,26 @@ export const ProductDetailsComponent = (props) => {
           {
             isLoading === true ? <CircularProgress color="inherit" size={24}/> :
               <>
-                {
-                  isAdded === true ? <><FaCheckDouble size={20}/> Đã thêm</> :
-                    <>
-                      <MdOutlineShoppingCart className="text-[24px]" /> {isSoldOut ? "Hết hàng" : "Thêm vào giỏ"}
-                    </>
-                }
+                <MdOutlineShoppingCart className="text-[24px]" /> {isSoldOut ? "Hết hàng" : "Thêm vào giỏ"}
               </>
           }
         </Button>
       </div>
 
       <div className="flex items-center gap-6 mt-5 border-t border-gray-100 pt-5">
-        <span className="flex items-center gap-2 text-[14px] sm:text-[15px] cursor-pointer font-[600] text-gray-600 hover:text-primary transition-colors group" onClick={() => handleAddToMyList(props?.item)}>
+        <button
+          type="button"
+          className="flex items-center gap-2 text-[14px] sm:text-[15px] cursor-pointer font-[600] text-gray-600 hover:text-primary transition-colors group border-none bg-transparent p-0 disabled:cursor-not-allowed disabled:opacity-70"
+          onClick={() => handleToggleMyList(props?.item)}
+          disabled={isMyListLoading}
+        >
           {
+            isMyListLoading === true ? <CircularProgress color="inherit" size={18} /> :
             isAddedInMyList === true ? <IoMdHeart className="text-[20px] text-primary" /> :
               <FaRegHeart className="text-[20px] group-hover:text-primary" />
           }
-          Thêm Yêu thích
-        </span>
+          {isAddedInMyList ? "Bỏ Yêu thích" : "Thêm Yêu thích"}
+        </button>
 
         <span className="hidden">
           <IoGitCompareOutline className="text-[20px] group-hover:text-primary" /> So sánh

@@ -93,7 +93,7 @@ function App() {
       element: (
         <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
-                <Dashboard />
+            <Dashboard />
           </AdminShell>
         </ProtectedRoute>
       ),
@@ -149,7 +149,7 @@ function App() {
       element: (
         <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
-                <Products />
+            <Products />
           </AdminShell>
         </ProtectedRoute>
       ),
@@ -160,7 +160,7 @@ function App() {
       element: (
         <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
-                <HomeSliderBanners />
+            <HomeSliderBanners />
           </AdminShell>
         </ProtectedRoute>
       ),
@@ -171,7 +171,7 @@ function App() {
       element: (
         <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
-                <CategoryList />
+            <CategoryList />
           </AdminShell>
         </ProtectedRoute>
       ),
@@ -182,7 +182,7 @@ function App() {
       element: (
         <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
-                <SubCategoryList />
+            <SubCategoryList />
           </AdminShell>
         </ProtectedRoute>
       ),
@@ -193,7 +193,7 @@ function App() {
       element: (
         <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
-                <Users />
+            <Users />
           </AdminShell>
         </ProtectedRoute>
       ),
@@ -204,7 +204,7 @@ function App() {
       element: (
         <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
-                <Orders />
+            <Orders />
           </AdminShell>
         </ProtectedRoute>
       ),
@@ -215,7 +215,7 @@ function App() {
       element: (
         <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
-                <Profile />
+            <Profile />
           </AdminShell>
         </ProtectedRoute>
       ),
@@ -226,7 +226,7 @@ function App() {
       element: (
         <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
-                <ProductDetails />
+            <ProductDetails />
           </AdminShell>
         </ProtectedRoute>
       ),
@@ -238,7 +238,7 @@ function App() {
       element: (
         <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
-                <Coupons />
+            <Coupons />
           </AdminShell>
         </ProtectedRoute>
       ),
@@ -249,7 +249,7 @@ function App() {
       element: (
         <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
-                <RightBannerList />
+            <RightBannerList />
           </AdminShell>
         </ProtectedRoute>
       ),
@@ -260,7 +260,7 @@ function App() {
       element: (
         <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
-                <BlogList />
+            <BlogList />
           </AdminShell>
         </ProtectedRoute>
       ),
@@ -271,7 +271,7 @@ function App() {
       element: (
         <ProtectedRoute isLogin={isLogin}>
           <AdminShell>
-                <ManageLogo />
+            <ManageLogo />
           </AdminShell>
         </ProtectedRoute>
       ),
@@ -317,11 +317,13 @@ function App() {
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
           setIsLogin(false);
+
           setUserData(null);
           alertBox("error", "Phiên làm việc hết hạn, vui lòng đăng nhập lại");
         } else {
           setUserData(res?.data);
           setIsLogin(true);
+
         }
       }).catch((err) => {
         localStorage.removeItem("accessToken");

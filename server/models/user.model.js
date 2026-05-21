@@ -107,13 +107,7 @@ const userSchema = mongoose.Schema({
     { timestamps: true }
 )
 
-userSchema.index(
-    { role: 1 },
-    {
-        unique: true,
-        partialFilterExpression: { role: "SUPERBOSS" }
-    }
-);
+// Đã xóa unique index SUPERBOSS - cho phép tối đa 2 tài khoản SUPERBOSS
 
 
 const UserModel = mongoose.model("User",userSchema);

@@ -369,7 +369,7 @@ export const Products = () => {
                 }
             )
         } else {
-            context.alertBox("error", "Only admin can delete data");
+            context.alertBox("error", "Chỉ admin mới có quyền xóa dữ liệu");
         }
     }
 

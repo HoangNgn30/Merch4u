@@ -163,11 +163,11 @@ const Orders = () => {
 
                               <td className="px-6 py-4 font-[500] text-center">{order?.delivery_address?.mobile}</td>
 
-                              <td className="px-6 py-4 font-[500]">
-                                <span className='inline-block text-[13px] font-[500] px-2.5 py-0.5 bg-[#f1f1f1] rounded-full mb-1 whitespace-nowrap text-gray-600 border border-gray-200'>
+                              <td className="px-6 py-4 font-[500] min-w-[260px] lg:min-w-[340px]">
+                                <span className='inline-block text-[13px] font-[500] px-2.5 py-0.5 bg-[#f1f1f1] dark:bg-gray-700 rounded-full mb-1 whitespace-nowrap text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-gray-600'>
                                   {addressTypeLabel[order?.delivery_address?.addressType] || order?.delivery_address?.addressType}
                                 </span>
-                                <span className="block max-w-[200px] lg:max-w-[280px] text-[13px] leading-snug text-gray-800 font-[600]">
+                                <span className="block max-w-[240px] lg:max-w-[320px] text-[13px] leading-snug text-gray-800 dark:text-gray-100 font-[600]">
                                   {[
                                     order?.delivery_address?.address_line1,
                                     order?.delivery_address?.city,
@@ -176,7 +176,7 @@ const Orders = () => {
                                   ].filter(Boolean).join(", ") +
                                    (order?.delivery_address?.landmark ? ` (${order?.delivery_address?.landmark})` : "")}
                                 </span>
-                                <span className="block text-[13px] text-gray-500 font-[600] mt-0.5">
+                                <span className="block text-[13px] text-gray-500 dark:text-gray-400 font-[600] mt-0.5">
                                   {order?.delivery_address?.mobile}
                                 </span>
                               </td>
