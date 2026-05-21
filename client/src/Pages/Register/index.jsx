@@ -157,7 +157,10 @@ const Register = () => {
         })
 
       }).catch((error) => {
-        console.error(error);
+        setIsLoading(false);
+        const errorMessage = error?.message || "Đã xảy ra lỗi khi đăng ký bằng Google";
+        context.alertBox("error", errorMessage);
+        console.error("Google Auth Error:", error?.code, error?.message);
       });
 
   }

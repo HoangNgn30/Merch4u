@@ -29,9 +29,13 @@ const ChangePassword = () => {
 
   useEffect(() => {
     fetchDataFromApi("/api/logo").then((res) => {
-      localStorage.setItem('logo', res?.logo[0]?.logo)
-    })
-  }, [])
+      if (res?.logo && res.logo.length > 0) {
+        localStorage.setItem('logo', res.logo[0]?.logo);
+      }
+    }).catch((err) => {
+      console.error("Failed to fetch logo:", err);
+    });
+  }, []);
 
   const onChangeInput = (e) => {
     const { name, value } = e.target;
@@ -71,7 +75,7 @@ const ChangePassword = () => {
     }
 
 
-    postData(`/api/user/reset-password`, formFields).then((res) => {
+    postData(`/api/user/forgot-password/change-password`, formFields).then((res) => {
       console.log(res)
       if (res?.error === false) {
         localStorage.removeItem("userEmail")
@@ -82,7 +86,10 @@ const ChangePassword = () => {
       }
       else {
         context.alertBox("error", res?.message);
+        setIsLoading(false);
       }
+    }).catch(() => {
+        setIsLoading(false);
     })
 
 

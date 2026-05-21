@@ -28,14 +28,19 @@ const ManageLogo = () => {
     useEffect(() => {
         fetchDataFromApi(`/api/logo`).then((res) => {
             const imgArr = [];
-            for (let i = 0; i < res?.logo.length; i++) {
-                imgArr.push(res?.logo[i]?.logo)
+            if (res?.logo && Array.isArray(res.logo)) {
+                for (let i = 0; i < res.logo.length; i++) {
+                    if (res.logo[i]?.logo) {
+                        imgArr.push(res.logo[i].logo);
+                    }
+                }
             }
-
 
             if (imgArr?.length > 0) {
                 setEditMode(true);
-                setLogoId(res?.logo[0]?._id)
+                if (res?.logo?.[0]?._id) {
+                    setLogoId(res.logo[0]._id);
+                }
             } else {
                 setEditMode(false);
             }
@@ -43,8 +48,10 @@ const ManageLogo = () => {
             setPreviews([])
             setTimeout(() => {
                 setPreviews(imgArr)
-                formFields.logo = imgArr[0]
+                formFields.logo = imgArr[0] || ""
             }, 10);
+        }).catch((err) => {
+            console.error("Failed to fetch logo:", err);
         })
     }, []);
 

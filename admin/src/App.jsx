@@ -65,7 +65,6 @@ function App() {
 
 
   useEffect(() => {
-    localStorage.removeItem("userEmail")
     if (windowWidth < 992) {
       setisSidebarOpen(false);
       setSidebarWidth(100)

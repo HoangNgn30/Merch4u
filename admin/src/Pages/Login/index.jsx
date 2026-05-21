@@ -39,9 +39,13 @@ const Login = () => {
 
   useEffect(() => {
     fetchDataFromApi("/api/logo").then((res) => {
-      localStorage.setItem('logo', res?.logo[0]?.logo)
-    })
-  }, [])
+      if (res?.logo && res.logo.length > 0) {
+        localStorage.setItem('logo', res.logo[0]?.logo);
+      }
+    }).catch((err) => {
+      console.error("Failed to fetch logo:", err);
+    });
+  }, []);
 
 
   const onChangeInput = (e) => {
@@ -318,12 +322,12 @@ const Login = () => {
               label="Ghi nhớ đăng nhập"
             />
 
-            <a
-              onClick={forgotPassword}
+            <Link
+              to="/forgot-password"
               className="text-primary font-[700] text-[15px] hover:underline hover:text-gray-700 cursor-pointer"
             >
               Quên mật khẩu?
-            </a>
+            </Link>
           </div>
 
 
