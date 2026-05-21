@@ -530,53 +530,6 @@ const Checkout = () => {
 
 
 
-  const onApprovePayment = async (data) => {
-    const user = context?.userData;
-
-    const info = {
-      userId: user?._id,
-      products: context?.cartData,
-      payment_status: "COMPLETE",
-      delivery_address: selectedAddress,
-      totalAmount: payableAmount,
-      shippingFee: shippingFee,
-      couponCode: appliedCoupon?.coupon?.code || "",
-      couponDiscount: couponDiscount,
-      date: new Date().toLocaleString("en-US", {
-        month: "short",
-        day: "2-digit",
-        year: "numeric",
-      })
-    };
-
-
-    // Capture order on the server
-
-    const headers = {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      'Content-Type': 'application/json',
-    }
-
-    const response = await axios.post(
-      VITE_API_URL + "/api/order/capture-order-paypal",
-      {
-        ...info,
-        paymentId: data.orderID
-      },
-      { headers }
-    );
-
-    if (response?.data?.success) {
-      context.alertBox("success", response?.data?.message);
-      history("/order/success");
-      deleteData(`/api/cart/emptyCart/${context?.userData?._id}`).then((res) => {
-        context?.getCartItems();
-      })
-      context.alertBox("success", "Đơn hàng đã thanh toán thành công!");
-    }
-
-  }
-
 
   const editAddress = (id) => {
     context?.setOpenAddressPanel(true);
