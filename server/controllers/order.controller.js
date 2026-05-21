@@ -503,7 +503,10 @@ export const captureOrderPaypalController = async (request, response) => {
             await markCouponUsed(order.couponCode, request.body.userId);
 
             // Clear cart on backend after successful PayPal capture
-            await CartProductModel.deleteMany({ userId: request.body.userId });
+            const cartItemIds = (request.body.products || []).map(p => p.cartItemId).filter(Boolean);
+            if (cartItemIds.length > 0) {
+                await CartProductModel.deleteMany({ _id: { $in: cartItemIds } });
+            }
 
             const user = await UserModel.findOne({ _id: request.body.userId })
 
@@ -554,7 +557,7 @@ export const captureOrderPaypalController = async (request, response) => {
 
 export const updateOrderStatusController = async (request, response) => {
     try {
-        const { order_status } = request.body;
+        const { order_status, payment_status } = request.body;
         const orderId = request.params.id;
         const allowedStatuses = ["pending", "confirm", "shipped", "delivered"];
         const requester = await UserModel.findById(request.userId).select("role");
@@ -567,22 +570,39 @@ export const updateOrderStatusController = async (request, response) => {
             })
         }
 
-        if (!allowedStatuses.includes(order_status)) {
+        const updateData = {};
+
+        if (order_status) {
+            if (!allowedStatuses.includes(order_status)) {
+                return response.status(400).json({
+                    message: "Trạng thái đơn hàng không hợp lệ",
+                    success: false,
+                    error: true
+                })
+            }
+            updateData.order_status = order_status;
+        }
+
+        if (payment_status !== undefined) {
+            updateData.payment_status = payment_status;
+        }
+
+        if (Object.keys(updateData).length === 0) {
             return response.status(400).json({
-                message: "Trạng thái đơn hàng không hợp lệ",
+                message: "Không có thông tin trạng thái để cập nhật",
                 success: false,
                 error: true
-            })
+            });
         }
 
         const updateOrder = await OrderModel.findByIdAndUpdate(
             orderId,
-            { order_status: order_status },
+            updateData,
             { new: true }
         )
 
         return response.json({
-            message: "Cập nhật trạng thái đơn hàng",
+            message: "Cập nhật trạng thái đơn hàng thành công",
             success: true,
             error: false,
             data: updateOrder
@@ -826,12 +846,13 @@ export const createOrderPayosController = async (request, response) => {
 
         order = await order.save();
 
+        const clientUrl = request.body.clientUrl || process.env.CLIENT_URL;
         const orderBody = {
             orderCode: orderCode,
             amount: pricing.totalAmt, 
             description: 'Thanh toán đơn hàng',
-            returnUrl: `${process.env.CLIENT_URL}/order/success`, 
-            cancelUrl: `${process.env.CLIENT_URL}/checkout`
+            returnUrl: `${clientUrl}/order/success`, 
+            cancelUrl: `${clientUrl}/checkout`
         };
 
         const paymentLink = await payos.paymentRequests.create(orderBody);
@@ -876,7 +897,10 @@ export const receivePayosWebhookController = async (request, response) => {
                     await order.save();
                     await markCouponUsed(order.couponCode, order.userId);
 
-                    await CartProductModel.deleteMany({ userId: order.userId });
+                    const cartItemIds = (order.products || []).map(p => p.cartItemId).filter(Boolean);
+                    if (cartItemIds.length > 0) {
+                        await CartProductModel.deleteMany({ _id: { $in: cartItemIds } });
+                    }
                     await deductInventoryForOrder(order.products);
 
                     const user = await UserModel.findOne({ _id: order.userId });
@@ -925,7 +949,10 @@ export const verifyPayosPaymentController = async (request, response) => {
                     await order.save();
                     await markCouponUsed(order.couponCode, order.userId);
 
-                    await CartProductModel.deleteMany({ userId: order.userId });
+                    const cartItemIds = (order.products || []).map(p => p.cartItemId).filter(Boolean);
+                    if (cartItemIds.length > 0) {
+                        await CartProductModel.deleteMany({ _id: { $in: cartItemIds } });
+                    }
                     await deductInventoryForOrder(order.products);
 
                     const user = await UserModel.findOne({ _id: order.userId });

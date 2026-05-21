@@ -24,6 +24,12 @@ const orderSchema = new mongoose.Schema({
             },
             subTotal: {
                 type: Number
+            },
+            cartItemId: {
+                type: String
+            },
+            size: {
+                type: String
             }
         }
     ],

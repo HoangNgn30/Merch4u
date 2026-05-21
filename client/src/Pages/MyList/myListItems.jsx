@@ -15,7 +15,7 @@ const MyListItems = (props) => {
       "Sản phẩm này sẽ được xóa khỏi danh sách yêu thích của bạn.",
       () => {
         deleteData(`/api/myList/${id}`).then((res)=>{
-          context?.alertBox("success", "Product remove from My List");
+          context?.alertBox("success", "Đã xóa sản phẩm khỏi danh sách yêu thích");
           context?.getMyListData();
          
         })

@@ -32,6 +32,24 @@ const getStatusClasses = (status) => {
   }
 };
 
+// Helper for payment status styles
+const getPaymentStatusClasses = (status) => {
+  switch (status) {
+    case 'Paid':
+    case 'COMPLETE':
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    case 'pending':
+      return 'bg-amber-50 text-amber-700 border-amber-200';
+    case 'failed':
+      return 'bg-rose-50 text-rose-700 border-rose-200';
+    case 'CASH ON DELIVERY':
+      return 'bg-blue-50 text-blue-700 border-blue-200';
+    default:
+      return 'bg-slate-50 text-slate-700 border-slate-200';
+  }
+};
+
+
 export const Orders = () => {
   const [isOpenOrderdProduct, setIsOpenOrderdProduct] = useState(null);
   const [orderStatus, setOrderStatus] = useState('');
@@ -76,6 +94,33 @@ export const Orders = () => {
       }
     });
   };
+
+  const handlePaymentStatusChange = (event, id) => {
+    const newPaymentStatus = event.target.value;
+    const obj = {
+      id: id,
+      payment_status: newPaymentStatus
+    };
+
+    editData(`/api/order/order-status/${id}`, obj).then((res) => {
+      const payload = res?.data || res;
+      if (payload?.error === false || payload?.success === true) {
+        context.alertBox("success", payload?.message || "Đã cập nhật trạng thái thanh toán");
+        
+        // Re-fetch the orders list to update UI reactively!
+        context?.setProgress(50);
+        fetchDataFromApi(`/api/order/order-list?page=${pageOrder}&limit=5`).then((listRes) => {
+          if (listRes?.error === false) {
+            setOrdersData(listRes?.data);
+            context?.setProgress(100);
+          }
+        });
+      } else {
+        context.alertBox("error", payload?.message || "Cập nhật thất bại");
+      }
+    });
+  };
+
 
   useEffect(() => {
     context?.setProgress(50);
@@ -167,6 +212,7 @@ export const Orders = () => {
               <th scope="col" className="px-5 py-4 whitespace-nowrap text-center">Số điện thoại</th>
               <th scope="col" className="px-5 py-4 whitespace-nowrap min-w-[280px]">Địa chỉ giao hàng</th>
               <th scope="col" className="px-5 py-4 whitespace-nowrap text-center">Tổng tiền</th>
+              <th scope="col" className="px-5 py-4 whitespace-nowrap text-center">T.T Thanh toán</th>
               <th scope="col" className="px-5 py-4 whitespace-nowrap text-center">Trạng thái</th>
               <th scope="col" className="px-5 py-4 whitespace-nowrap text-center">Ngày tạo</th>
               <th scope="col" className="px-5 py-4 whitespace-nowrap text-center">Thao tác</th>
@@ -243,6 +289,30 @@ export const Orders = () => {
                       </td>
 
                       <td className="px-5 py-4 text-center">
+                        <div className="min-w-[130px] inline-block">
+                          <Select
+                            value={order?.payment_status || 'pending'}
+                            size="small"
+                            className={`w-full text-xs font-semibold rounded-lg border ${getPaymentStatusClasses(order?.payment_status || 'pending')}`}
+                            sx={{
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              '& .MuiSelect-select': {
+                                py: '4px',
+                                px: '8px',
+                              }
+                            }}
+                            onChange={(e) => handlePaymentStatusChange(e, order?._id)}
+                          >
+                            <MenuItem value={'pending'} className="text-xs font-semibold text-amber-700">Chờ thanh toán</MenuItem>
+                            <MenuItem value={'Paid'} className="text-xs font-semibold text-emerald-700">Đã thanh toán</MenuItem>
+                            <MenuItem value={'failed'} className="text-xs font-semibold text-rose-700">Thanh toán lỗi</MenuItem>
+                            <MenuItem value={'CASH ON DELIVERY'} className="text-xs font-semibold text-blue-700">COD (Thu hộ)</MenuItem>
+                          </Select>
+                        </div>
+                      </td>
+
+                      <td className="px-5 py-4 text-center">
                         <div className="min-w-[120px] inline-block">
                           <Select
                             value={currentStatus}
@@ -282,7 +352,7 @@ export const Orders = () => {
 
                     {isOpenOrderdProduct === index && (
                       <tr className="bg-slate-50/50">
-                        <td className="px-6 py-4" colSpan={10}>
+                        <td className="px-6 py-4" colSpan={11}>
                           <div className="my-2 p-5 bg-white border border-slate-100 rounded-xl shadow-inner">
                             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
                               <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
@@ -341,7 +411,7 @@ export const Orders = () => {
               })
             ) : (
               <tr>
-                <td colSpan={10} className="px-5 py-12 text-center text-slate-400 font-medium italic">
+                <td colSpan={11} className="px-5 py-12 text-center text-slate-400 font-medium italic">
                   Không tìm thấy đơn hàng nào tương ứng.
                 </td>
               </tr>

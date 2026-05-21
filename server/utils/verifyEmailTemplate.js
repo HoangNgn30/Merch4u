@@ -1,4 +1,4 @@
-const VerificationEmail = (username, otp ) => {
+const VerificationEmail = (username, otp) => {
     return `<!DOCTYPE html>
   <html lang="en">
   <head>
@@ -54,13 +54,11 @@ const VerificationEmail = (username, otp ) => {
   <body>
       <div className="container">
           <div className="header">
-              <h1>Xin chào ${username} Vui lòng xác minh địa chỉ Email của bạn</h1>
           </div>
           <div className="content">
   
-              <p>Cảm ơn bạn đã đăng ký Merch4u. Vui lòng sử dụng mã OTP bên dưới để xác minh địa chỉ email của bạn:</p>
+              <p>Vui lòng sử dụng mã OTP bên dưới để xác minh địa chỉ email của bạn:</p>
               <div className="otp">${otp}</div>
-              <p>Nếu bạn chưa tạo tài khoản, bạn có thể bỏ qua email này.</p>
           </div>
           <div className="footer">
               <p>&copy; ${new Date().getFullYear()} Merch4u. All rights reserved.</p>
@@ -70,7 +68,7 @@ const VerificationEmail = (username, otp ) => {
   </html>
   
     `;
-  };
+};
 
 
-  export default VerificationEmail;
+export default VerificationEmail;

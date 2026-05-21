@@ -1,12 +1,12 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Button } from "@mui/material";
+import { Button, Checkbox } from "@mui/material";
 import { BsFillBagCheckFill } from "react-icons/bs";
 import { MyContext } from '../../App';
 import { FaPlus } from "react-icons/fa6";
 import Radio from '@mui/material/Radio';
 import { deleteData, editData, fetchDataFromApi, postData } from "../../utils/api";
 import axios from 'axios';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import CircularProgress from '@mui/material/CircularProgress';
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
@@ -26,7 +26,7 @@ const addressTypeLabel = {
 
 const formatVnd = (value) => Number(value || 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 
-const CheckoutCartItem = ({ item, index, updateCartSize, updateCartQty, removeItem }) => {
+const CheckoutCartItem = ({ item, index, updateCartSize, updateCartQty, removeItem, isSelected, onToggleSelect }) => {
   const [sizeAnchorEl, setSizeAnchorEl] = useState(null);
   const openSize = Boolean(sizeAnchorEl);
   const [productSizes, setProductSizes] = useState([]);
@@ -61,7 +61,13 @@ const CheckoutCartItem = ({ item, index, updateCartSize, updateCartQty, removeIt
     <div className="flex flex-col gap-2 py-3 border-b border-[rgba(0,0,0,0.06)] relative group">
       {/* Top row: Image, Title, Delete */}
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            checked={Boolean(isSelected)}
+            onChange={(e) => onToggleSelect(item?._id, e.target.checked)}
+            size="small"
+            className="!p-1 shrink-0"
+          />
           <div className="img w-[50px] h-[50px] shrink-0 object-cover overflow-hidden rounded-md cursor-pointer border border-gray-100">
             <img
               src={item?.image}
@@ -151,13 +157,65 @@ const Checkout = () => {
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [myCoupons, setMyCoupons] = useState([]);
+  const [selectedItems, setSelectedItems] = useState({});
   const context = useContext(MyContext);
 
   const history = useNavigate();
+  const location = useLocation();
   const subTotal = Number(totalAmount || 0);
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const cancel = queryParams.get('cancel');
+    if (cancel === 'true') {
+      context.alertBox("warning", "Thanh toán qua QR đã bị hủy");
+      history("/checkout", { replace: true });
+    }
+  }, [location.search]);
   const shippingFee = subTotal >= FREE_SHIPPING_THRESHOLD ? 0 : FIXED_SHIPPING_FEE;
   const couponDiscount = Number(appliedCoupon?.discountAmount || 0);
   const payableAmount = Math.max(0, subTotal - couponDiscount) + shippingFee;
+
+  // Khởi tạo các item trong giỏ được tích chọn mặc định
+  useEffect(() => {
+    if (context.cartData?.length > 0) {
+      const initialSelected = {};
+      let updated = false;
+      context.cartData.forEach(item => {
+        if (selectedItems[item._id] === undefined) {
+          initialSelected[item._id] = true;
+          updated = true;
+        } else {
+          initialSelected[item._id] = selectedItems[item._id];
+        }
+      });
+      if (updated) {
+        setSelectedItems(prev => ({ ...initialSelected, ...prev }));
+      }
+    }
+  }, [context.cartData]);
+
+  const handleToggleSelect = (id, checked) => {
+    setSelectedItems(prev => ({
+      ...prev,
+      [id]: checked
+    }));
+  };
+
+  const getSelectedProductsPayload = () => {
+    return context.cartData
+      .filter(item => selectedItems[item._id] === true)
+      .map(item => ({
+        productId: item.productId,
+        productTitle: item.productTitle,
+        quantity: item.quantity,
+        price: item.price,
+        image: item.image,
+        subTotal: item.price * item.quantity,
+        cartItemId: item._id,
+        size: item.size || ""
+      }));
+  };
 
   const updateCartSize = (item, selectedVal) => {
     const cartObj = {
@@ -221,17 +279,16 @@ const Checkout = () => {
 
 
   useEffect(() => {
-    setTotalAmount(
-      context.cartData?.length !== 0 ?
-        context.cartData?.map(item => parseInt(item.price) * item.quantity)
-          .reduce((total, value) => total + value, 0) : 0);
-
-    // localStorage.setItem("totalAmount", context.cartData?.length !== 0 ?
-    //   context.cartData?.map(item => parseInt(item.price) * item.quantity)
-    //     .reduce((total, value) => total + value, 0) : 0)
-    //   ?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })
-
-  }, [context.cartData])
+    if (context.cartData?.length > 0) {
+      const total = context.cartData
+        .filter(item => selectedItems[item._id] === true)
+        .map(item => parseInt(item.price) * item.quantity)
+        .reduce((total, value) => total + value, 0);
+      setTotalAmount(total);
+    } else {
+      setTotalAmount(0);
+    }
+  }, [context.cartData, selectedItems])
 
   useEffect(() => {
     setAppliedCoupon(null);
@@ -362,7 +419,7 @@ const Checkout = () => {
 
     const info = {
       userId: user?._id,
-      products: context?.cartData,
+      products: getSelectedProductsPayload(),
       payment_status: "COMPLETE",
       delivery_address: selectedAddress,
       totalAmount: payableAmount,
@@ -396,9 +453,15 @@ const Checkout = () => {
     if (response?.data?.success) {
       context.alertBox("success", response?.data?.message);
       history("/order/success");
-      deleteData(`/api/cart/emptyCart/${context?.userData?._id}`).then((res) => {
+      
+      const selectedIds = context.cartData
+        .filter(item => selectedItems[item._id] === true)
+        .map(item => item._id);
+      
+      const deletePromises = selectedIds.map(id => deleteData(`/api/cart/delete-cart-item/${id}`));
+      Promise.all(deletePromises).then(() => {
         context?.getCartItems();
-      })
+      });
       context.alertBox("success", "Đơn hàng đã thanh toán thành công!");
     }
 
@@ -453,12 +516,19 @@ const Checkout = () => {
   const cashOnDelivery = () => {
 
     const user = context?.userData
+    
+    const selectedProds = getSelectedProductsPayload();
+    if (selectedProds.length === 0) {
+      context.alertBox("error", "Vui lòng chọn ít nhất một sản phẩm để thanh toán");
+      return;
+    }
+    
     setIsloading(true);
 
     if (userData?.address_details?.length !== 0) {
       const payLoad = {
         userId: user?._id,
-        products: context?.cartData,
+        products: selectedProds,
         paymentId: '',
         payment_status: "CASH ON DELIVERY",
         delivery_address: selectedAddress,
@@ -475,13 +545,19 @@ const Checkout = () => {
 
 
       postData(`/api/order/create`, payLoad).then((res) => {
-        if (res?.error === false) {
-          context.alertBox("success", res?.message || "Đơn hàng đã được đặt thành công!");
-          deleteData(`/api/cart/emptyCart/${user?._id}`).then(() => {
-            context?.getCartItems();
-            setIsloading(false);
-          });
-          history("/order/success");
+          if (res?.error === false) {
+            context.alertBox("success", res?.message || "Đơn hàng đã được đặt thành công!");
+            
+            const selectedIds = context.cartData
+              .filter(item => selectedItems[item._id] === true)
+              .map(item => item._id);
+            
+            const deletePromises = selectedIds.map(id => deleteData(`/api/cart/delete-cart-item/${id}`));
+            Promise.all(deletePromises).then(() => {
+              context?.getCartItems();
+              setIsloading(false);
+            });
+            history("/order/success");
         } else {
           context.alertBox("error", res?.message || "Đặt hàng thất bại!");
           setIsloading(false);
@@ -500,6 +576,12 @@ const Checkout = () => {
   const payWithPayOS = async () => {
       const user = context?.userData;
 
+      const selectedProds = getSelectedProductsPayload();
+      if (selectedProds.length === 0) {
+        context.alertBox("error", "Vui lòng chọn ít nhất một sản phẩm để thanh toán");
+        return;
+      }
+
       if (userData?.address_details?.length === 0 || !selectedAddress) {
         context.alertBox("error", "Vui lòng chọn địa chỉ giao hàng");
         return;
@@ -510,12 +592,13 @@ const Checkout = () => {
       try {
         const orderData = {
           userId: user?._id,
-          products: context?.cartData,
+          products: selectedProds,
           delivery_address: selectedAddress,
           totalAmt: payableAmount,
           shippingFee: shippingFee,
           couponCode: appliedCoupon?.coupon?.code || "",
           couponDiscount: couponDiscount,
+          clientUrl: window.location.origin, // URL callback động cho PayOS
           date: new Date().toLocaleString("en-US", {
             month: "short",
             day: "2-digit",
@@ -672,6 +755,8 @@ const Checkout = () => {
                         updateCartSize={updateCartSize}
                         updateCartQty={updateCartQty}
                         removeItem={removeItem}
+                        isSelected={selectedItems[item?._id]}
+                        onToggleSelect={handleToggleSelect}
                       />
                     )
                   })
