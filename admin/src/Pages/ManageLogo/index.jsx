@@ -85,7 +85,7 @@ const ManageLogo = () => {
                 }
             )
         } else {
-            context.alertBox("error", "Only admin can delete data");
+            context.alertBox("error", "Chỉ admin mới có quyền xóa dữ liệu");
         }
     }
 
@@ -102,7 +102,7 @@ const ManageLogo = () => {
 
         if (editMode === true) {
             editData(`/api/logo/${logoId}`, formFields).then((res) => {
-                context.alertBox("success", "logo updated successfully");
+                context.alertBox("success", "Cập nhật logo thành công");
                 setTimeout(() => {
                     setIsLoading(false);
                 }, 2500);
@@ -110,7 +110,7 @@ const ManageLogo = () => {
         } else {
             postData(`/api/logo/add`, formFields).then((res) => {
                 setLogoId(res?.logo?._id)
-                context.alertBox("success", "Logo add successfully");
+                context.alertBox("success", "Thêm logo thành công");
                 setTimeout(() => {
                     setIsLoading(false);
                     setEditMode(true);

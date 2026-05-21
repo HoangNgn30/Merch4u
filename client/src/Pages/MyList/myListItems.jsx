@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import Rating from "@mui/material/Rating";
 import { IoCloseSharp } from "react-icons/io5";
@@ -15,9 +15,15 @@ const MyListItems = (props) => {
       "Sản phẩm này sẽ được xóa khỏi danh sách yêu thích của bạn.",
       () => {
         deleteData(`/api/myList/${id}`).then((res)=>{
-          context?.alertBox("success", "Product remove from My List");
-          context?.getMyListData();
+          if (res?.error === false) {
+            context?.alertBox("success", res?.message || "Đã xóa sản phẩm khỏi danh sách yêu thích");
+            context?.getMyListData();
+          } else {
+            context?.alertBox("error", res?.message || "Không thể xóa sản phẩm khỏi danh sách yêu thích");
+          }
          
+        }).catch(() => {
+          context?.alertBox("error", "Không thể xóa sản phẩm khỏi danh sách yêu thích");
         })
       }
     )

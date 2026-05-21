@@ -175,22 +175,14 @@ const SignUp = () => {
                     } else {
                         context.alertBox("error", res?.message);
                         setIsLoading(false);
+                        setLoadingGoogle(false);
                     }
 
                 })
-
-                console.log(user)
-                // IdP data available using getAdditionalUserInfo(result)
-                // ...
             }).catch((error) => {
-                // Handle Errors here.
-                const errorCode = error.code;
-                const errorMessage = error.message;
-                // The email of the user's account used.
-                const email = error.customData.email;
-                // The AuthCredential type that was used.
-                const credential = GoogleAuthProvider.credentialFromError(error);
-                // ...
+                console.error("Google Auth Error:", error);
+                context.alertBox("error", `Lỗi đăng ký Google: ${error.message}`);
+                setLoadingGoogle(false);
             });
 
 

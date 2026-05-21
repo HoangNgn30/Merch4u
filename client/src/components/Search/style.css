@@ -78,3 +78,13 @@
   font-weight:700;
   white-space:nowrap;
 }
+
+.searchNoResult{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px 16px;
+  color:#9ca3af;
+  font-size:13px;
+  font-weight:500;
+}

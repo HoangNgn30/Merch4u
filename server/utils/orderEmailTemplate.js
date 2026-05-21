@@ -57,8 +57,6 @@ const OrderConfirmationEmail = (username, orders) => {
             <p>Gửi <strong>${username}</strong>,</p>
             <p>Cảm ơn bạn đã đặt hàng! Dưới đây là chi tiết đơn hàng của bạn:</p>
 
-            
- 
             <table className="order-details">
               <tr>
                         <th>Sản Phẩm</th>
@@ -66,28 +64,26 @@ const OrderConfirmationEmail = (username, orders) => {
                         <th>Giá Tiền</th>
              </tr>
     
-            
            ${orders?.products.map(
         (product) => `
              <tr>
-        <td>${product?.productTitle}</td>
-                <td>${product?.quantity}</td>
-                        <td>${product?.subTotal?.toLocaleString("vi-VN", {
-            style: "currency",
-            currency: "VND",
-        })}</td>
-        </tr>
-                    `
-    )}
+                <td>${product?.productTitle || ""}</td>
+                <td>${product?.quantity || 0}</td>
+                <td>${(Number(product?.subTotal || (product?.price * product?.quantity) || 0)).toLocaleString("vi-VN", {
+                    style: "currency",
+                    currency: "VND",
+                })}</td>
+             </tr>
+             `
+    ).join("")}
 
-    
                     <tr>
                         <td colspan="2" style="text-align: right; font-weight: bold;">Tổng cộng:</td>
                         <td style="font-weight: bold; color: #ff5252;">
-                            ${(orders?.totalAmt || 0)?.toLocaleString("vi-VN", {
-            style: "currency",
-            currency: "VND",
-        })}
+                            ${(Number(orders?.totalAmt || 0)).toLocaleString("vi-VN", {
+                                style: "currency",
+                                currency: "VND",
+                            })}
                         </td>
                     </tr>    
           
@@ -102,7 +98,7 @@ const OrderConfirmationEmail = (username, orders) => {
     </div>
     </div >
 </body >
-</html > `;
+</html> `;
 };
 
 export default OrderConfirmationEmail;

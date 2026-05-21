@@ -125,12 +125,16 @@ export async function registerUserController(request, response) {
         await user.save();
 
         // Send verification email
-        await sendEmailFun({
+        const emailSent = await sendEmailFun({
             sendTo: email,
             subject: "Thư xác minh Email từ Merch4u",
             text: "",
             html: VerificationEmail(name, verifyCode)
-        })
+        });
+
+        if (!emailSent) {
+            console.warn(`[DEBUG - SMTP FAILURE] Gửi email xác minh đăng ký thất bại đến ${email}. Mã OTP xác thực là: ${verifyCode}`);
+        }
 
 
         // Create a JWT token for verification purposes
@@ -603,23 +607,29 @@ export async function forgotPasswordController(request, response) {
 
             await user.save();
 
-            await sendEmailFun({
+            const emailSent = await sendEmailFun({
                 sendTo: email,
                 subject: "Thư gửi mã xác minh OTP từ Merch4u",
                 text: "",
                 html: VerificationEmail(user.name, verifyCode)
-            })
+            });
 
+            if (!emailSent) {
+                console.warn(`[DEBUG - SMTP FAILURE] Gửi email OTP thất bại đến ${email}. Mã OTP được tạo là: ${verifyCode}`);
+                return response.status(500).json({
+                    message: "Hệ thống không thể gửi email OTP lúc này. Vui lòng kiểm tra lại cấu hình SMTP của server (EMAIL và EMAIL_PASS).",
+                    error: true,
+                    success: false
+                });
+            }
 
             return response.json({
-                message: "Vui lòng kiểm tra email",
+                message: "Mã OTP đã được gửi thành công, vui lòng kiểm tra email của bạn.",
                 error: false,
                 success: true
             })
 
         }
-
-
 
     } catch (error) {
         return response.status(500).json({

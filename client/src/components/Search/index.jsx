@@ -1,18 +1,19 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import "../Search/style.css";
-import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import { IoSearch } from "react-icons/io5";
 import { MyContext } from "../../App";
 import { useNavigate } from "react-router-dom";
-import { fetchDataFromApi, postData } from "../../utils/api";
+import { postData } from "../../utils/api";
 
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const debounceRef = useRef(null);
+  const requestIdRef = useRef(0);
 
   const context = useContext(MyContext);
   const history = useNavigate();
@@ -21,16 +22,33 @@ const Search = () => {
     const query = searchQuery.trim();
     clearTimeout(debounceRef.current);
 
-    if (query.length < 2) {
+    if (query.length < 1) {
+      requestIdRef.current += 1;
       setSuggestions([]);
+      setHasSearched(false);
+      setShowSuggestions(false);
       return;
     }
 
     debounceRef.current = setTimeout(() => {
-      fetchDataFromApi(`/api/ai/search?q=${encodeURIComponent(query)}&limit=5`).then((res) => {
+      const requestId = requestIdRef.current + 1;
+      requestIdRef.current = requestId;
+
+      postData("/api/product/search/get", {
+        page: 1,
+        limit: 5,
+        query,
+      }).then((res) => {
+        if (requestId !== requestIdRef.current) return;
+
         if (res?.error === false) {
           setSuggestions(res?.products || []);
           setShowSuggestions(true);
+          setHasSearched(true);
+        } else {
+          setSuggestions([]);
+          setShowSuggestions(true);
+          setHasSearched(true);
         }
       });
     }, 300);
@@ -49,17 +67,16 @@ const Search = () => {
     setIsLoading(true);
     setShowSuggestions(false);
 
-    let res = await fetchDataFromApi(`/api/ai/search?q=${encodeURIComponent(query)}&limit=24`);
+    const res = await postData("/api/product/search/get", {
+      page: 1,
+      limit: 24,
+      query,
+    });
 
-    if (res?.error !== false) {
-      res = await postData("/api/product/search/get", {
-        page: 1,
-        limit: 24,
-        query,
-      });
-    }
-
-    context?.setSearchData(res);
+    context?.setSearchData({
+      ...(res || {}),
+      query,
+    });
     setIsLoading(false);
     context?.setOpenSearchPanel(false);
     history("/search");
@@ -94,32 +111,40 @@ const Search = () => {
         {isLoading ? <CircularProgress color="inherit" size={20} /> : <IoSearch size={22} color="#ffffff" />}
       </button>
 
-      {showSuggestions && suggestions.length > 0 && (
+      {showSuggestions && (
         <div className="searchSuggestions">
-          {suggestions.map((item) => (
-            <button
-              type="button"
-              className="searchSuggestionItem"
-              key={item._id}
-              onMouseDown={(event) => {
-                event.preventDefault();
-                openProduct(item._id);
-              }}
-            >
-              <span className="searchSuggestionImage">
-                {item?.images?.[0] && <img src={item.images[0]} alt={item.name} />}
-              </span>
-              <span className="searchSuggestionInfo">
-                <span className="searchSuggestionName">{item.name}</span>
-                <span className="searchSuggestionMeta">
-                  {item.brand || item.catName || item.subCat || "Merch4u"}
+          {suggestions.length > 0 ? (
+            suggestions.map((item) => (
+              <button
+                type="button"
+                className="searchSuggestionItem"
+                key={item._id}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  openProduct(item._id);
+                }}
+              >
+                <span className="searchSuggestionImage">
+                  {item?.images?.[0] && <img src={item.images[0]} alt={item.name} />}
                 </span>
-              </span>
-              <span className="searchSuggestionPrice">
-                {Number(item.price || 0).toLocaleString("vi-VN")}đ
-              </span>
-            </button>
-          ))}
+                <span className="searchSuggestionInfo">
+                  <span className="searchSuggestionName">{item.name}</span>
+                  <span className="searchSuggestionMeta">
+                    {item.brand || item.catName || item.subCat || "Merch4u"}
+                  </span>
+                </span>
+                <span className="searchSuggestionPrice">
+                  {Number(item.price || 0).toLocaleString("vi-VN")}đ
+                </span>
+              </button>
+            ))
+          ) : (
+            hasSearched && (
+              <div className="searchNoResult">
+                <span>Không tìm thấy sản phẩm phù hợp</span>
+              </div>
+            )
+          )}
         </div>
       )}
     </div>

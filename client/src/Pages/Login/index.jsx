@@ -36,31 +36,29 @@ const Login = () => {
 
   },[]);
 
-  const forgotPassword =()=>{
-  
-          if(formFields.email===""){
-            context.alertBox("error", "Vui lòng nhập email");
-            return false;
-          }
-          else{
-            context.alertBox("success", `Mã OTP đã được gửi đến ${formFields.email}`);
-            localStorage.setItem("userEmail", formFields.email);
-            localStorage.setItem("actionType", 'forgot-password');
-
-            postData("/api/user/forgot-password", {
-              email: formFields.email,
-            }).then((res) => {
-              if (res?.error === false) {
-                context.alertBox("success", res?.message);
-                history("/verify")
-              } else {
-                context.alertBox("error", res?.message);
-              }
-            })
-
-
-          }
-    
+  const forgotPassword = () => {
+    if (formFields.email === "") {
+      context.alertBox("error", "Vui lòng nhập email");
+      return false;
+    } else {
+      setIsLoading(true);
+      postData("/api/user/forgot-password", {
+        email: formFields.email,
+      }).then((res) => {
+        setIsLoading(false);
+        if (res?.error === false) {
+          context.alertBox("success", res?.message);
+          localStorage.setItem("userEmail", formFields.email);
+          localStorage.setItem("actionType", 'forgot-password');
+          history("/verify");
+        } else {
+          context.alertBox("error", res?.message || "Gửi mã OTP thất bại.");
+        }
+      }).catch((err) => {
+        setIsLoading(false);
+        context.alertBox("error", "Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại.");
+      });
+    }
   }
 
   const onChangeInput = (e) => {
@@ -162,19 +160,9 @@ const Login = () => {
               }
     
             })
-    
-            console.log(user)
-            // IdP data available using getAdditionalUserInfo(result)
-            // ...
           }).catch((error) => {
-            // Handle Errors here.
-            const errorCode = error.code;
-            const errorMessage = error.message;
-            // The email of the user's account used.
-            const email = error.customData.email;
-            // The AuthCredential type that was used.
-            const credential = GoogleAuthProvider.credentialFromError(error);
-            // ...
+            console.error("Google Auth Error:", error);
+            context.alertBox("error", `Lỗi đăng nhập Google: ${error.message}`);
           });
     
     

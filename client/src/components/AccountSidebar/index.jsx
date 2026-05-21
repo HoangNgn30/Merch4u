@@ -66,7 +66,7 @@ const AccountSidebar = () => {
         let avatar = [];
         avatar.push(res?.data?.avtar);
         setPreviews(avatar);
-        context.alertBox("success", "Profile picture updated successfully!");
+        context.alertBox("success", "Cập nhật ảnh đại diện thành công!");
         fetchDataFromApi(`/api/user/user-details`).then((res) => {
           context?.setUserData(res.data);
         })

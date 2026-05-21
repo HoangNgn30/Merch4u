@@ -12,6 +12,7 @@ import {  captureOrderPaypalController,
     updateOrderStatusController, 
     createOrderPayosController,
     cancelOrderController,
+    cancelOrderByCodeController,
     receivePayosWebhookController,
     verifyPayosPaymentController,
     getDeliveredChartsData 
@@ -28,6 +29,7 @@ orderRouter.post('/capture-order-paypal',auth,captureOrderPaypalController)
 orderRouter.post('/create-order-payos', auth, createOrderPayosController)
 orderRouter.post('/payos-webhook', receivePayosWebhookController)
 orderRouter.get('/verify-payos/:orderCode', auth, verifyPayosPaymentController)
+orderRouter.put('/cancel-by-code/:orderCode', auth, cancelOrderByCodeController)
 
 
 orderRouter.put('/order-status/:id',auth,authRole('ADMIN'),updateOrderStatusController)

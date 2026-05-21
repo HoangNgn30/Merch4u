@@ -9,6 +9,7 @@ import { fetchDataFromApi } from "../../utils/api";
 import CircularProgress from '@mui/material/CircularProgress';
 import { Reviews } from "./reviews";
 import AIRecommendations from "../../components/AIRecommendations";
+import { IoHomeOutline } from "react-icons/io5";
 
 export const ProductDetails = () => {
 
@@ -67,34 +68,76 @@ export const ProductDetails = () => {
 
   return (
     <>
-      <div className="py-5 hidden">
-        <div className="container">
-          <Breadcrumbs aria-label="breadcrumb">
-            <Link
-              underline="hover"
-              color="inherit"
-              to="/"
-              className="link transition !text-[14px]"
+      <div className="bg-white border-b border-gray-100">
+        <div className="container py-3">
+          <div className="max-w-full overflow-x-auto rounded-full border border-gray-100 bg-gray-50/80 px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.035)]">
+            <Breadcrumbs
+              aria-label="breadcrumb"
+              separator="›"
+              sx={{
+                "& .MuiBreadcrumbs-ol": {
+                  flexWrap: "nowrap",
+                  overflow: "hidden",
+                },
+                "& .MuiBreadcrumbs-separator": {
+                  color: "#cbd5e1",
+                  fontSize: "13px",
+                  marginLeft: "8px",
+                  marginRight: "8px",
+                },
+                "& .MuiBreadcrumbs-li:last-child": {
+                  minWidth: 0,
+                  overflow: "hidden",
+                },
+              }}
             >
-              Home
-            </Link>
-            <Link
-              underline="hover"
-              color="inherit"
-              to="/"
-              className="link transition !text-[14px]"
-            >
-              Fashion
-            </Link>
+              <Link
+                to="/"
+                className="flex items-center gap-1.5 whitespace-nowrap text-[13px] font-[600] text-slate-500 transition-colors hover:text-primary"
+              >
+                <IoHomeOutline className="text-[15px]" />
+                Trang chủ
+              </Link>
 
-            <Link
-              underline="hover"
-              color="inherit"
-              className="link transition !text-[14px]"
-            >
-              Cropped Satin Bomber Jacket
-            </Link>
-          </Breadcrumbs>
+              <Link
+                to="/products"
+                className="whitespace-nowrap text-[13px] font-[600] text-slate-500 transition-colors hover:text-primary"
+              >
+                Sản phẩm
+              </Link>
+
+              {productData?.catName && (
+                <Link
+                  to={productData?.catId ? `/products?catId=${productData.catId}` : "/products"}
+                  className="whitespace-nowrap text-[13px] font-[600] text-slate-500 transition-colors hover:text-primary"
+                >
+                  {productData.catName}
+                </Link>
+              )}
+
+              {productData?.subCat && (
+                <Link
+                  to={productData?.subCatId ? `/products?subCatId=${productData.subCatId}` : "/products"}
+                  className="whitespace-nowrap text-[13px] font-[600] text-slate-500 transition-colors hover:text-primary"
+                >
+                  {productData.subCat}
+                </Link>
+              )}
+
+              {productData?.thirdsubCat && (
+                <Link
+                  to={productData?.thirdsubCatId ? `/products?thirdLavelCatId=${productData.thirdsubCatId}` : "/products"}
+                  className="whitespace-nowrap text-[13px] font-[600] text-slate-500 transition-colors hover:text-primary"
+                >
+                  {productData.thirdsubCat}
+                </Link>
+              )}
+
+              <span className="block min-w-0 truncate text-[13px] font-[700] text-slate-800">
+                {productData?.name || "Sản phẩm"}
+              </span>
+            </Breadcrumbs>
+          </div>
         </div>
       </div>
 

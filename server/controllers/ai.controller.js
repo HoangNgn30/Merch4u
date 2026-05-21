@@ -135,8 +135,12 @@ async function vectorSearchProducts(queryVector, limit = 5, excludeIds = []) {
         .slice(0, limit);
 }
 
-function scoreTextProduct(product, query) {
-    const q = query.toLowerCase();
+export function scoreTextProduct(product, query) {
+    const q = query.toLowerCase().trim();
+    if (!q) return 0;
+    const words = q.split(/\s+/).filter(Boolean);
+    if (words.length === 0) return 0;
+
     const fields = {
         name: String(product.name || "").toLowerCase(),
         brand: String(product.brand || "").toLowerCase(),
@@ -146,32 +150,96 @@ function scoreTextProduct(product, query) {
         description: String(product.description || "").toLowerCase(),
     };
 
-    let score = 0;
-    if (fields.name === q) score += 1;
-    if (fields.name.includes(q)) score += 0.9;
-    if (fields.brand.includes(q)) score += 0.7;
-    if (fields.catName.includes(q) || fields.subCat.includes(q) || fields.thirdsubCat.includes(q)) score += 0.55;
-    if (fields.description.includes(q)) score += 0.35;
+    let matchedWordsCount = 0;
+    for (const word of words) {
+        const matchesAnyField = 
+            fields.name.includes(word) ||
+            fields.brand.includes(word) ||
+            fields.catName.includes(word) ||
+            fields.subCat.includes(word) ||
+            fields.thirdsubCat.includes(word) ||
+            fields.description.includes(word);
+        if (matchesAnyField) {
+            matchedWordsCount++;
+        }
+    }
 
-    return Math.min(score, 1);
+    const wordMatchScore = matchedWordsCount / words.length;
+
+    let fieldScore = 0;
+    const nameMatches = words.filter(word => fields.name.includes(word)).length;
+    const brandMatches = words.filter(word => fields.brand.includes(word)).length;
+    const catMatches = words.filter(word => fields.catName.includes(word) || fields.subCat.includes(word) || fields.thirdsubCat.includes(word)).length;
+    const descMatches = words.filter(word => fields.description.includes(word)).length;
+
+    if (nameMatches > 0) fieldScore += 0.5 * (nameMatches / words.length);
+    if (brandMatches > 0) fieldScore += 0.3 * (brandMatches / words.length);
+    if (catMatches > 0) fieldScore += 0.2 * (catMatches / words.length);
+    if (descMatches > 0) fieldScore += 0.1 * (descMatches / words.length);
+
+    let totalScore = (wordMatchScore * 0.5) + fieldScore;
+
+    if (fields.name === q) {
+        totalScore += 0.8;
+    } else if (fields.name.includes(q)) {
+        totalScore += 0.6;
+    } else if (
+        fields.brand.includes(q) ||
+        fields.catName.includes(q) ||
+        fields.subCat.includes(q) ||
+        fields.thirdsubCat.includes(q) ||
+        fields.description.includes(q)
+    ) {
+        totalScore += 0.3;
+    }
+
+    return Math.min(totalScore, 1);
 }
 
-async function textSearchProducts(query, limit = 12) {
-    const regex = new RegExp(escapeRegExp(query), "i");
+export async function textSearchProducts(query, limit = 12) {
+    const words = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    if (words.length === 0) return [];
 
-    const products = await ProductModel.find({
-        $or: [
-            { name: regex },
-            { brand: regex },
-            { catName: regex },
-            { subCat: regex },
-            { thirdsubCat: regex },
-            { description: regex },
-        ],
-    })
+    const makeKeywordCondition = (word) => {
+        const regex = new RegExp(escapeRegExp(word), "i");
+        return {
+            $or: [
+                { name: regex },
+                { brand: regex },
+                { catName: regex },
+                { subCat: regex },
+                { thirdsubCat: regex },
+                { description: regex },
+            ],
+        };
+    };
+
+    const andConditions = words.map(makeKeywordCondition);
+
+    let products = await ProductModel.find({ $and: andConditions })
         .select(PRODUCT_SELECT)
         .limit(limit)
         .lean();
+
+    if (products.length < 4) {
+        const strictIds = new Set(products.map(p => p._id.toString()));
+        const orConditions = { $or: words.map(makeKeywordCondition) };
+        const fallbackLimit = limit - products.length;
+
+        if (fallbackLimit > 0) {
+            const fallbackProducts = await ProductModel.find({
+                $and: [
+                    orConditions,
+                    { _id: { $nin: Array.from(strictIds).map(id => new mongoose.Types.ObjectId(id)) } }
+                ]
+            })
+                .select(PRODUCT_SELECT)
+                .limit(fallbackLimit)
+                .lean();
+
+            products = products.concat(fallbackProducts);
+        }
+    }
 
     return products.map((product) => ({
         ...product,
@@ -203,11 +271,18 @@ async function hybridSearchProducts(query, limit = 8) {
     for (const product of vectorResults) {
         const id = product._id.toString();
         const current = combined.get(id) || {};
+        const textScore = current.textScore || scoreTextProduct(product, query);
+
+        // Bỏ qua sản phẩm từ vector search mà không khớp bất kỳ từ khóa nào
+        if (!combined.has(id) && textScore === 0) {
+            continue;
+        }
+
         combined.set(id, {
             ...product,
             ...current,
             score: product.score,
-            textScore: current.textScore || scoreTextProduct(product, query),
+            textScore,
             vectorScore: Number(product.score || 0),
         });
     }
@@ -216,7 +291,7 @@ async function hybridSearchProducts(query, limit = 8) {
         .map((product) => {
             const hasVector = product.vectorScore > 0;
             const hybridScore = hasVector
-                ? (0.3 * Number(product.textScore || 0)) + (0.7 * Number(product.vectorScore || 0))
+                ? (0.6 * Number(product.textScore || 0)) + (0.4 * Number(product.vectorScore || 0))
                 : Number(product.textScore || 0);
             return { ...product, hybridScore };
         })

@@ -24,6 +24,18 @@ const orderSchema = new mongoose.Schema({
             },
             subTotal: {
                 type: Number
+            },
+            size: {
+                type: String
+            },
+            weight: {
+                type: String
+            },
+            ram: {
+                type: String
+            },
+            cartItemId: {
+                type: String
             }
         }
     ],

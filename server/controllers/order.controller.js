@@ -85,6 +85,25 @@ const CANCEL_BLOCKED_STATUSES = ["shipped", "delivered", "cancelled"];
 const FIXED_SHIPPING_FEE = 50000;
 const FREE_SHIPPING_MIN_ORDER = 1000000;
 
+const getClientBaseUrl = (request) => {
+    if (request.body?.clientUrl) {
+        return request.body.clientUrl;
+    }
+    const origin = request.get("Origin");
+    if (origin) return origin;
+
+    const referer = request.get("Referer");
+    if (referer) {
+        try {
+            const parsed = new URL(referer);
+            return parsed.origin;
+        } catch (e) {
+            // ignore
+        }
+    }
+    return process.env.CLIENT_URL || "http://localhost:5174";
+}
+
 const isInventoryDeductedForOrder = (order) => {
     return order?.payment_status !== "Pending";
 }
@@ -277,6 +296,7 @@ const markCouponUsed = async (couponCode, userId) => {
 
 export const createOrderController = async (request, response) => {
     try {
+        console.log("createOrderController request.body.products:", JSON.stringify(request.body.products, null, 2));
         // Kiểm tra tồn kho trước khi tạo đơn
         await validateInventory(request.body.products);
 
@@ -298,6 +318,27 @@ export const createOrderController = async (request, response) => {
 
         order = await order.save();
         await markCouponUsed(order.couponCode, request.body.userId);
+
+        // Xóa các sản phẩm đã thanh toán khỏi giỏ hàng
+        try {
+            const cartItemIds = order.products.map(p => p.cartItemId).filter(Boolean);
+            if (cartItemIds.length > 0) {
+                await CartProductModel.deleteMany({ _id: { $in: cartItemIds } });
+            } else {
+                // Fallback: Xóa theo productId, size, weight, ram để tránh xóa toàn bộ giỏ hàng
+                for (const item of order.products) {
+                    await CartProductModel.deleteMany({
+                        userId: request.body.userId,
+                        productId: item.productId,
+                        size: item.size || "",
+                        weight: item.weight || "",
+                        ram: item.ram || ""
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Lỗi khi xóa giỏ hàng cho đơn hàng COD:", err);
+        }
 
         // Trừ kho 1 lần duy nhất — dùng dữ liệu từ DB
         await deductInventoryForOrder(request.body.products);
@@ -469,7 +510,19 @@ export const createOrderPaypalController = async (request, response) => {
 
 export const captureOrderPaypalController = async (request, response) => {
     try {
-        const { paymentId } = request.body;
+        const { paymentId, products } = request.body;
+        console.log("captureOrderPaypalController request.body.products:", JSON.stringify(products, null, 2));
+
+        // 1. Kiểm tra tồn kho trước khi thực hiện capture thanh toán
+        try {
+            await validateInventory(products);
+        } catch (err) {
+            return response.status(400).json({
+                success: false,
+                error: true,
+                message: err.message || "Sản phẩm không đủ hàng trong kho"
+            });
+        }
 
         const req = new paypal.orders.OrdersCaptureRequest(paymentId);
         req.requestBody({});
@@ -500,37 +553,67 @@ export const captureOrderPaypalController = async (request, response) => {
 
             const order = new OrderModel(orderInfo);
             await order.save();
-            await markCouponUsed(order.couponCode, request.body.userId);
+            
+            try {
+                await markCouponUsed(order.couponCode, request.body.userId);
+            } catch (err) {
+                console.error("Lỗi khi đánh dấu mã giảm giá đã dùng:", err);
+            }
 
             // Clear cart on backend after successful PayPal capture
-            await CartProductModel.deleteMany({ userId: request.body.userId });
+            try {
+                const cartItemIds = order.products.map(p => p.cartItemId).filter(Boolean);
+                if (cartItemIds.length > 0) {
+                    await CartProductModel.deleteMany({ _id: { $in: cartItemIds } });
+                } else {
+                    // Fallback: Xóa theo productId, size, weight, ram để tránh xóa toàn bộ giỏ hàng
+                    for (const item of order.products) {
+                        await CartProductModel.deleteMany({
+                            userId: request.body.userId,
+                            productId: item.productId,
+                            size: item.size || "",
+                            weight: item.weight || "",
+                            ram: item.ram || ""
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error("Lỗi khi xóa giỏ hàng:", err);
+            }
 
-            const user = await UserModel.findOne({ _id: request.body.userId })
+            // Gửi email, cập nhật minigame, trừ kho trong try-catch riêng biệt để tránh lỗi làm gián đoạn phản hồi
+            try {
+                const user = await UserModel.findOne({ _id: request.body.userId })
+                if (user?.email) {
+                    await sendEmailFun({
+                        sendTo: [user.email],
+                        subject: "Xác nhận đơn hàng - Merch4u",
+                        text: "",
+                        html: OrderConfirmationEmail(user?.name, order)
+                    });
+                }
+            } catch (err) {
+                console.error("Lỗi gửi email xác nhận:", err);
+            }
 
-            const recipients = [];
-            recipients.push(user?.email);
+            try {
+                await updateMinigameMissionsOnOrder(request.body.userId, pricing.totalAmt);
+            } catch (err) {
+                console.error("Lỗi cập nhật minigame:", err);
+            }
 
-            // Send verification email
-            await sendEmailFun({
-                sendTo: recipients,
-                subject: "Xác nhận đơn hàng - Merch4u",
-                text: "",
-                html: OrderConfirmationEmail(user?.name, order)
-            })
-
-            // Update minigame missions
-            await updateMinigameMissionsOnOrder(request.body.userId, pricing.totalAmt);
-
-            // Trừ kho — dùng dữ liệu từ DB
-            await deductInventoryForOrder(request.body.products);
-
+            try {
+                await deductInventoryForOrder(request.body.products);
+            } catch (err) {
+                console.error("Lỗi trừ kho:", err);
+            }
 
             return response.status(200).json(
                 {
                     success: true,
                     error: false,
                     order: order,
-                    message: "Đã đặt hàng"
+                    message: "Đơn hàng đã thanh toán thành công và được tạo"
                 }
             );
         } else {
@@ -542,6 +625,7 @@ export const captureOrderPaypalController = async (request, response) => {
         }
 
     } catch (error) {
+        console.error("Lỗi capture PayPal:", error);
         return response.status(500).json({
             message: error.message || error,
             error: true,
@@ -650,6 +734,70 @@ export const cancelOrderController = async (request, response) => {
 
         return response.status(200).json({
             message: "Đơn hàng đã được hủy",
+            success: true,
+            error: false,
+            order
+        })
+    } catch (error) {
+        return response.status(500).json({
+            message: error.message || error,
+            error: true,
+            success: false
+        })
+    }
+}
+
+export const cancelOrderByCodeController = async (request, response) => {
+    try {
+        const { orderCode } = request.params;
+        const order = await OrderModel.findOne({ paymentId: String(orderCode) });
+
+        if (!order) {
+            return response.status(404).json({
+                message: "Không tìm thấy đơn hàng",
+                error: true,
+                success: false
+            })
+        }
+
+        const requester = await UserModel.findById(request.userId).select("role");
+        const isOwner = String(order.userId) === String(request.userId);
+        const isAdmin = ["ADMIN", "SUPERBOSS"].includes(requester?.role);
+
+        if (!isOwner && !isAdmin) {
+            return response.status(403).json({
+                message: "Bạn không có quyền hủy đơn hàng này",
+                error: true,
+                success: false
+            })
+        }
+
+        if (order.order_status === "cancelled") {
+            return response.status(200).json({
+                message: "Đơn hàng đã được hủy trước đó",
+                success: true,
+                error: false,
+                order
+            });
+        }
+
+        if (CANCEL_BLOCKED_STATUSES.includes(order.order_status)) {
+            return response.status(400).json({
+                message: "Không thể hủy đơn hàng đã giao hoặc đang vận chuyển",
+                error: true,
+                success: false
+            })
+        }
+
+        await restoreInventoryForOrder(order);
+        await restoreCouponForOrder(order);
+
+        order.order_status = "cancelled";
+        order.cancelledAt = new Date();
+        await order.save();
+
+        return response.status(200).json({
+            message: "Đơn hàng đã được hủy thành công",
             success: true,
             error: false,
             order
@@ -803,6 +951,10 @@ export async function deleteOrder(request, response) {
 
 export const createOrderPayosController = async (request, response) => {
     try {
+        console.log("createOrderPayosController request.body.products:", JSON.stringify(request.body.products, null, 2));
+        // 1. Kiểm tra tồn kho trước khi tạo liên kết thanh toán
+        await validateInventory(request.body.products);
+
         // Sử dụng 10 chữ số cuối của timestamp để đảm bảo độ dài an toàn cho PayOS (thường < 15 chữ số)
         const orderCode = Number(String(Date.now()).slice(-10)); 
         console.log("Creating PayOS order with code:", orderCode);
@@ -826,12 +978,13 @@ export const createOrderPayosController = async (request, response) => {
 
         order = await order.save();
 
+        const clientUrl = getClientBaseUrl(request);
         const orderBody = {
             orderCode: orderCode,
             amount: pricing.totalAmt, 
             description: 'Thanh toán đơn hàng',
-            returnUrl: `${process.env.CLIENT_URL}/order/success`, 
-            cancelUrl: `${process.env.CLIENT_URL}/checkout`
+            returnUrl: `${clientUrl}/order/success`, 
+            cancelUrl: `${clientUrl}/checkout`
         };
 
         const paymentLink = await payos.paymentRequests.create(orderBody);
@@ -876,7 +1029,21 @@ export const receivePayosWebhookController = async (request, response) => {
                     await order.save();
                     await markCouponUsed(order.couponCode, order.userId);
 
-                    await CartProductModel.deleteMany({ userId: order.userId });
+                    const cartItemIds = order.products.map(p => p.cartItemId).filter(Boolean);
+                    if (cartItemIds.length > 0) {
+                        await CartProductModel.deleteMany({ _id: { $in: cartItemIds } });
+                    } else {
+                        // Fallback: Xóa theo productId, size, weight, ram để tránh xóa toàn bộ giỏ hàng
+                        for (const item of order.products) {
+                            await CartProductModel.deleteMany({
+                                userId: order.userId,
+                                productId: item.productId,
+                                size: item.size || "",
+                                weight: item.weight || "",
+                                ram: item.ram || ""
+                            });
+                        }
+                    }
                     await deductInventoryForOrder(order.products);
 
                     const user = await UserModel.findOne({ _id: order.userId });
@@ -925,7 +1092,21 @@ export const verifyPayosPaymentController = async (request, response) => {
                     await order.save();
                     await markCouponUsed(order.couponCode, order.userId);
 
-                    await CartProductModel.deleteMany({ userId: order.userId });
+                    const cartItemIds = order.products.map(p => p.cartItemId).filter(Boolean);
+                    if (cartItemIds.length > 0) {
+                        await CartProductModel.deleteMany({ _id: { $in: cartItemIds } });
+                    } else {
+                        // Fallback: Xóa theo productId, size, weight, ram để tránh xóa toàn bộ giỏ hàng
+                        for (const item of order.products) {
+                            await CartProductModel.deleteMany({
+                                userId: order.userId,
+                                productId: item.productId,
+                                size: item.size || "",
+                                weight: item.weight || "",
+                                ram: item.ram || ""
+                            });
+                        }
+                    }
                     await deductInventoryForOrder(order.products);
 
                     const user = await UserModel.findOne({ _id: order.userId });
