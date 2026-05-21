@@ -220,12 +220,18 @@ const deductInventoryForOrder = async (products = []) => {
     }
 }
 
-const calculateOrderSubTotal = (products = []) => {
-    return products.reduce((total, item) => {
-        const price = Number(item?.price || 0);
+const calculateOrderSubTotal = async (products = []) => {
+    let total = 0;
+    for (const item of products) {
+        const product = await ProductModel.findById(item.productId);
+        if (!product) {
+            throw new Error(`Sản phẩm với ID ${item.productId} không tồn tại`);
+        }
+        const price = Number(product.price || 0);
         const quantity = Number(item?.quantity || 0);
-        return total + (price * quantity);
-    }, 0);
+        total += price * quantity;
+    }
+    return total;
 }
 
 const calculateShippingFee = (subTotal) => {
@@ -240,7 +246,7 @@ const isCouponUsableForOrder = (coupon) => {
 }
 
 const resolveOrderPricing = async (body) => {
-    const subTotal = calculateOrderSubTotal(body.products);
+    const subTotal = await calculateOrderSubTotal(body.products);
     const shippingFee = calculateShippingFee(subTotal);
     const couponCode = body.couponCode ? String(body.couponCode).trim().toUpperCase() : "";
     let couponDiscount = 0;
@@ -296,6 +302,7 @@ const markCouponUsed = async (couponCode, userId) => {
 
 export const createOrderController = async (request, response) => {
     try {
+        const userId = request.userId;
         console.log("createOrderController request.body.products:", JSON.stringify(request.body.products, null, 2));
         // Kiểm tra tồn kho trước khi tạo đơn
         await validateInventory(request.body.products);
@@ -303,7 +310,7 @@ export const createOrderController = async (request, response) => {
         const pricing = await resolveOrderPricing(request.body);
 
         let order = new OrderModel({
-            userId: request.body.userId,
+            userId: userId,
             products: request.body.products,
             subTotal: pricing.subTotal,
             shippingFee: pricing.shippingFee,
@@ -317,7 +324,7 @@ export const createOrderController = async (request, response) => {
         });
 
         order = await order.save();
-        await markCouponUsed(order.couponCode, request.body.userId);
+        await markCouponUsed(order.couponCode, userId);
 
         // Xóa các sản phẩm đã thanh toán khỏi giỏ hàng
         try {
@@ -328,7 +335,7 @@ export const createOrderController = async (request, response) => {
                 // Fallback: Xóa theo productId, size, weight, ram để tránh xóa toàn bộ giỏ hàng
                 for (const item of order.products) {
                     await CartProductModel.deleteMany({
-                        userId: request.body.userId,
+                        userId: userId,
                         productId: item.productId,
                         size: item.size || "",
                         weight: item.weight || "",
@@ -343,7 +350,7 @@ export const createOrderController = async (request, response) => {
         // Trừ kho 1 lần duy nhất — dùng dữ liệu từ DB
         await deductInventoryForOrder(request.body.products);
 
-        const user = await UserModel.findOne({ _id: request.body.userId });
+        const user = await UserModel.findOne({ _id: userId });
 
         if (user?.email) {
             await sendEmailFun({
@@ -355,7 +362,7 @@ export const createOrderController = async (request, response) => {
         }
 
         // Update minigame missions
-        await updateMinigameMissionsOnOrder(request.body.userId, pricing.totalAmt);
+        await updateMinigameMissionsOnOrder(userId, pricing.totalAmt);
 
         return response.status(200).json({
             error: false,
@@ -472,31 +479,47 @@ function getPayPalClient() {
 
 export const createOrderPaypalController = async (request, response) => {
     try {
+        const { products, couponCode } = request.body;
+
+        // Kiểm tra tồn kho
+        await validateInventory(products);
+
+        // Tính giá trị đơn hàng từ database (VND)
+        const pricing = await resolveOrderPricing({ products, couponCode });
+
+        // Quy đổi VND -> USD trên server
+        const FALLBACK_RATE = 1 / 25000;
+        let usdRate = FALLBACK_RATE;
+        try {
+            const rateResp = await fetch("https://v6.exchangerate-api.com/v6/" + process.env.EXCHANGE_RATE_API_KEY + "/latest/VND");
+            const rateData = await rateResp.json();
+            if (rateData.result === "success" && rateData.conversion_rates?.USD) {
+                usdRate = rateData.conversion_rates.USD;
+            }
+        } catch (err) {
+            console.error("Lỗi lấy tỷ giá USD/VND, sử dụng fallback:", err.message);
+        }
+
+        const usdAmount = (pricing.totalAmt * usdRate).toFixed(2);
 
         const req = new paypal.orders.OrdersCreateRequest();
         req.prefer("return=representation");
-
         req.requestBody({
             intent: "CAPTURE",
             purchase_units: [{
                 amount: {
                     currency_code: 'USD',
-                    value: request.query.totalAmount
+                    value: usdAmount
                 }
             }]
         });
 
-
-        try {
-            const client = getPayPalClient();
-            const order = await client.execute(req);
-            response.json({ id: order.result.id });
-        } catch (error) {
-            console.error(error);
-            response.status(500).send("Lỗi khi tạo đơn hàng PayPal");
-        }
+        const client = getPayPalClient();
+        const order = await client.execute(req);
+        response.json({ id: order.result.id });
 
     } catch (error) {
+        console.error("Lỗi tạo đơn PayPal:", error);
         return response.status(500).json({
             message: error.message || error,
             error: true,
@@ -510,6 +533,7 @@ export const createOrderPaypalController = async (request, response) => {
 
 export const captureOrderPaypalController = async (request, response) => {
     try {
+        const userId = request.userId;
         const { paymentId, products } = request.body;
         console.log("captureOrderPaypalController request.body.products:", JSON.stringify(products, null, 2));
 
@@ -532,7 +556,7 @@ export const captureOrderPaypalController = async (request, response) => {
 
         if (capture.result.status === "COMPLETED") {
             const orderInfo = {
-                userId: request.body.userId,
+                userId: userId,
                 products: request.body.products,
                 paymentId: request.body.paymentId,
                 payment_status: "Paid",
@@ -555,7 +579,7 @@ export const captureOrderPaypalController = async (request, response) => {
             await order.save();
 
             try {
-                await markCouponUsed(order.couponCode, request.body.userId);
+                await markCouponUsed(order.couponCode, userId);
             } catch (err) {
                 console.error("Lỗi khi đánh dấu mã giảm giá đã dùng:", err);
             }
@@ -571,7 +595,7 @@ export const captureOrderPaypalController = async (request, response) => {
                     // Fallback: Xóa theo productId, size, weight, ram để tránh xóa toàn bộ giỏ hàng
                     for (const item of order.products) {
                         await CartProductModel.deleteMany({
-                            userId: request.body.userId,
+                            userId: userId,
                             productId: item.productId,
                             size: item.size || "",
                             weight: item.weight || "",
@@ -585,7 +609,7 @@ export const captureOrderPaypalController = async (request, response) => {
 
             // Gửi email, cập nhật minigame, trừ kho trong try-catch riêng biệt để tránh lỗi làm gián đoạn phản hồi
             try {
-                const user = await UserModel.findOne({ _id: request.body.userId })
+                const user = await UserModel.findOne({ _id: userId })
                 if (user?.email) {
                     await sendEmailFun({
                         sendTo: [user.email],
@@ -599,7 +623,7 @@ export const captureOrderPaypalController = async (request, response) => {
             }
 
             try {
-                await updateMinigameMissionsOnOrder(request.body.userId, pricing.totalAmt);
+                await updateMinigameMissionsOnOrder(userId, pricing.totalAmt);
             } catch (err) {
                 console.error("Lỗi cập nhật minigame:", err);
             }
@@ -970,6 +994,7 @@ export async function deleteOrder(request, response) {
 
 export const createOrderPayosController = async (request, response) => {
     try {
+        const userId = request.userId;
         console.log("createOrderPayosController request.body.products:", JSON.stringify(request.body.products, null, 2));
         // 1. Kiểm tra tồn kho trước khi tạo liên kết thanh toán
         await validateInventory(request.body.products);
@@ -981,7 +1006,7 @@ export const createOrderPayosController = async (request, response) => {
         const pricing = await resolveOrderPricing(request.body);
 
         let order = new OrderModel({
-            userId: request.body.userId,
+            userId: userId,
             products: request.body.products,
             paymentId: String(orderCode),
             payment_status: "Pending",
@@ -1098,6 +1123,14 @@ export const verifyPayosPaymentController = async (request, response) => {
             const order = await OrderModel.findOne({ paymentId: String(orderCode) });
 
             if (order) {
+                // Kiểm tra quyền sở hữu đơn hàng
+                if (String(order.userId) !== String(request.userId)) {
+                    return response.status(403).json({
+                        success: false,
+                        message: "Bạn không có quyền xác thực đơn hàng này"
+                    });
+                }
+
                 if (order.order_status === "cancelled") {
                     return response.status(200).json({
                         success: false,
