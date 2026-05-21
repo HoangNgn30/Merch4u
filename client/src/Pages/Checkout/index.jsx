@@ -193,7 +193,6 @@ const Checkout = () => {
   }));
 
   const history = useNavigate();
-  const subTotal = Number(totalAmount || 0);
   const shippingFee = subTotal >= FREE_SHIPPING_THRESHOLD ? 0 : FIXED_SHIPPING_FEE;
   const couponDiscount = Number(appliedCoupon?.discountAmount || 0);
   const payableAmount = Math.max(0, subTotal - couponDiscount) + shippingFee;
