@@ -11,6 +11,21 @@ import { Collapse } from "react-collapse";
 const PHONE_REGEX = /^0\d{9}$/;
 const PHONE_MESSAGE = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng 0. Ví dụ: 0326851181";
 
+const normalizePhoneNumber = (mobile) => {
+  if (!mobile) return "";
+  let cleaned = String(mobile).replace(/[^\d+]/g, "").trim();
+  if (cleaned.startsWith("+84")) {
+    const remainder = cleaned.substring(3);
+    cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+  } else if (cleaned.startsWith("84")) {
+    const remainder = cleaned.substring(2);
+    cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+  } else if (cleaned.length === 9 && !cleaned.startsWith("0")) {
+    cleaned = "0" + cleaned;
+  }
+  return cleaned;
+};
+
 const MyAccount = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoading2, setIsLoading2] = useState(false);
@@ -59,7 +74,7 @@ const MyAccount = () => {
 
   const onChangeInput = (e) => {
     const { name, value } = e.target;
-    const nextValue = name === "mobile" ? value.replace(/\D/g, "").slice(0, 10) : value;
+    const nextValue = name === "mobile" ? value.replace(/[^\d+]/g, "").slice(0, 13) : value;
 
     if (["name", "email", "mobile"].includes(name)) {
       setFormsFields((prev) => ({
@@ -101,15 +116,19 @@ const MyAccount = () => {
       return;
     }
 
-    if (!PHONE_REGEX.test(formFields.mobile)) {
+    const normalizedMobile = normalizePhoneNumber(formFields.mobile);
+    if (!PHONE_REGEX.test(normalizedMobile)) {
       context.alertBox("error", PHONE_MESSAGE);
       setIsLoading(false);
       return;
     }
 
-    editData(`/api/user/update-profile`, formFields, { withCredentials: true }).then((res) => {
+    const payload = { ...formFields, mobile: normalizedMobile };
+
+    editData(`/api/user/update-profile`, payload, { withCredentials: true }).then((res) => {
       if (res?.data?.error !== true) {
         context.alertBox("success", res?.data?.message || "Cập nhật hồ sơ thành công");
+        setFormsFields((prev) => ({ ...prev, mobile: normalizedMobile }));
         context?.getUserDetails?.();
       } else {
         context.alertBox("error", res?.data?.message || "Không thể cập nhật hồ sơ");
@@ -221,7 +240,7 @@ const MyAccount = () => {
                     disabled={isLoading === true}
                     onChange={onChangeInput}
                     placeholder="VD: 0326851181"
-                    inputProps={{ inputMode: "numeric", maxLength: 10 }}
+                    inputProps={{ inputMode: "numeric", maxLength: 13 }}
                   />
                 </div>
               </div>

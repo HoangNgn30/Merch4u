@@ -23,9 +23,20 @@ const getInitialAccountStatus = (role) => role === "ADMIN" ? "pending" : "active
 const PHONE_REGEX = /^0\d{9}$/;
 const PHONE_MESSAGE = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng 0. Ví dụ: 0326851181";
 const normalizePhoneForProfile = (mobile) => {
-    const value = String(mobile || "").trim();
-    return PHONE_REGEX.test(value) ? value : "";
+    if (!mobile) return "";
+    let cleaned = String(mobile).replace(/[^\d+]/g, "").trim();
+    if (cleaned.startsWith("+84")) {
+        const remainder = cleaned.substring(3);
+        cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+    } else if (cleaned.startsWith("84")) {
+        const remainder = cleaned.substring(2);
+        cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+    } else if (cleaned.length === 9 && !cleaned.startsWith("0")) {
+        cleaned = "0" + cleaned;
+    }
+    return cleaned;
 };
+
 
 const buildPublicUserSelect = "-password -refresh_token -access_token -otp -otpExpires";
 
@@ -622,8 +633,8 @@ export async function updateUserDetails(request, response) {
             })
         }
 
-        const normalizedMobile = String(mobile || "").trim();
-        if (normalizedMobile && !PHONE_REGEX.test(normalizedMobile)) {
+        const normalizedMobile = normalizePhoneForProfile(mobile);
+        if (mobile && !PHONE_REGEX.test(normalizedMobile)) {
             return response.status(400).json({
                 message: PHONE_MESSAGE,
                 error: true,

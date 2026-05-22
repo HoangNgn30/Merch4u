@@ -13,6 +13,21 @@ import { MyContext } from "../../App";
 const PHONE_REGEX = /^0\d{9}$/;
 const PHONE_MESSAGE = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng 0. Ví dụ: 0326851181";
 
+const normalizePhoneNumber = (mobile) => {
+    if (!mobile) return "";
+    let cleaned = String(mobile).replace(/[^\d+]/g, "").trim();
+    if (cleaned.startsWith("+84")) {
+        const remainder = cleaned.substring(3);
+        cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+    } else if (cleaned.startsWith("84")) {
+        const remainder = cleaned.substring(2);
+        cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+    } else if (cleaned.length === 9 && !cleaned.startsWith("0")) {
+        cleaned = "0" + cleaned;
+    }
+    return cleaned;
+};
+
 const AddAddress = () => {
     const [addressType, setAddressType] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +63,7 @@ const AddAddress = () => {
 
     const onChangeInput = (e) => {
         const { name, value } = e.target;
-        const nextValue = name === "mobile" ? value.replace(/\D/g, "").slice(0, 10) : value;
+        const nextValue = name === "mobile" ? value.replace(/[^\d+]/g, "").slice(0, 13) : value;
 
         setFormsFields((prev) => ({
             ...prev,
@@ -102,7 +117,8 @@ const AddAddress = () => {
             return false;
         }
 
-        if (!PHONE_REGEX.test(formFields.mobile)) {
+        const normalizedMobile = normalizePhoneNumber(formFields.mobile);
+        if (!PHONE_REGEX.test(normalizedMobile)) {
             context.alertBox("error", PHONE_MESSAGE);
             return false;
         }
@@ -120,12 +136,13 @@ const AddAddress = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (!validateForm()) return;
+        const normalizedMobile = normalizePhoneNumber(formFields.mobile);
+        const payload = { ...formFields, mobile: normalizedMobile };
 
         setIsLoading(true);
 
         if (context?.addressMode === "add") {
-            postData("/api/address/add", formFields, { withCredentials: true }).then((res) => {
+            postData("/api/address/add", payload, { withCredentials: true }).then((res) => {
                 if (res?.error !== true) {
                     context.alertBox("success", res?.message || "Thêm địa chỉ thành công");
                     context.setOpenAddressPanel(false);
@@ -140,7 +157,7 @@ const AddAddress = () => {
         }
 
         if (context?.addressMode === "edit") {
-            editData(`/api/address/${context?.addressId}`, formFields, { withCredentials: true }).then((res) => {
+            editData(`/api/address/${context?.addressId}`, payload, { withCredentials: true }).then((res) => {
                 if (res?.data?.error !== true) {
                     context.alertBox("success", res?.data?.message || "Cập nhật địa chỉ thành công");
                 } else {
@@ -237,7 +254,7 @@ const AddAddress = () => {
                     onChange={onChangeInput}
                     value={formFields.mobile}
                     placeholder="VD: 0326851181"
-                    inputProps={{ inputMode: "numeric", maxLength: 10 }}
+                    inputProps={{ inputMode: "numeric", maxLength: 13 }}
                 />
             </div>
 

@@ -4,7 +4,20 @@ import UserModel from "../models/user.model.js";
 const PHONE_REGEX = /^0\d{9}$/;
 const PHONE_MESSAGE = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng 0. Ví dụ: 0326851181";
 
-const normalizeMobile = (mobile) => String(mobile || "").trim();
+const normalizeMobile = (mobile) => {
+    if (!mobile) return "";
+    let cleaned = String(mobile).replace(/[^\d+]/g, "").trim();
+    if (cleaned.startsWith("+84")) {
+        const remainder = cleaned.substring(3);
+        cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+    } else if (cleaned.startsWith("84")) {
+        const remainder = cleaned.substring(2);
+        cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+    } else if (cleaned.length === 9 && !cleaned.startsWith("0")) {
+        cleaned = "0" + cleaned;
+    }
+    return cleaned;
+};
 
 export const addAddressController = async (request, response) => {
     try {

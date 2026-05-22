@@ -17,6 +17,21 @@ import { deleteData, deleteMultipleData, fetchDataFromApi, editData } from '../.
 import { FaCheckDouble } from "react-icons/fa6";
 import CircularProgress from '@mui/material/CircularProgress';
 
+const formatPhoneNumber = (mobile) => {
+    if (!mobile || mobile === "-") return "";
+    let cleaned = String(mobile).replace(/[^\d+]/g, "").trim();
+    if (cleaned.startsWith("+84")) {
+        const remainder = cleaned.substring(3);
+        cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+    } else if (cleaned.startsWith("84")) {
+        const remainder = cleaned.substring(2);
+        cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+    } else if (cleaned.length === 9 && !cleaned.startsWith("0")) {
+        cleaned = "0" + cleaned;
+    }
+    return cleaned;
+};
+
 const label = { inputProps: { "aria-label": "Checkbox demo" } };
 
 const columns = [
@@ -341,7 +356,7 @@ export const Users = () => {
                                                 <TableCell style={{ minWidth: columns.minWidth }} align="center" className="font-medium text-slate-700">
                                                     <span className="inline-flex items-center justify-center gap-1 text-[13px]"> 
                                                         <MdLocalPhone className="text-slate-400 text-[14px]" />  
-                                                        {user?.mobile ? user?.mobile : <span className="text-slate-300 italic">Chưa có</span>}
+                                                        {formatPhoneNumber(user?.mobile) ? formatPhoneNumber(user?.mobile) : <span className="text-slate-300 italic">Chưa có</span>}
                                                     </span>
                                                 </TableCell>
 

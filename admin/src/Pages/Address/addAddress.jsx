@@ -7,6 +7,21 @@ import { fetchDataFromApi, postData } from '../../utils/api';
 import { MyContext } from '../../App';
 
 
+const normalizePhoneNumber = (mobile) => {
+    if (!mobile) return "";
+    let cleaned = String(mobile).replace(/[^\d+]/g, "").trim();
+    if (cleaned.startsWith("+84")) {
+        const remainder = cleaned.substring(3);
+        cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+    } else if (cleaned.startsWith("84")) {
+        const remainder = cleaned.substring(2);
+        cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+    } else if (cleaned.length === 9 && !cleaned.startsWith("0")) {
+        cleaned = "0" + cleaned;
+    }
+    return cleaned;
+};
+
 const AddAddress = () => {
     const [isLoading, setIsLoading] = useState(false);
 
@@ -96,16 +111,18 @@ const AddAddress = () => {
 
 
         const phoneRegex = /^0\d{9}$/;
-        if (!phoneRegex.test(formFields.mobile)) {
+        const normalizedMobile = normalizePhoneNumber(formFields.mobile);
+        if (!phoneRegex.test(normalizedMobile)) {
             context.alertBox("error", "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng 0. Ví dụ: 0326851181");
             setIsLoading(false);
             return false
         }
 
 
-        console.log(formFields)
+        const payload = { ...formFields, mobile: normalizedMobile };
+        console.log(payload)
 
-        postData(`/api/address/add`, formFields, { withCredentials: true }).then((res) => {
+        postData(`/api/address/add`, payload, { withCredentials: true }).then((res) => {
             console.log(res)
             if (res?.error !== true) {
                 setIsLoading(false);
@@ -174,11 +191,11 @@ const AddAddress = () => {
                                 className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm'
                                 name="mobile"
                                 placeholder="VD: 0326851181"
-                                maxLength={10}
+                                maxLength={13}
                                 value={formFields.mobile}
                                 disabled={isLoading === true ? true : false}
                                 onChange={(e) => {
-                                    const mobile = e.target.value.replace(/\D/g, "").slice(0, 10);
+                                    const mobile = e.target.value.replace(/[^\d+]/g, "").slice(0, 13);
                                     setFormsFields((prevState) => ({
                                         ...prevState,
                                         mobile
