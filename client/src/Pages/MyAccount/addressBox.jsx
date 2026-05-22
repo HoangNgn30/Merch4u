@@ -11,6 +11,21 @@ const addressTypeLabel = {
     Office: "Công ty",
 };
 
+const formatPhoneNumber = (mobile) => {
+    if (!mobile || mobile === "-") return "";
+    let cleaned = String(mobile).replace(/[^\d+]/g, "").trim();
+    if (cleaned.startsWith("+84")) {
+        const remainder = cleaned.substring(3);
+        cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+    } else if (cleaned.startsWith("84")) {
+        const remainder = cleaned.substring(2);
+        cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+    } else if (cleaned.length === 9 && !cleaned.startsWith("0")) {
+        cleaned = "0" + cleaned;
+    }
+    return cleaned;
+};
+
 const AddressBox = (props) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
@@ -45,7 +60,7 @@ const AddressBox = (props) => {
 
             <h4 className="pt-2 flex items-center gap-4 text-[14px]">
                 <span>{context?.userData?.name} </span>
-                <span>{props?.address?.mobile}</span>
+                <span>{formatPhoneNumber(props?.address?.mobile)}</span>
             </h4>
 
             <span className="pt-0 text-[13px] block w-100">

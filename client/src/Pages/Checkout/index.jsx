@@ -26,6 +26,21 @@ const addressTypeLabel = {
 
 const formatVnd = (value) => Number(value || 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 
+const formatPhoneNumber = (mobile) => {
+  if (!mobile || mobile === "-") return "";
+  let cleaned = String(mobile).replace(/[^\d+]/g, "").trim();
+  if (cleaned.startsWith("+84")) {
+    const remainder = cleaned.substring(3);
+    cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+  } else if (cleaned.startsWith("84")) {
+    const remainder = cleaned.substring(2);
+    cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+  } else if (cleaned.length === 9 && !cleaned.startsWith("0")) {
+    cleaned = "0" + cleaned;
+  }
+  return cleaned;
+};
+
 const CheckoutCartItem = ({ item, index, updateCartSize, updateCartQty, removeItem }) => {
   const [sizeAnchorEl, setSizeAnchorEl] = useState(null);
   const openSize = Boolean(sizeAnchorEl);
@@ -759,7 +774,7 @@ const Checkout = () => {
                           </p>
 
 
-                          <p className="mb-0 font-[500]">{userData?.mobile || address?.mobile}</p>
+                          <p className="mb-0 font-[500]">{formatPhoneNumber(userData?.mobile || address?.mobile)}</p>
                         </div>
 
                         <Button variant="text" className="!absolute top-[15px] right-[15px]" size="small"

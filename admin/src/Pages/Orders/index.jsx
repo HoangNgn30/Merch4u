@@ -14,6 +14,21 @@ const addressTypeLabel = {
   Office: "Công ty",
 };
 
+const formatPhoneNumber = (mobile) => {
+  if (!mobile || mobile === "-") return "";
+  let cleaned = String(mobile).replace(/[^\d+]/g, "").trim();
+  if (cleaned.startsWith("+84")) {
+    const remainder = cleaned.substring(3);
+    cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+  } else if (cleaned.startsWith("84")) {
+    const remainder = cleaned.substring(2);
+    cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+  } else if (cleaned.length === 9 && !cleaned.startsWith("0")) {
+    cleaned = "0" + cleaned;
+  }
+  return cleaned;
+};
+
 // Helper for status styles
 const getStatusClasses = (status) => {
   switch (status) {
@@ -265,7 +280,7 @@ export const Orders = () => {
                       </td>
 
                       <td className="px-5 py-4 text-center font-medium text-slate-700">
-                        {order?.delivery_address?.mobile || "-"}
+                        {formatPhoneNumber(order?.delivery_address?.mobile) || "-"}
                       </td>
 
                       <td className="px-5 py-4">

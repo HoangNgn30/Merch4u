@@ -15,6 +15,21 @@ const addressTypeLabel = {
   Office: "Công ty",
 };
 
+const formatPhoneNumber = (mobile) => {
+  if (!mobile || mobile === "-") return "";
+  let cleaned = String(mobile).replace(/[^\d+]/g, "").trim();
+  if (cleaned.startsWith("+84")) {
+    const remainder = cleaned.substring(3);
+    cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+  } else if (cleaned.startsWith("84")) {
+    const remainder = cleaned.substring(2);
+    cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+  } else if (cleaned.length === 9 && !cleaned.startsWith("0")) {
+    cleaned = "0" + cleaned;
+  }
+  return cleaned;
+};
+
 const Orders = () => {
   const [isOpenOrderdProduct, setIsOpenOrderdProduct] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -161,7 +176,7 @@ const Orders = () => {
                                 {order?.userId?.name}
                               </td>
 
-                              <td className="px-6 py-4 font-[500] text-center">{order?.delivery_address?.mobile}</td>
+                              <td className="px-6 py-4 font-[500] text-center">{formatPhoneNumber(order?.delivery_address?.mobile)}</td>
 
                               <td className="px-6 py-4 font-[500] min-w-[260px] lg:min-w-[340px]">
                                 <span className='inline-block text-[13px] font-[500] px-2.5 py-0.5 bg-[#f1f1f1] dark:bg-gray-700 rounded-full mb-1 whitespace-nowrap text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-gray-600'>
@@ -177,7 +192,7 @@ const Orders = () => {
                                    (order?.delivery_address?.landmark ? ` (${order?.delivery_address?.landmark})` : "")}
                                 </span>
                                 <span className="block text-[13px] text-gray-500 dark:text-gray-400 font-[600] mt-0.5">
-                                  {order?.delivery_address?.mobile}
+                                  {formatPhoneNumber(order?.delivery_address?.mobile)}
                                 </span>
                               </td>
 

@@ -136,6 +136,8 @@ const AddAddress = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
+        if (!validateForm()) return;
+
         const normalizedMobile = normalizePhoneNumber(formFields.mobile);
         const payload = { ...formFields, mobile: normalizedMobile };
 

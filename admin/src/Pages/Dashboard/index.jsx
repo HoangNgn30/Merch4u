@@ -55,6 +55,21 @@ const addressTypeLabel = {
   Office: "Công ty",
 };
 
+const formatPhoneNumber = (mobile) => {
+  if (!mobile || mobile === "-") return "";
+  let cleaned = String(mobile).replace(/[^\d+]/g, "").trim();
+  if (cleaned.startsWith("+84")) {
+    const remainder = cleaned.substring(3);
+    cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+  } else if (cleaned.startsWith("84")) {
+    const remainder = cleaned.substring(2);
+    cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
+  } else if (cleaned.length === 9 && !cleaned.startsWith("0")) {
+    cleaned = "0" + cleaned;
+  }
+  return cleaned;
+};
+
 const formatCurrencyCompact = (value) => {
   if (value >= 1000000) {
     return (value / 1000000).toFixed(0) + " Tr";
@@ -402,7 +417,9 @@ const Dashboard = () => {
                         {order?.userId?.name || "Khách ẩn danh"}
                       </td>
 
-                      <td className="px-6 py-4 font-[500] text-slate-700 text-center">{order?.delivery_address?.mobile || "-"}</td>
+                      <td className="px-6 py-4 font-[500] text-slate-700 text-center">
+                        {formatPhoneNumber(order?.delivery_address?.mobile) || "-"}
+                      </td>
 
                       <td className="px-6 py-4">
                         <span className='inline-block text-[10px] font-bold px-2 py-0.5 bg-slate-100 rounded text-slate-600 border border-slate-200 uppercase tracking-wider mb-1'>
