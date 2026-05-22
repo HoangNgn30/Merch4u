@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
 import "./responsive.css";
-import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Home from "./Pages/Home";
 import ProductListing from "./Pages/ProductListing";
@@ -454,9 +453,6 @@ function App() {
               <Route path={"/my-account"} exact={true} element={<MyAccount />} />
               <Route path={"/my-list"} exact={true} element={<MyList />} />
               <Route path={"/my-orders"} exact={true} element={<Orders />} />
-              <Route path={"/my-coupons"} exact={true} element={<Coupons />} />
-              <Route path={"/order/success"} exact={true} element={<OrderSuccess />} />
-              <Route path={"/order/failed"} exact={true} element={<OrderFailed />} />
               <Route path={"/my-coupons"} exact={true} element={<Coupons />} />
               <Route path={"/order/success"} exact={true} element={<OrderSuccess />} />
               <Route path={"/order/failed"} exact={true} element={<OrderFailed />} />

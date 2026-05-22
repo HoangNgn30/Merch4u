@@ -126,6 +126,7 @@ export const Orders = () => {
     context?.setProgress(50);
     fetchDataFromApi(`/api/order/order-list?page=${pageOrder}&limit=5`).then((res) => {
       if (res?.error === false) {
+        setOrders(res);
         setOrdersData(res?.data);
         context?.setProgress(100);
       }

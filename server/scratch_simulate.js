@@ -1,8 +1,8 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
-import CartProductModel from './models/cartProduct.modal.js';
+import CartProductModel from './models/cartProduct.model.js';
 import OrderModel from './models/order.model.js';
-import ProductModel from './models/product.modal.js';
+import ProductModel from './models/product.model.js';
 import { createOrderController } from './controllers/order.controller.js';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://ducanh:25102004@cluster0.1snhfyy.mongodb.net/?appName=Cluster0';

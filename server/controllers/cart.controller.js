@@ -1,4 +1,4 @@
-import CartProductModel from "../models/cartProduct.modal.js";
+import CartProductModel from "../models/cartProduct.model.js";
 
 export const addToCartItemController = async (request, response) => {
     try {

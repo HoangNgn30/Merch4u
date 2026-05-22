@@ -107,7 +107,7 @@ const Profile = () => {
             return;
         }
 
-        editData(`/api/user/${userId}`, formFields, { withCredentials: true }).then((res) => {
+        editData(`/api/user/update-profile`, formFields, { withCredentials: true }).then((res) => {
             if (res?.data?.error !== true) {
                 context.alertBox("success", res?.data?.message || "Cập nhật hồ sơ thành công");
                 context?.getUserDetails?.();

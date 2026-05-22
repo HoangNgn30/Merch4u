@@ -12,10 +12,10 @@ userRouter.post('/authWithGoogle',authWithGoogle)
 userRouter.get('/logout',auth,logoutController);
 userRouter.put('/user-avatar',auth,upload.array('avatar'),userAvatarController);
 userRouter.delete('/deteleImage',auth,authRole('ADMIN'),removeImageFromCloudinary);
-userRouter.put('/:id',auth,updateUserDetails);
+userRouter.put('/update-profile',auth,updateUserDetails);
 userRouter.post('/forgot-password',forgotPasswordController)
 userRouter.post('/verify-forgot-password-otp',verifyForgotPasswordOtp)
-userRouter.post('/reset-password',resetpassword)
+userRouter.post('/reset-password',auth,resetpassword)
 userRouter.post('/forgot-password/change-password',changePasswordController)
 userRouter.post('/refresh-token',refreshToken)
 userRouter.get('/user-details',auth,userDetails);

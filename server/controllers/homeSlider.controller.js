@@ -1,4 +1,4 @@
-import HomeSliderModel from '../models/homeSlider.modal.js';
+import HomeSliderModel from '../models/homeSlider.model.js';
 import { cloudinary, uploadFilesToCloudinary } from '../utils/cloudinaryUpload.js';
 
 // Image upload

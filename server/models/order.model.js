@@ -75,6 +75,10 @@ const orderSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    couponRestoredOnCancel: {
+        type: Boolean,
+        default: false
+    },
     delivery_address: {
         type: mongoose.Schema.ObjectId,
         ref: 'address'

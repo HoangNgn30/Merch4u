@@ -1070,12 +1070,12 @@ export async function getReviews(request, response) {
 
 
         const reviews = await ReviewModel.find({ productId: productId });
-        console.log(reviews)
 
-        if (!reviews) {
-            return response.status(400).json({
-                error: true,
-                success: false
+        if (reviews.length === 0) {
+            return response.status(200).json({
+                error: false,
+                success: true,
+                reviews: []
             })
         }
 
@@ -1103,10 +1103,11 @@ export async function getAllReviews(request, response) {
 
         const reviews = await ReviewModel.find();
 
-        if (!reviews) {
-            return response.status(400).json({
-                error: true,
-                success: false
+        if (reviews.length === 0) {
+            return response.status(200).json({
+                error: false,
+                success: true,
+                reviews: []
             })
         }
 

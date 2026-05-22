@@ -22,7 +22,7 @@ const orderRouter = Router();
 
 orderRouter.post('/create',auth,createOrderController)
 orderRouter.get("/order-list",auth,authRole('ADMIN'),getOrderDetailsController)
-orderRouter.get('/create-order-paypal',auth,createOrderPaypalController)
+orderRouter.post('/create-order-paypal',auth,createOrderPaypalController)
 orderRouter.post('/capture-order-paypal',auth,captureOrderPaypalController)
 
 

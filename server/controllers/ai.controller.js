@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
 import { GoogleGenAI } from "@google/genai";
-import ProductModel from "../models/product.modal.js";
-import CategoryModel from "../models/category.modal.js";
+import ProductModel from "../models/product.model.js";
+import CategoryModel from "../models/category.model.js";
 import UserModel from "../models/user.model.js";
 import OrderModel from "../models/order.model.js";
 import ChatSessionModel from "../models/chatSession.model.js";
 import UserActivityModel from "../models/userActivity.model.js";
 import CouponModel from "../models/coupon.model.js";
-import HomeSliderModel from "../models/homeSlider.modal.js";
+import HomeSliderModel from "../models/homeSlider.model.js";
 
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = apiKey ? new GoogleGenAI({ apiKey }) : null;

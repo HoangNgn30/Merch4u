@@ -1,4 +1,4 @@
-import ProductModel from '../models/product.modal.js';
+import ProductModel from '../models/product.model.js';
 import ProductVariantModel from '../models/productVariant.model.js';
 
 import { cloudinary, uploadFilesToCloudinary } from '../utils/cloudinaryUpload.js';
@@ -88,7 +88,6 @@ export async function createProduct(request, response) {
 
         product = await product.save();
 
-        console.log(product)
 
         if (!product) {
             return response.status(500).json({
@@ -570,7 +569,6 @@ export async function getAllProductsByRating(request, response) {
             );
         }
 
-        console.log(request.query.subCatId)
 
         let products = [];
 

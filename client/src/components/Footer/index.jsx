@@ -334,8 +334,7 @@ const Footer = () => {
 
       <Dialog
         open={context?.openProductDetailsModal.open}
-        fullWidth={context?.fullWidth}
-        maxWidth={context?.maxWidth}
+        maxWidth="lg"
         onClose={context?.handleCloseProductDetailsModal}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"

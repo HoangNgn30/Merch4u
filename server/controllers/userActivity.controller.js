@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import ProductModel from "../models/product.modal.js";
+import ProductModel from "../models/product.model.js";
 import UserActivityModel from "../models/userActivity.model.js";
 
 export async function trackProductView(request, response) {

@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
 import OrderModel from "../models/order.model.js";
-import ProductModel from '../models/product.modal.js';
+import ProductModel from '../models/product.model.js';
 import UserModel from '../models/user.model.js';
 import paypal from "@paypal/checkout-server-sdk";
 import { PayOS } from '@payos/node';
 import OrderConfirmationEmail from "../utils/orderEmailTemplate.js";
 import sendEmailFun from "../config/sendEmail.js";
-import CartProductModel from "../models/cartProduct.modal.js";
+import CartProductModel from "../models/cartProduct.model.js";
 import CouponModel from "../models/coupon.model.js";
 import { calculateCouponDiscount } from "./coupon.controller.js";
 
@@ -303,7 +303,7 @@ const markCouponUsed = async (couponCode, userId) => {
 export const createOrderController = async (request, response) => {
     try {
         const userId = request.userId;
-        console.log("createOrderController request.body.products:", JSON.stringify(request.body.products, null, 2));
+
         // Kiểm tra tồn kho trước khi tạo đơn
         await validateInventory(request.body.products);
 
@@ -535,7 +535,7 @@ export const captureOrderPaypalController = async (request, response) => {
     try {
         const userId = request.userId;
         const { paymentId, products } = request.body;
-        console.log("captureOrderPaypalController request.body.products:", JSON.stringify(products, null, 2));
+
 
         // 1. Kiểm tra tồn kho trước khi thực hiện capture thanh toán
         try {
@@ -995,13 +995,12 @@ export async function deleteOrder(request, response) {
 export const createOrderPayosController = async (request, response) => {
     try {
         const userId = request.userId;
-        console.log("createOrderPayosController request.body.products:", JSON.stringify(request.body.products, null, 2));
+
         // 1. Kiểm tra tồn kho trước khi tạo liên kết thanh toán
         await validateInventory(request.body.products);
 
         // Sử dụng 10 chữ số cuối của timestamp để đảm bảo độ dài an toàn cho PayOS (thường < 15 chữ số)
-        const orderCode = Number(String(Date.now()).slice(-10));
-        console.log("Creating PayOS order with code:", orderCode);
+        const orderCode = Number(String(Date.now()).slice(-8) + String(Math.floor(Math.random() * 100)).padStart(2, '0'));
 
         const pricing = await resolveOrderPricing(request.body);
 
@@ -1032,7 +1031,7 @@ export const createOrderPayosController = async (request, response) => {
             cancelUrl: `${clientUrl}/checkout`
         };
 
-        const paymentLink = await payos.paymentRequests.create(orderBody);
+        const paymentLink = await payos.createPaymentLink(orderBody);
 
         return response.status(200).json({
             error: false,

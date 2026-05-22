@@ -1,4 +1,4 @@
-import CategoryModel from '../models/category.modal.js';
+import CategoryModel from '../models/category.model.js';
 import { cloudinary, uploadFilesToCloudinary } from '../utils/cloudinaryUpload.js';
 
 export async function uploadImages(request, response) {
@@ -246,8 +246,8 @@ export async function deleteCategory(request, response) {
                 parentId: subCategory[i]._id
             });
 
-            for (let i = 0; i < thirdsubCategory.length; i++) {
-                const deletedThirdSubCat = await CategoryModel.findByIdAndDelete(thirdsubCategory[i]._id);
+            for (let j = 0; j < thirdsubCategory.length; j++) {
+                const deletedThirdSubCat = await CategoryModel.findByIdAndDelete(thirdsubCategory[j]._id);
             }
 
             const deletedSubCat = await CategoryModel.findByIdAndDelete(subCategory[i]._id);
@@ -277,32 +277,37 @@ export async function deleteCategory(request, response) {
 }
 
 export async function updatedCategory(request, response){
-    console.log(request.body.name)
-    const category = await CategoryModel.findByIdAndUpdate(
-        request.params.id,
-        {
-          name: request.body.name,
-          images: request.body.images,
-          parentId:request.body.parentId,
-          parentCatName: request.body.parentCatName
-        },
-        { new: true }
-      );
+    try {
+        const category = await CategoryModel.findByIdAndUpdate(
+            request.params.id,
+            {
+              name: request.body.name,
+              images: request.body.images,
+              parentId:request.body.parentId,
+              parentCatName: request.body.parentCatName
+            },
+            { new: true }
+          );
 
-      if (!category) {
+          if (!category) {
+            return response.status(500).json({
+              message: "Không thể cập nhật danh mục!",
+              success: false,
+              error:true
+            });
+          }
+
+          return response.status(200).json({
+            error:false,
+            success:true,
+            category:category,
+            message:"Đã cập nhật danh mục"
+          })
+    } catch (error) {
         return response.status(500).json({
-          message: "Không thể cập nhật danh mục!",
-          success: false,
-          error:true
-        });
-      }
-
-
-      response.status(200).json({
-        error:false,
-        success:true,
-        category:category,
-        message:"Đã cập nhật danh mục"
-      })
-    
+            message: error.message || error,
+            error: true,
+            success: false
+        })
+    }
 }

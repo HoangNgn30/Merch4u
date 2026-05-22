@@ -1,4 +1,4 @@
-import MyListModel from '../models/myList.modal.js';
+import MyListModel from '../models/myList.model.js';
 
 export const addToMyListController = async (request, response) => {
     try {
