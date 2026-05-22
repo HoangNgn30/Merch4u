@@ -32,6 +32,15 @@ const formatPhoneNumber = (mobile) => {
     return cleaned;
 };
 
+const canDeleteTargetUser = (requester, targetUser) => {
+    if (!requester || !targetUser) return false;
+    if (String(requester._id) === String(targetUser._id)) return false;
+    if (targetUser.role === "SUPERBOSS") return false;
+    if (requester.role === "SUPERBOSS") return ["ADMIN", "USER"].includes(targetUser.role);
+    if (requester.role === "ADMIN") return targetUser.role === "USER";
+    return false;
+};
+
 const label = { inputProps: { "aria-label": "Checkbox demo" } };
 
 const columns = [
@@ -171,10 +180,13 @@ export const Users = () => {
     // Handler to toggle all checkboxes
     const handleSelectAll = (e) => {
         const isChecked = e.target.checked;
-        const updatedItems = userData?.users?.map((item) => ({
-            ...item,
-            checked: isChecked,
-        })) || [];
+        const updatedItems = userData?.users?.map((item) => {
+            const isSelectable = canDeleteTargetUser(context?.userData, item);
+            return {
+                ...item,
+                checked: isSelectable ? isChecked : false,
+            };
+        }) || [];
 
         setUserData({
             error: false,
@@ -187,7 +199,7 @@ export const Users = () => {
         });
 
         if (isChecked) {
-            const ids = updatedItems.map((item) => item._id).sort((a, b) => a - b);
+            const ids = updatedItems.filter((item) => item.checked).map((item) => item._id).sort((a, b) => a - b);
             setSortedIds(ids);
         } else {
             setSortedIds([]);
@@ -196,9 +208,13 @@ export const Users = () => {
 
     // Handler to toggle individual checkboxes
     const handleCheckboxChange = (e, id, index) => {
-        const updatedItems = userData?.users?.map((item) =>
-            item._id === id ? { ...item, checked: !item.checked } : item
-        ) || [];
+        const updatedItems = userData?.users?.map((item) => {
+            if (item._id === id) {
+                const isSelectable = canDeleteTargetUser(context?.userData, item);
+                return { ...item, checked: isSelectable ? !item.checked : false };
+            }
+            return item;
+        }) || [];
 
         setUserData({
             error: false,
@@ -224,21 +240,32 @@ export const Users = () => {
                 return;
             }
 
+            // double check to prevent unauthorized deletion in state manipulation
+            const hasForbidden = userData?.users?.some(
+                (user) => sortedIds.includes(user._id) && !canDeleteTargetUser(context?.userData, user)
+            );
+            if (hasForbidden) {
+                context.alertBox('error', 'Bạn không có quyền xóa một hoặc nhiều người dùng đã chọn.');
+                return;
+            }
+
             context?.showConfirmDelete(
                 "Xóa các người dùng đã chọn?",
                 `Bạn có chắc chắn muốn xóa ${sortedIds.length} người dùng đã chọn?`,
                 () => {
-                    try {
-                        deleteMultipleData(`/api/user/deleteMultiple`, {
-                            data: { ids: sortedIds },
-                        }).then((res) => {
+                    deleteMultipleData(`/api/user/deleteMultiple`, {
+                        data: { ids: sortedIds },
+                    }).then((res) => {
+                        if (res?.success || !res?.error) {
                             getUsers(page, rowsPerPage);
                             context.alertBox("success", "Đã xóa người dùng thành công");
                             setSortedIds([]);
-                        });
-                    } catch (error) {
-                        context.alertBox('error', 'Lỗi khi xóa người dùng.');
-                    }
+                        } else {
+                            context.alertBox("error", res?.message || "Lỗi khi xóa người dùng.");
+                        }
+                    }).catch((error) => {
+                        context.alertBox('error', error?.response?.data?.message || error?.message || 'Lỗi khi xóa người dùng.');
+                    });
                 }
             );
         } else {
@@ -248,13 +275,25 @@ export const Users = () => {
 
     const deleteUser = (id) => {
         if (["ADMIN", "SUPERBOSS"].includes(context?.userData?.role)) {
+            const targetUser = userData?.users?.find(u => u._id === id);
+            if (!canDeleteTargetUser(context?.userData, targetUser)) {
+                context.alertBox("error", "Bạn không có quyền xóa người dùng này");
+                return;
+            }
+
             context?.showConfirmDelete(
                 "Xóa người dùng?",
                 "Bạn có chắc chắn muốn xóa người dùng này?",
                 () => {
                     deleteData(`/api/user/deleteUser/${id}`).then((res) => {
-                        getUsers(page, rowsPerPage);
-                        context.alertBox("success", "Xóa người dùng thành công");
+                        if (res?.success || !res?.error) {
+                            getUsers(page, rowsPerPage);
+                            context.alertBox("success", "Xóa người dùng thành công");
+                        } else {
+                            context.alertBox("error", res?.message || "Lỗi khi xóa người dùng.");
+                        }
+                    }).catch((error) => {
+                        context.alertBox('error', error?.response?.data?.message || error?.message || 'Lỗi khi xóa người dùng.');
                     });
                 }
             );
@@ -301,7 +340,15 @@ export const Users = () => {
                                         size="small"
                                         className="text-indigo-600"
                                         onChange={handleSelectAll}
-                                        checked={userData?.users?.length > 0 ? userData?.users?.every((item) => item.checked) : false}
+                                        disabled={!(userData?.users?.some((item) => canDeleteTargetUser(context?.userData, item)))}
+                                        checked={
+                                            userData?.users?.length > 0
+                                                ? userData?.users
+                                                      ?.filter((item) => canDeleteTargetUser(context?.userData, item))
+                                                      ?.every((item) => item.checked) &&
+                                                  userData?.users?.some((item) => canDeleteTargetUser(context?.userData, item))
+                                                : false
+                                        }
                                     />
                                 </TableCell>
                                 {columns.map((column) => (
@@ -328,6 +375,7 @@ export const Users = () => {
                                                         size="small" 
                                                         checked={user.checked === true ? true : false}
                                                         className="text-indigo-600"
+                                                        disabled={!canDeleteTargetUser(context?.userData, user)}
                                                         onChange={(e) => handleCheckboxChange(e, user._id, index)}
                                                     />
                                                 </TableCell>
@@ -439,13 +487,23 @@ export const Users = () => {
                                                 </TableCell>
 
                                                 <TableCell style={{ minWidth: columns.minWidth }} align="center">
-                                                    <button 
-                                                        onClick={() => deleteUser(user?._id)} 
-                                                        className="w-[32px] h-[32px] mx-auto bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-100 hover:border-rose-600 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-300"
-                                                        title="Xóa người dùng"
-                                                    >
-                                                        <GoTrash className="text-[15px]" />
-                                                    </button>
+                                                    {canDeleteTargetUser(context?.userData, user) ? (
+                                                        <button 
+                                                            onClick={() => deleteUser(user?._id)} 
+                                                            className="w-[32px] h-[32px] mx-auto bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-100 hover:border-rose-600 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-300"
+                                                            title="Xóa người dùng"
+                                                        >
+                                                            <GoTrash className="text-[15px]" />
+                                                        </button>
+                                                    ) : (
+                                                        <button 
+                                                            disabled
+                                                            className="w-[32px] h-[32px] mx-auto bg-slate-50 text-slate-300 border border-slate-100 rounded-lg flex items-center justify-center cursor-not-allowed opacity-60"
+                                                            title="Bạn không có quyền xóa tài khoản này"
+                                                        >
+                                                            <GoTrash className="text-[15px]" />
+                                                        </button>
+                                                    )}
                                                 </TableCell>
                                             </TableRow>
                                         );
