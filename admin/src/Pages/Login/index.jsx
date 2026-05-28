@@ -154,12 +154,13 @@ const Login = () => {
     setLoadingGoogle(true);
 
     signInWithPopup(auth, googleProvider)
-      .then((result) => {
+      .then(async (result) => {
         // This gives you a Google Access Token. You can use it to access the Google API.
         const credential = GoogleAuthProvider.credentialFromResult(result);
         const token = credential.accessToken;
         // The signed-in user info.
         const user = result.user;
+        const idToken = await user.getIdToken();
 
         const fields = {
           name: user.providerData[0].displayName,
@@ -167,7 +168,8 @@ const Login = () => {
           password: null,
           avatar: user.providerData[0].photoURL,
           mobile: user.providerData[0].phoneNumber,
-          role: "ADMIN"
+          role: "ADMIN",
+          idToken: idToken
         };
 
 

@@ -123,10 +123,11 @@ const Register = () => {
   const authWithGoogle = () => {
 
     signInWithPopup(auth, googleProvider)
-      .then((result) => {
+      .then(async (result) => {
         const credential = GoogleAuthProvider.credentialFromResult(result);
         const token = credential.accessToken;
         const user = result.user;
+        const idToken = await user.getIdToken();
 
         const fields = {
           name: user.providerData[0].displayName,
@@ -134,7 +135,8 @@ const Register = () => {
           password: null,
           avatar: user.providerData[0].photoURL,
           mobile: user.providerData[0].phoneNumber,
-          role: "USER"
+          role: "USER",
+          idToken: idToken
         };
 
         postData("/api/user/authWithGoogle", fields).then((res) => {
