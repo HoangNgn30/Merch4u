@@ -24,7 +24,7 @@ const PHONE_REGEX = /^0\d{9}$/;
 const PHONE_MESSAGE = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng 0. Ví dụ: 0326851181";
 const normalizePhoneForProfile = (mobile) => {
     if (!mobile) return "";
-    let cleaned = String(mobile).replace(/[^\d+]/g, "").trim();
+    let cleaned = String(mobile).replace(/[^\d]/g, "").trim();
     if (cleaned.startsWith("+84")) {
         const remainder = cleaned.substring(3);
         cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
@@ -628,6 +628,14 @@ export async function updateUserDetails(request, response) {
         if (name && !nameRegex.test(name)) {
             return response.status(400).json({
                 message: "Họ và tên chỉ được chứa chữ cái",
+                error: true,
+                success: false
+            })
+        }
+
+        if (name && (name.length < 3 || name.length > 30)) {
+            return response.status(400).json({
+                message: "Họ và tên phải từ 3 đến 30 ký tự",
                 error: true,
                 success: false
             })

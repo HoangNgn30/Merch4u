@@ -15,7 +15,7 @@ const PHONE_MESSAGE = "Số điện thoại phải gồm đúng 10 chữ số v�
 
 const normalizePhoneNumber = (mobile) => {
     if (!mobile) return "";
-    let cleaned = String(mobile).replace(/[^\d+]/g, "").trim();
+    let cleaned = String(mobile).replace(/[^\d]/g, "").trim();
     if (cleaned.startsWith("+84")) {
         const remainder = cleaned.substring(3);
         cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
@@ -63,7 +63,7 @@ const AddAddress = () => {
 
     const onChangeInput = (e) => {
         const { name, value } = e.target;
-        const nextValue = name === "mobile" ? value.replace(/[^\d+]/g, "").slice(0, 13) : value;
+        const nextValue = name === "mobile" ? value.replace(/[^\d]/g, "").slice(0, 13) : value;
 
         setFormsFields((prev) => ({
             ...prev,

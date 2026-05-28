@@ -117,6 +117,14 @@ const productSchema = mongoose.Schema({
 });
 
 
+productSchema.index({ catId: 1 });
+productSchema.index({ subCatId: 1 });
+productSchema.index({ thirdsubCatId: 1 });
+productSchema.index({ isFeatured: 1 });
+productSchema.index({ isDisplayOnHomeBanner: 1 });
+productSchema.index({ price: 1 });
+productSchema.index({ rating: 1 });
+
 const ProductModel = mongoose.model('Product',productSchema)
 
 export default ProductModel

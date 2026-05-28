@@ -9,7 +9,7 @@ import { MyContext } from '../../App';
 
 const normalizePhoneNumber = (mobile) => {
     if (!mobile) return "";
-    let cleaned = String(mobile).replace(/[^\d+]/g, "").trim();
+    let cleaned = String(mobile).replace(/[^\d]/g, "").trim();
     if (cleaned.startsWith("+84")) {
         const remainder = cleaned.substring(3);
         cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
@@ -195,7 +195,7 @@ const AddAddress = () => {
                                 value={formFields.mobile}
                                 disabled={isLoading === true ? true : false}
                                 onChange={(e) => {
-                                    const mobile = e.target.value.replace(/[^\d+]/g, "").slice(0, 13);
+                                    const mobile = e.target.value.replace(/[^\d]/g, "").slice(0, 13);
                                     setFormsFields((prevState) => ({
                                         ...prevState,
                                         mobile

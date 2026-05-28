@@ -124,10 +124,11 @@ export async function createProduct(request, response) {
 export async function getAllProducts(request, response) {
     try {
 
-        const { page, limit } = request.query;
+        const page = Math.max(parseInt(request.query.page) || 1, 1);
+        const limit = Math.max(parseInt(request.query.limit) || 10, 1);
         const total = await ProductModel.countDocuments();
 
-        const products = await ProductModel.find().sort({ createdAt: -1 }).populate("category").skip((page - 1) * limit).limit(parseInt(limit));
+        const products = await ProductModel.find().sort({ createdAt: -1 }).populate("category").skip((page - 1) * limit).limit(limit);
 
         if (!products) {
             return response.status(400).json({
@@ -141,7 +142,7 @@ export async function getAllProducts(request, response) {
             success: true,
             products: products,
             total: total,
-            page: parseInt(page),
+            page: page,
             totalPages: Math.ceil(total / limit),
             totalCount: total
         })
@@ -161,8 +162,8 @@ export async function getAllProducts(request, response) {
 export async function getAllProductsByCatId(request, response) {
     try {
 
-        const page = parseInt(request.query.page) || 1;
-        const perPage = parseInt(request.query.perPage) || 10000;
+        const page = Math.max(parseInt(request.query.page) || 1, 1);
+        const perPage = Math.max(parseInt(request.query.perPage) || 10000, 1);
 
 
         const filter = { catId: request.params.id };
@@ -215,8 +216,8 @@ export async function getAllProductsByCatId(request, response) {
 export async function getAllProductsByCatName(request, response) {
     try {
 
-        const page = parseInt(request.query.page) || 1;
-        const perPage = parseInt(request.query.perPage) || 10000;
+        const page = Math.max(parseInt(request.query.page) || 1, 1);
+        const perPage = Math.max(parseInt(request.query.perPage) || 10000, 1);
 
 
         const filter = { catName: request.query.catName };
@@ -271,8 +272,8 @@ export async function getAllProductsByCatName(request, response) {
 export async function getAllProductsBySubCatId(request, response) {
     try {
 
-        const page = parseInt(request.query.page) || 1;
-        const perPage = parseInt(request.query.perPage) || 10000;
+        const page = Math.max(parseInt(request.query.page) || 1, 1);
+        const perPage = Math.max(parseInt(request.query.perPage) || 10000, 1);
 
 
         const filter = { subCatId: request.params.id };
@@ -325,8 +326,8 @@ export async function getAllProductsBySubCatId(request, response) {
 export async function getAllProductsBySubCatName(request, response) {
     try {
 
-        const page = parseInt(request.query.page) || 1;
-        const perPage = parseInt(request.query.perPage) || 10000;
+        const page = Math.max(parseInt(request.query.page) || 1, 1);
+        const perPage = Math.max(parseInt(request.query.perPage) || 10000, 1);
 
 
         const filter = { subCat: request.query.subCat };
@@ -382,8 +383,8 @@ export async function getAllProductsBySubCatName(request, response) {
 export async function getAllProductsByThirdLavelCatId(request, response) {
     try {
 
-        const page = parseInt(request.query.page) || 1;
-        const perPage = parseInt(request.query.perPage) || 10000;
+        const page = Math.max(parseInt(request.query.page) || 1, 1);
+        const perPage = Math.max(parseInt(request.query.perPage) || 10000, 1);
 
 
         const filter = { thirdsubCatId: request.params.id };
@@ -436,8 +437,8 @@ export async function getAllProductsByThirdLavelCatId(request, response) {
 export async function getAllProductsByThirdLavelCatName(request, response) {
     try {
 
-        const page = parseInt(request.query.page) || 1;
-        const perPage = parseInt(request.query.perPage) || 10000;
+        const page = Math.max(parseInt(request.query.page) || 1, 1);
+        const perPage = Math.max(parseInt(request.query.perPage) || 10000, 1);
 
 
         const filter = { thirdsubCat: request.query.thirdsubCat };
@@ -552,8 +553,8 @@ export async function getAllProductsByPrice(request, response) {
 export async function getAllProductsByRating(request, response) {
     try {
 
-        const page = parseInt(request.query.page) || 1;
-        const perPage = parseInt(request.query.perPage) || 10000;
+        const page = Math.max(parseInt(request.query.page) || 1, 1);
+        const perPage = Math.max(parseInt(request.query.perPage) || 10000, 1);
 
 
         const totalPosts = await ProductModel.countDocuments();
@@ -1119,6 +1120,9 @@ export async function getProductVariantById(request, response) {
 export async function filters(request, response) {
     const { catId, subCatId, thirdsubCatId, minPrice, maxPrice, rating, page = 1, limit = 25 } = request.body;
 
+    const pageNum = Math.max(parseInt(page) || 1, 1);
+    const limitNum = Math.max(parseInt(limit) || 25, 1);
+
     const filters = {}
 
     if (catId?.length) {
@@ -1143,7 +1147,7 @@ export async function filters(request, response) {
 
     try {
 
-        const products = await ProductModel.find(filters).populate("category").skip((parseInt(page) - 1) * parseInt(limit)).limit(parseInt(limit));
+        const products = await ProductModel.find(filters).populate("category").skip((pageNum - 1) * limitNum).limit(limitNum);
 
         const total = await ProductModel.countDocuments(filters);
 
@@ -1152,8 +1156,8 @@ export async function filters(request, response) {
             success: true,
             products: products,
             total: total,
-            page: parseInt(page),
-            totalPages: Math.ceil(total / limit)
+            page: pageNum,
+            totalPages: Math.ceil(total / limitNum)
         })
 
     } catch (error) {

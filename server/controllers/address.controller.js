@@ -6,7 +6,7 @@ const PHONE_MESSAGE = "Số điện thoại phải gồm đúng 10 chữ số v�
 
 const normalizeMobile = (mobile) => {
     if (!mobile) return "";
-    let cleaned = String(mobile).replace(/[^\d+]/g, "").trim();
+    let cleaned = String(mobile).replace(/[^\d]/g, "").trim();
     if (cleaned.startsWith("+84")) {
         const remainder = cleaned.substring(3);
         cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;

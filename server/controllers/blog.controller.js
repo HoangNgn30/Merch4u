@@ -60,14 +60,14 @@ export async function addBlog(request, response) {
 export async function getBlogs(request, response) {
     try {
 
-        const page = parseInt(request.query.page) || 1;
-        const perPage = parseInt(request.query.perPage);
+        const page = Math.max(parseInt(request.query.page) || 1, 1);
+        const perPage = Math.max(parseInt(request.query.perPage) || 10, 1);
 
 
         const totalPosts = await BlogModel.countDocuments();
         const totalPages = Math.ceil(totalPosts / perPage);
 
-        if (page > totalPages) {
+        if (page > totalPages && totalPages > 0) {
             return response.status(404).json(
                 {
                     message: "Không tìm thấy trang",

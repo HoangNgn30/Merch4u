@@ -217,7 +217,7 @@ export const deleteCartItemQtyController = async (request, response) => {
 
           const deleteCartItem  = await CartProductModel.deleteOne({_id : id, userId : userId })
 
-          if(!deleteCartItem){
+          if(!deleteCartItem || deleteCartItem.deletedCount === 0){
             return response.status(404).json({
                 message:"Không tìm thấy sản phẩm trong giỏ hàng",
                 error:true,

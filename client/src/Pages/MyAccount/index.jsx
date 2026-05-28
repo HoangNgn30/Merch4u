@@ -13,7 +13,7 @@ const PHONE_MESSAGE = "Số điện thoại phải gồm đúng 10 chữ số v�
 
 const normalizePhoneNumber = (mobile) => {
   if (!mobile) return "";
-  let cleaned = String(mobile).replace(/[^\d+]/g, "").trim();
+  let cleaned = String(mobile).replace(/[^\d]/g, "").trim();
   if (cleaned.startsWith("+84")) {
     const remainder = cleaned.substring(3);
     cleaned = remainder.startsWith("0") ? remainder : "0" + remainder;
@@ -74,7 +74,7 @@ const MyAccount = () => {
 
   const onChangeInput = (e) => {
     const { name, value } = e.target;
-    const nextValue = name === "mobile" ? value.replace(/[^\d+]/g, "").slice(0, 13) : value;
+    const nextValue = name === "mobile" ? value.replace(/[^\d]/g, "").slice(0, 13) : value;
 
     if (["name", "email", "mobile"].includes(name)) {
       setFormsFields((prev) => ({
@@ -106,6 +106,12 @@ const MyAccount = () => {
     const nameRegex = /^[A-Za-zÀ-ỹ\s]+$/u;
     if (!nameRegex.test(formFields.name)) {
       context.alertBox("error", "Họ và tên chỉ được chứa chữ cái");
+      setIsLoading(false);
+      return;
+    }
+
+    if (formFields.name.length < 3 || formFields.name.length > 30) {
+      context.alertBox("error", "Họ và tên phải từ 3 đến 30 ký tự");
       setIsLoading(false);
       return;
     }

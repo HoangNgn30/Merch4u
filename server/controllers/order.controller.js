@@ -385,9 +385,10 @@ export async function getOrderDetailsController(request, response) {
     try {
         const userId = request.userId // order id
 
-        const { page, limit } = request.query;
+        const page = Math.max(parseInt(request.query.page) || 1, 1);
+        const limit = Math.max(parseInt(request.query.limit) || 10, 1);
 
-        const orderlist = await OrderModel.find().sort({ createdAt: -1 }).populate('delivery_address userId').skip((page - 1) * limit).limit(parseInt(limit));
+        const orderlist = await OrderModel.find().sort({ createdAt: -1 }).populate('delivery_address userId').skip((page - 1) * limit).limit(limit);
 
         const total = await OrderModel.countDocuments();
 
@@ -397,7 +398,7 @@ export async function getOrderDetailsController(request, response) {
             error: false,
             success: true,
             total: total,
-            page: parseInt(page),
+            page: page,
             totalPages: Math.ceil(total / limit)
         })
     } catch (error) {
@@ -413,9 +414,10 @@ export async function getUserOrderDetailsController(request, response) {
     try {
         const userId = request.userId // order id
 
-        const { page, limit } = request.query;
+        const page = Math.max(parseInt(request.query.page) || 1, 1);
+        const limit = Math.max(parseInt(request.query.limit) || 10, 1);
 
-        const orderlist = await OrderModel.find({ userId: userId }).sort({ createdAt: -1 }).populate('delivery_address userId').skip((page - 1) * limit).limit(parseInt(limit));
+        const orderlist = await OrderModel.find({ userId: userId }).sort({ createdAt: -1 }).populate('delivery_address userId').skip((page - 1) * limit).limit(limit);
 
         const total = await OrderModel.countDocuments({ userId: userId });
 
@@ -425,7 +427,7 @@ export async function getUserOrderDetailsController(request, response) {
             error: false,
             success: true,
             total: total,
-            page: parseInt(page),
+            page: page,
             totalPages: Math.ceil(total / limit)
         })
     } catch (error) {

@@ -84,6 +84,13 @@ const SignUp = () => {
             return false;
         }
 
+        const nameRegex = /^[a-zA-ZÀ-ỹ\s]+$/;
+        if (!nameRegex.test(formFields.name)) {
+            context.alertBox("error", "Họ và tên chỉ được chứa chữ cái");
+            setIsLoading(false);
+            return false;
+        }
+
         if (formFields.email === "") {
             context.alertBox("error", "Vui lòng nhập email");
             setIsLoading(false);
