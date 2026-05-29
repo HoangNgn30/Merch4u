@@ -401,7 +401,7 @@ Tôi có thể giúp sếp thống kê doanh thu, kiểm tra đơn hàng gần �
 
             {/* Toggle Button */}
             <button
-                className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-tr from-[#ff5252] to-[#ff7676] hover:from-[#e04848] hover:to-[#ff5252] shadow-lg shadow-red-500/25 flex items-center justify-center text-white cursor-pointer transition-all duration-300 hover:scale-105 z-[9999] border border-white/10"
+                className="fixed bottom-6 left-6 w-14 h-14 rounded-full bg-gradient-to-tr from-[#ff5252] to-[#ff7676] hover:from-[#e04848] hover:to-[#ff5252] shadow-lg shadow-red-500/25 flex items-center justify-center text-white cursor-pointer transition-all duration-300 hover:scale-105 z-[9999] border border-white/10"
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label="Admin AI Assistant"
                 title="Admin AI Co-pilot"
@@ -411,7 +411,7 @@ Tôi có thể giúp sếp thống kê doanh thu, kiểm tra đơn hàng gần �
 
             {/* Chat Window */}
             <div
-                className={`fixed bottom-24 right-6 w-[440px] h-[620px] flex flex-col backdrop-blur-md bg-white/95 border border-slate-200/80 shadow-2xl rounded-2xl overflow-hidden z-[9999] transition-all duration-300 origin-bottom-right ${
+                className={`fixed bottom-24 left-6 w-[440px] h-[620px] flex flex-col backdrop-blur-md bg-white/95 border border-slate-200/80 shadow-2xl rounded-2xl overflow-hidden z-[9999] transition-all duration-300 origin-bottom-left ${
                     isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-90 translate-y-10 pointer-events-none"
                 }`}
             >
