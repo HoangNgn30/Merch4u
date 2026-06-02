@@ -157,9 +157,6 @@ const SearchPage = () => {
                   <IoGridSharp className="text-[14px]" />
                 </button>
 
-                <span className="text-[14px] hidden sm:block md:block lg:block font-[500] pl-3 text-[rgba(0,0,0,0.7)]">
-                  Có {productsData?.products?.length !== 0 ? productsData?.products?.length : 0} sản phẩm.
-                </span>
               </div>
 
               <div className="col2 ml-auto flex items-center justify-end gap-3 pr-4">

@@ -115,7 +115,7 @@ const Header2 = () => {
 
     return (
         <>
-        <header className="fixed lg:sticky z-[1000] top-0 left-0 w-full bg-white/95 backdrop-blur-md border-b border-[rgba(0,0,0,0.08)]">
+        <header className="fixed lg:sticky z-[1000] top-0 left-0 w-full bg-white/95 backdrop-blur-md shadow-none">
             <div className="w-full max-w-[1440px] mx-auto flex items-center justify-between py-3 px-4 lg:px-6 xl:px-8 gap-2 lg:gap-4">
 
                 <div className="flex items-center lg:hidden">

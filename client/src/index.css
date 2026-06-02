@@ -213,7 +213,10 @@ input[type=number]::-webkit-outer-spin-button {
 
 .productDetailsModal  .MuiDialog-paper{width: 1200px !important; max-width: 1200px !important;}
 
-header{box-shadow: none;}
+header, header:hover {
+  box-shadow: none !important;
+  border: none !important;
+}
 
 .lazy-load-image-background img{transition: all 0.1s ease-in-out !important ;}
 

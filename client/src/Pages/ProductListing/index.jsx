@@ -177,9 +177,6 @@ const ProductListing = () => {
                   <IoGridSharp className="text-[14px]" />
                 </button>
 
-                <span className="text-[14px] hidden sm:block md:block lg:block font-[500] pl-3 text-[rgba(0,0,0,0.7)]">
-                  Có {visibleProducts?.length || 0} sản phẩm.
-                </span>
               </div>
 
               <div className="col2 ml-auto flex items-center justify-end gap-3 pr-4">
@@ -243,27 +240,6 @@ const ProductListing = () => {
               </div>
             </div>
 
-            {artistOptions.length > 0 && (
-              <div className="artistFilterBar mb-6 overflow-x-auto">
-                <div className="flex items-center gap-3 min-w-max pb-2">
-                  <Button
-                    className={`!rounded-[12px] !capitalize !px-5 !py-2 !text-[13px] !font-medium transition-all ${selectedArtist === "all" ? "!bg-primary !text-white !shadow-md" : "!bg-gray-50 !text-gray-600 hover:!bg-gray-100"}`}
-                    onClick={() => setSelectedArtist("all")}
-                  >
-                    Tất cả
-                  </Button>
-                  {artistOptions.map((brand) => (
-                    <Button
-                      key={brand}
-                      className={`!rounded-[12px] !capitalize !px-5 !py-2 !text-[13px] !font-medium transition-all ${selectedArtist === brand ? "!bg-primary !text-white !shadow-md" : "!bg-gray-50 !text-gray-600 hover:!bg-gray-100"}`}
-                      onClick={() => setSelectedArtist(brand)}
-                    >
-                      {brand}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             <div
               className={`grid ${itemView === "grid"

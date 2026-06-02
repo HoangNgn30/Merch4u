@@ -12,34 +12,36 @@ const HomeSlider = (props) => {
 
   return (
     <div className="homeSlider pb-3 pt-3 lg:pb-5 lg:pt-5 relative z-[99] overflow-hidden w-full">
-      <Swiper
-          loop={true}
-          spaceBetween={10}
-          navigation={context?.windowWidth < 992 ? false : true}
-          modules={[Navigation, Autoplay]}
-          autoplay={{
-            delay: 2500,
-            disableOnInteraction: false,
-          }}
-          className="sliderHome"
-        >
-          {
-            props?.data?.length !== 0 && props?.data?.slice()?.reverse()?.map((item, index) => {
-              return (
-                <SwiperSlide key={index}>
-                  <div className="item rounded-[10px] overflow-hidden">
-                    <img
-                      src={item?.images[0]}
-                      alt="Banner slide"
-                      className="itemHomeSlider w-full aspect-[2/1] md:aspect-[2.5/1] lg:aspect-[3/1] object-cover"
-                    />
-                  </div>
-                </SwiperSlide>
-              )
-            })
-          }
+      <div className="container">
+        <Swiper
+            loop={true}
+            spaceBetween={10}
+            navigation={context?.windowWidth < 992 ? false : true}
+            modules={[Navigation, Autoplay]}
+            autoplay={{
+              delay: 2500,
+              disableOnInteraction: false,
+            }}
+            className="sliderHome"
+          >
+            {
+              props?.data?.length !== 0 && props?.data?.slice()?.reverse()?.map((item, index) => {
+                return (
+                  <SwiperSlide key={index}>
+                    <div className="item rounded-[10px] overflow-hidden">
+                      <img
+                        src={item?.images[0]}
+                        alt="Banner slide"
+                        className="itemHomeSlider w-full aspect-[2/1] md:aspect-[2.5/1] lg:aspect-[3/1] object-cover"
+                      />
+                    </div>
+                  </SwiperSlide>
+                )
+              })
+            }
 
-        </Swiper>
+          </Swiper>
+      </div>
     </div>
   );
 };
