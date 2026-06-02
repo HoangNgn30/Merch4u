@@ -1217,47 +1217,157 @@ export async function searchProductController(request, response) {
             });
         }
 
-
         const pageNum = Math.max(parseInt(page) || 1, 1);
         const limitNum = Math.min(Math.max(parseInt(limit) || 10, 1), 50);
 
-        const words = normalizedQuery.split(/\s+/).filter(Boolean);
-        if (words.length === 0) {
+        try {
+            // ─── Atlas Search: Fuzzy Search Pipeline ──────────────────────────
+            const searchStage = {
+                $search: {
+                    index: "product_search",
+                    compound: {
+                        should: [
+                            // Exact phrase match — ưu tiên cao nhất
+                            {
+                                phrase: {
+                                    query: normalizedQuery,
+                                    path: "name",
+                                    score: { boost: { value: 10 } }
+                                }
+                            },
+                            // Fuzzy match trên tên sản phẩm (chấp nhận 1 ký tự sai)
+                            {
+                                text: {
+                                    query: normalizedQuery,
+                                    path: "name",
+                                    fuzzy: {
+                                        maxEdits: 1,
+                                        prefixLength: 2,
+                                        maxExpansions: 50
+                                    },
+                                    score: { boost: { value: 5 } }
+                                }
+                            },
+                            // Fuzzy match trên brand
+                            {
+                                text: {
+                                    query: normalizedQuery,
+                                    path: "brand",
+                                    fuzzy: {
+                                        maxEdits: 1,
+                                        prefixLength: 1,
+                                        maxExpansions: 50
+                                    },
+                                    score: { boost: { value: 3 } }
+                                }
+                            }
+                        ],
+                        minimumShouldMatch: 1
+                    }
+                }
+            };
+
+            const pipeline = [
+                searchStage,
+                // Thêm relevance score vào kết quả
+                {
+                    $addFields: {
+                        searchScore: { $meta: "searchScore" }
+                    }
+                },
+                // Sắp xếp theo relevance score (cao nhất trước)
+                { $sort: { searchScore: -1 } },
+                // Đếm tổng kết quả + phân trang
+                {
+                    $facet: {
+                        metadata: [{ $count: "total" }],
+                        products: [
+                            { $skip: (pageNum - 1) * limitNum },
+                            { $limit: limitNum },
+                            // Populate category
+                            {
+                                $lookup: {
+                                    from: "categories",
+                                    localField: "category",
+                                    foreignField: "_id",
+                                    as: "category"
+                                }
+                            },
+                            {
+                                $unwind: {
+                                    path: "$category",
+                                    preserveNullAndEmptyArrays: true
+                                }
+                            },
+                            // Loại bỏ embedding khỏi kết quả
+                            { $project: { embedding: 0 } }
+                        ]
+                    }
+                }
+            ];
+
+            const [result] = await ProductModel.aggregate(pipeline);
+            const total = result.metadata[0]?.total || 0;
+            const products = result.products || [];
+
             return response.status(200).json({
                 error: false,
                 success: true,
-                products: [],
-                total: 0,
+                products: products,
+                total: total,
                 page: pageNum,
-                totalPages: 0
+                totalPages: Math.ceil(total / limitNum)
+            });
+
+        } catch (atlasError) {
+            // ─── Fallback: Regex search (khi chưa có Atlas Search Index) ──
+            console.warn(
+                "[Search] Atlas Search không khả dụng, sử dụng regex fallback:",
+                atlasError?.codeName || atlasError?.message
+            );
+
+            const escapeRegExp = (val) => String(val).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const words = normalizedQuery.split(/\s+/).filter(Boolean);
+
+            if (words.length === 0) {
+                return response.status(200).json({
+                    error: false,
+                    success: true,
+                    products: [],
+                    total: 0,
+                    page: pageNum,
+                    totalPages: 0
+                });
+            }
+
+            const searchQuery = {
+                $and: words.map((word) => ({
+                    $or: [
+                        { name: { $regex: escapeRegExp(word), $options: "i" } },
+                        { description: { $regex: escapeRegExp(word), $options: "i" } },
+                        { brand: { $regex: escapeRegExp(word), $options: "i" } },
+                        { catName: { $regex: escapeRegExp(word), $options: "i" } }
+                    ]
+                }))
+            };
+
+            const total = await ProductModel.countDocuments(searchQuery);
+            const products = await ProductModel.find(searchQuery)
+                .populate("category")
+                .collation({ locale: "vi", strength: 1 })
+                .sort({ name: 1 })
+                .skip((pageNum - 1) * limitNum)
+                .limit(limitNum);
+
+            return response.status(200).json({
+                error: false,
+                success: true,
+                products: products,
+                total: total,
+                page: pageNum,
+                totalPages: Math.ceil(total / limitNum)
             });
         }
-
-        const escapeRegExp = (val) => String(val).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-        const searchQuery = {
-            $and: words.map((word) => ({
-                name: { $regex: escapeRegExp(word), $options: "i" }
-            }))
-        };
-
-        const total = await ProductModel.countDocuments(searchQuery);
-        const products = await ProductModel.find(searchQuery)
-            .populate("category")
-            .collation({ locale: "vi", strength: 1 })
-            .sort({ name: 1 })
-            .skip((pageNum - 1) * limitNum)
-            .limit(limitNum);
-
-        return response.status(200).json({
-            error: false,
-            success: true,
-            products: products,
-            total: total,
-            page: pageNum,
-            totalPages: Math.ceil(total / limitNum)
-        });
-
 
     } catch (error) {
         return response.status(500).json({
