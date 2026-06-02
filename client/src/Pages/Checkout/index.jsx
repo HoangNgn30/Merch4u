@@ -208,9 +208,9 @@ const Checkout = () => {
   }));
 
   const history = useNavigate();
-  const shippingFee = subTotal >= FREE_SHIPPING_THRESHOLD ? 0 : FIXED_SHIPPING_FEE;
+  const shippingFee = subTotal === 0 ? 0 : (subTotal >= FREE_SHIPPING_THRESHOLD ? 0 : FIXED_SHIPPING_FEE);
   const couponDiscount = Number(appliedCoupon?.discountAmount || 0);
-  const payableAmount = Math.max(0, subTotal - couponDiscount) + shippingFee;
+  const payableAmount = subTotal === 0 ? 0 : (Math.max(0, subTotal - couponDiscount) + shippingFee);
 
   // Khởi tạo các item trong giỏ được tích chọn mặc định
   useEffect(() => {
@@ -314,18 +314,6 @@ const Checkout = () => {
   }, [context?.userData, userData])
 
 
-  useEffect(() => {
-    setTotalAmount(
-      context.cartData?.length !== 0 ?
-        context.cartData?.map(item => parseInt(item.price) * item.quantity)
-          .reduce((total, value) => total + value, 0) : 0);
-
-    // localStorage.setItem("totalAmount", context.cartData?.length !== 0 ?
-    //   context.cartData?.map(item => parseInt(item.price) * item.quantity)
-    //     .reduce((total, value) => total + value, 0) : 0)
-    //   ?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })
-
-  }, [context.cartData])
 
   useEffect(() => {
     setAppliedCoupon(null);
