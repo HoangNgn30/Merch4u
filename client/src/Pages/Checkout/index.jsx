@@ -467,33 +467,18 @@ const Checkout = () => {
                 throw new Error("No products selected");
               }
 
-              // Create order on the server
-
-              const resp = await fetch(
-                "https://v6.exchangerate-api.com/v6/8f85eea95dae9336b9ea3ce9/latest/VND"
-              );
-
-              const respData = await resp.json();
-              var convertedAmount = 0;
-
-              if (respData.result === "success") {
-                const usdToVndRate = respData.conversion_rates.USD;
-                convertedAmount = (payableAmount * usdToVndRate).toFixed(2);
-              }
-
               const headers = {
-                'Authorization': `Bearer ${localStorage.getItem('accessToken')}`, // Include your API key in the Authorization header
-                'Content-Type': 'application/json', // Adjust the content type as needed
+                'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+                'Content-Type': 'application/json',
               }
 
-              const data = {
-                userId: context?.userData?._id,
-                totalAmount: convertedAmount
-              }
-
-
-              const response = await axios.get(
-                VITE_API_URL + `/api/order/create-order-paypal?userId=${data?.userId}&totalAmount=${data?.totalAmount}`, { headers }
+              const response = await axios.post(
+                VITE_API_URL + "/api/order/create-order-paypal",
+                {
+                  products: checkoutProducts,
+                  couponCode: appliedCoupon?.coupon?.code || ""
+                },
+                { headers }
               );
 
               return response?.data?.id; // Return order ID to PayPal
@@ -591,7 +576,7 @@ const Checkout = () => {
     if (userData?.address_details?.length !== 0) {
       const payLoad = {
         userId: user?._id,
-        products: context?.cartData,
+        products: checkoutProducts,
         paymentId: '',
         payment_status: "CASH ON DELIVERY",
         delivery_address: selectedAddress,
@@ -654,7 +639,7 @@ const Checkout = () => {
     try {
       const orderData = {
         userId: user?._id,
-        products: context?.cartData,
+        products: checkoutProducts,
         delivery_address: selectedAddress,
         totalAmt: payableAmount,
         shippingFee: shippingFee,

@@ -1028,7 +1028,7 @@ export const createOrderPayosController = async (request, response) => {
         const orderBody = {
             orderCode: orderCode,
             amount: pricing.totalAmt,
-            description: 'Thanh toán đơn hàng',
+            description: 'Thanh toan don hang',
             returnUrl: `${clientUrl}/order/success`,
             cancelUrl: `${clientUrl}/checkout`
         };
