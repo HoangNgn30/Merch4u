@@ -5,7 +5,7 @@ import crypto from 'crypto'
 import sendEmailFun from '../config/sendEmail.js';
 import VerificationEmail from '../utils/verifyEmailTemplate.js';
 import generatedAccessToken from '../utils/generatedAccessToken.js';
-import genertedRefreshToken from '../utils/generatedRefreshToken.js';
+import generatedRefreshToken from '../utils/generatedRefreshToken.js';
 
 import { cloudinary, uploadFilesToCloudinary } from '../utils/cloudinaryUpload.js';
 import ReviewModel from '../models/reviews.model.js';
@@ -334,7 +334,7 @@ export async function authWithGoogle(request, response) {
             }
 
             const accesstoken = await generatedAccessToken(user._id);
-            const refreshToken = await genertedRefreshToken(user._id);
+            const refreshToken = await generatedRefreshToken(user._id);
 
             await UserModel.findByIdAndUpdate(user?._id, {
                 last_login_date: new Date()
@@ -380,7 +380,7 @@ export async function authWithGoogle(request, response) {
             }
 
             const accesstoken = await generatedAccessToken(existingUser._id);
-            const refreshToken = await genertedRefreshToken(existingUser._id);
+            const refreshToken = await generatedRefreshToken(existingUser._id);
 
             await UserModel.findByIdAndUpdate(existingUser?._id, {
                 last_login_date: new Date()
@@ -471,7 +471,7 @@ export async function loginUserController(request, response) {
 
 
         const accesstoken = await generatedAccessToken(user._id);
-        const refreshToken = await genertedRefreshToken(user._id);
+        const refreshToken = await generatedRefreshToken(user._id);
 
         const updateUser = await UserModel.findByIdAndUpdate(user?._id, {
             last_login_date: new Date()

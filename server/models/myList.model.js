@@ -2,11 +2,13 @@ import mongoose from "mongoose";
 
 const myListSchema = new mongoose.Schema({
     productId: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'product',
         required:true
     },
     userId: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
         required:true
     },
     productTitle:{
@@ -41,6 +43,7 @@ const myListSchema = new mongoose.Schema({
     timestamps : true
 });
 
+myListSchema.index({ userId: 1, productId: 1 }, { unique: true });
 
 const MyListModel = mongoose.model('MyList',myListSchema)
 

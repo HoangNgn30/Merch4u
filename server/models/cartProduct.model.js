@@ -41,7 +41,8 @@ const cartProductSchema = new mongoose.Schema({
         required:true
     },
     productId:{
-        type:String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'product',
         required:true
     },
     countInStock:{
@@ -49,7 +50,8 @@ const cartProductSchema = new mongoose.Schema({
         required:true
     },
     userId:{
-        type:String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
         required:true
     },
     brand:{
@@ -58,6 +60,8 @@ const cartProductSchema = new mongoose.Schema({
 },{
     timestamps : true
 });
+
+cartProductSchema.index({ userId: 1, productId: 1 });
 
 const CartProductModel = mongoose.model('cart',cartProductSchema)
 

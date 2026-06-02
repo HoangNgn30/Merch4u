@@ -950,7 +950,8 @@ export async function createProductVariant(request, response) {
     try {
         let productVariant = new ProductVariantModel({
             name: request.body.name,
-            type: request.body.type || 'Size'
+            type: request.body.type || 'Size',
+            productId: request.body.productId
         })
 
         productVariant = await productVariant.save();
@@ -1026,7 +1027,8 @@ export async function updateProductVariant(request, response) {
             request.params.id,
             {
                 name: request.body.name,
-                type: request.body.type || 'Size'
+                type: request.body.type || 'Size',
+                productId: request.body.productId
             },
             { new: true }
         );

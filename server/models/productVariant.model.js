@@ -11,11 +11,16 @@ const productVariantSchema = mongoose.Schema({
         enum: ['Size', 'Color', 'Type', 'Material', 'Other'],
         default: 'Size'
     },
+    productId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'product',
+        required: false
+    },
     dateCreated: {
         type: Date,
         default: Date.now,
     },
-},{
+}, {
     timestamps : true
 });
 
