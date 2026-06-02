@@ -9,6 +9,7 @@ import genertedRefreshToken from '../utils/generatedRefreshToken.js';
 
 import { cloudinary, uploadFilesToCloudinary } from '../utils/cloudinaryUpload.js';
 import ReviewModel from '../models/reviews.model.js';
+import OrderModel from '../models/order.model.js';
 
 const ROLE_VALUES = ["USER", "ADMIN", "SUPERBOSS"];
 const ACCOUNT_STATUS_VALUES = ["pending", "active", "rejected"];
@@ -1054,6 +1055,24 @@ export async function addReview(request, response) {
             })
         }
 
+        // Kiểm tra xem người dùng đã từng mua sản phẩm này chưa
+        const hasPurchased = await OrderModel.findOne({
+            userId: userId,
+            "products.productId": productId,
+            $or: [
+                { order_status: { $in: ["confirm", "shipped", "delivered"] } },
+                { payment_status: { $in: ["Paid", "paid", "success"] } }
+            ]
+        });
+
+        if (!hasPurchased) {
+            return response.status(403).json({
+                message: "Bạn chỉ có thể đánh giá sản phẩm sau khi đã mua sản phẩm này.",
+                error: true,
+                success: false
+            });
+        }
+
         const userReview = new ReviewModel({
             image: user.avatar || "",
             userName: user.name,
@@ -1078,6 +1097,42 @@ export async function addReview(request, response) {
             error: true,
             success: false
         })
+    }
+}
+
+export async function checkPurchaseController(request, response) {
+    try {
+        const userId = request.userId;
+        const productId = request.params.productId;
+
+        if (!productId) {
+            return response.status(400).json({
+                message: "Thiếu mã sản phẩm",
+                error: true,
+                success: false
+            });
+        }
+
+        const hasPurchased = await OrderModel.findOne({
+            userId: userId,
+            "products.productId": productId,
+            $or: [
+                { order_status: { $in: ["confirm", "shipped", "delivered"] } },
+                { payment_status: { $in: ["Paid", "paid", "success"] } }
+            ]
+        });
+
+        return response.json({
+            hasPurchased: !!hasPurchased,
+            error: false,
+            success: true
+        });
+    } catch (error) {
+        return response.status(500).json({
+            message: "Đã xảy ra lỗi khi kiểm tra quyền đánh giá sản phẩm",
+            error: true,
+            success: false
+        });
     }
 }
 

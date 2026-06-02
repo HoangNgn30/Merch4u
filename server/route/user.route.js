@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import {addReview, approveAdminAccount, authWithGoogle, changePasswordController, changeUserRole, deleteMultiple, deleteUser, forgotPasswordController, getAllReviews, getAllUsers, getReviews, loginUserController, logoutController, refreshToken, registerUserController, rejectAdminAccount, removeImageFromCloudinary, resetpassword, updateUserDetails, userAvatarController, userDetails, verifyEmailController, verifyForgotPasswordOtp} from '../controllers/user.controller.js';
+import {addReview, approveAdminAccount, authWithGoogle, changePasswordController, changeUserRole, checkPurchaseController, deleteMultiple, deleteUser, forgotPasswordController, getAllReviews, getAllUsers, getReviews, loginUserController, logoutController, refreshToken, registerUserController, rejectAdminAccount, removeImageFromCloudinary, resetpassword, updateUserDetails, userAvatarController, userDetails, verifyEmailController, verifyForgotPasswordOtp} from '../controllers/user.controller.js';
 import { trackProductView } from '../controllers/userActivity.controller.js';
 import auth, { authRole } from '../middlewares/auth.js';
 import upload from '../middlewares/multer.js';
@@ -22,6 +22,7 @@ userRouter.get('/user-details',auth,userDetails);
 userRouter.post('/track-view',auth,trackProductView);
 userRouter.post('/addReview',auth,addReview);
 userRouter.get('/getReviews',getReviews);
+userRouter.get('/check-purchase/:productId',auth,checkPurchaseController);
 userRouter.get('/getAllReviews',auth,authRole('ADMIN'),getAllReviews);
 userRouter.get('/getAllUsers',auth,authRole('ADMIN'),getAllUsers);
 userRouter.post('/approve/:id',auth,authRole('SUPERBOSS'),approveAdminAccount);

@@ -19,6 +19,7 @@ export const Reviews = (props) => {
     const [loading, setLoading] = useState(false);
 
     const [reviewsData, setReviewsData] = useState([])
+    const [hasPurchased, setHasPurchased] = useState(false);
 
     const context = useContext(MyContext);
 
@@ -32,7 +33,17 @@ export const Reviews = (props) => {
         }))
 
         getReviews();
-    }, [context?.userData, props]);
+
+        if (context?.isLogin === true && props?.productId) {
+            fetchDataFromApi(`/api/user/check-purchase/${props.productId}`).then((res) => {
+                if (res?.error === false) {
+                    setHasPurchased(res.hasPurchased);
+                }
+            });
+        } else {
+            setHasPurchased(false);
+        }
+    }, [context?.userData, context?.isLogin, props]);
 
 
     const onChangeInput = (e) => {
@@ -134,42 +145,48 @@ export const Reviews = (props) => {
 
             <br />
 
-            <div className="reviewForm bg-[#fafafa] p-4 rounded-md">
-                <h2 className="text-[18px]">Thêm đánh giá</h2>
+            {
+                hasPurchased === true ? (
+                    <div className="reviewForm bg-[#fafafa] p-4 rounded-md">
+                        <h2 className="text-[18px]">Thêm đánh giá</h2>
 
-                <form className="w-full mt-5" onSubmit={addReview}>
-                    <TextField
-                        id="outlined-multiline-flexible"
-                        label="Viết đánh giá..."
-                        className="w-full"
-                        onChange={onChangeInput}
-                        name="review"
-                        multiline
-                        rows={5}
-                        value={reviews.review}
-                    />
+                        <form className="w-full mt-5" onSubmit={addReview}>
+                            <TextField
+                                id="outlined-multiline-flexible"
+                                label="Viết đánh giá..."
+                                className="w-full"
+                                onChange={onChangeInput}
+                                name="review"
+                                multiline
+                                rows={5}
+                                value={reviews.review}
+                            />
 
-                    <br />
-                    <br />
-                    <Rating name="size-small" value={reviews.rating} onChange={(event, newValue) => {
-                        setReviews(() => ({
-                            ...reviews,
-                            rating: newValue
-                        }))
-                    }} />
+                            <br />
+                            <br />
+                            <Rating name="size-small" value={reviews.rating} onChange={(event, newValue) => {
+                                setReviews(() => ({
+                                    ...reviews,
+                                    rating: newValue
+                                }))
+                            }} />
 
-                    <div className="flex items-center mt-5">
-
-
-                        <Button type="submit" className="btn-org flex gap-2">
-                       
-                            {
-                                loading === true && <CircularProgress size={15}/> 
-                            }
-                            Gửi đánh giá</Button>
+                            <div className="flex items-center mt-5">
+                                <Button type="submit" className="btn-org flex gap-2">
+                                    {loading === true && <CircularProgress size={15}/>}
+                                    Gửi đánh giá
+                                </Button>
+                            </div>
+                        </form>
                     </div>
-                </form>
-            </div>
+                ) : (
+                    <div className="bg-gray-50 border border-gray-100 p-4 rounded-xl text-center text-gray-500 font-medium">
+                        {context?.isLogin === true 
+                            ? "Chỉ khách hàng đã từng mua sản phẩm này mới có thể viết đánh giá." 
+                            : "Vui lòng đăng nhập và mua sản phẩm này để có thể đánh giá."}
+                    </div>
+                )
+            }
         </div>
     )
 }
