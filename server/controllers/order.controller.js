@@ -1033,7 +1033,7 @@ export const createOrderPayosController = async (request, response) => {
             cancelUrl: `${clientUrl}/checkout`
         };
 
-        const paymentLink = await payos.createPaymentLink(orderBody);
+        const paymentLink = await payos.paymentRequests.create(orderBody);
 
         return response.status(200).json({
             error: false,
@@ -1118,7 +1118,7 @@ export const verifyPayosPaymentController = async (request, response) => {
     try {
         const { orderCode } = request.params;
 
-        const paymentInfo = await payos.paymentRequests.getPaymentLinkInformation(Number(orderCode));
+        const paymentInfo = await payos.paymentRequests.get(Number(orderCode));
 
         if (paymentInfo.status === 'PAID') {
             const order = await OrderModel.findOne({ paymentId: String(orderCode) });

@@ -157,7 +157,8 @@ const CheckoutCartItem = ({ item, index, updateCartSize, updateCartQty, removeIt
 
 const Checkout = () => {
 
-  const [userData, setUserData] = useState(null);
+  const context = useContext(MyContext);
+  const userData = context?.userData;
   const [isChecked, setIsChecked] = useState(0);
   const [selectedAddress, setSelectedAddress] = useState("");
   const [isLoading, setIsloading] = useState(false);
@@ -166,7 +167,6 @@ const Checkout = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [myCoupons, setMyCoupons] = useState([]);
   const [selectedItems, setSelectedItems] = useState({});
-  const context = useContext(MyContext);
 
   const [selectedItemIds, setSelectedItemIds] = useState([]);
   const prevCartIdsRef = useRef([]);
@@ -308,10 +308,10 @@ const Checkout = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    setUserData(context?.userData)
-    setSelectedAddress(context?.userData?.address_details[0]?._id);
-
-  }, [context?.userData, userData])
+    if (context?.userData?.address_details?.length > 0) {
+      setSelectedAddress(context?.userData?.address_details[0]?._id);
+    }
+  }, [context?.userData]);
 
 
 
