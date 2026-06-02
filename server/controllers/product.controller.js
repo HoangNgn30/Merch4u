@@ -1222,8 +1222,6 @@ export async function searchProductController(request, response) {
 
         try {
             // ─── Atlas Search: Fuzzy Search Pipeline ──────────────────────────
-            // Yêu cầu: Tạo Atlas Search Index "product_search" trên Atlas UI
-            // với các field: name, description, brand, catName
             const searchStage = {
                 $search: {
                     index: "product_search",
@@ -1250,19 +1248,6 @@ export async function searchProductController(request, response) {
                                     score: { boost: { value: 5 } }
                                 }
                             },
-                            // Fuzzy match trên mô tả sản phẩm
-                            {
-                                text: {
-                                    query: normalizedQuery,
-                                    path: "description",
-                                    fuzzy: {
-                                        maxEdits: 1,
-                                        prefixLength: 2,
-                                        maxExpansions: 50
-                                    },
-                                    score: { boost: { value: 2 } }
-                                }
-                            },
                             // Fuzzy match trên brand
                             {
                                 text: {
@@ -1274,19 +1259,6 @@ export async function searchProductController(request, response) {
                                         maxExpansions: 50
                                     },
                                     score: { boost: { value: 3 } }
-                                }
-                            },
-                            // Fuzzy match trên tên danh mục
-                            {
-                                text: {
-                                    query: normalizedQuery,
-                                    path: "catName",
-                                    fuzzy: {
-                                        maxEdits: 1,
-                                        prefixLength: 1,
-                                        maxExpansions: 50
-                                    },
-                                    score: { boost: { value: 1 } }
                                 }
                             }
                         ],
