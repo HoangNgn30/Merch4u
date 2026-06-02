@@ -411,7 +411,7 @@ Tôi có thể giúp sếp thống kê doanh thu, kiểm tra đơn hàng gần �
 
             {/* Chat Window */}
             <div
-                className={`fixed bottom-24 left-6 w-[440px] h-[620px] flex flex-col backdrop-blur-md bg-white/95 border border-slate-200/80 shadow-2xl rounded-2xl overflow-hidden z-[9999] transition-all duration-300 origin-bottom-left ${
+                className={`fixed bottom-24 left-6 w-[380px] h-[500px] max-h-[calc(100vh-120px)] max-w-[calc(100vw-32px)] flex flex-col backdrop-blur-md bg-white/95 border border-slate-200/80 shadow-2xl rounded-2xl overflow-hidden z-[9999] transition-all duration-300 origin-bottom-left ${
                     isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-90 translate-y-10 pointer-events-none"
                 }`}
             >
