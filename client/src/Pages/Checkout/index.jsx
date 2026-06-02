@@ -449,6 +449,37 @@ const Checkout = () => {
     }
   };
 
+  const handleCreateOrder = async () => {
+    if (selectedCartItems.length === 0) {
+      context.alertBox("error", "Vui lòng chọn ít nhất một sản phẩm để thanh toán");
+      throw new Error("No products selected");
+    }
+
+    const headers = {
+      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      'Content-Type': 'application/json',
+    }
+
+    const response = await axios.post(
+      VITE_API_URL + "/api/order/create-order-paypal",
+      {
+        products: checkoutProducts,
+        couponCode: appliedCoupon?.coupon?.code || ""
+      },
+      { headers }
+    );
+
+    return response?.data?.id;
+  };
+
+  const onApprovePaymentRef = useRef(onApprovePayment);
+  const handleCreateOrderRef = useRef(handleCreateOrder);
+
+  useEffect(() => {
+    onApprovePaymentRef.current = onApprovePayment;
+    handleCreateOrderRef.current = handleCreateOrder;
+  });
+
   useEffect(() => {
     const renderPayPalButtons = () => {
       const container = document.getElementById("paypal-button-container");
@@ -462,30 +493,10 @@ const Checkout = () => {
               shape: 'pill',
             },
             createOrder: async () => {
-              if (selectedCartItems.length === 0) {
-                context.alertBox("error", "Vui lòng chọn ít nhất một sản phẩm để thanh toán");
-                throw new Error("No products selected");
-              }
-
-              const headers = {
-                'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-                'Content-Type': 'application/json',
-              }
-
-              const response = await axios.post(
-                VITE_API_URL + "/api/order/create-order-paypal",
-                {
-                  products: checkoutProducts,
-                  couponCode: appliedCoupon?.coupon?.code || ""
-                },
-                { headers }
-              );
-
-              return response?.data?.id; // Return order ID to PayPal
-
+              return await handleCreateOrderRef.current();
             },
             onApprove: async (data) => {
-              onApprovePayment(data);
+              await onApprovePaymentRef.current(data);
             },
             onCancel: () => {
               context.alertBox("warning", "Thanh toán đã bị hủy");
@@ -500,20 +511,19 @@ const Checkout = () => {
 
     if (window.paypal) {
       renderPayPalButtons();
-      return;
+    } else {
+      const script = document.createElement("script");
+      script.src = `https://www.paypal.com/sdk/js?client-id=${VITE_APP_PAYPAL_CLIENT_ID}&disable-funding=card`;
+      script.async = true;
+      script.onload = renderPayPalButtons;
+      document.body.appendChild(script);
     }
-
-    const script = document.createElement("script");
-    script.src = `https://www.paypal.com/sdk/js?client-id=${VITE_APP_PAYPAL_CLIENT_ID}&disable-funding=card`;
-    script.async = true;
-    script.onload = renderPayPalButtons;
-    document.body.appendChild(script);
 
     return () => {
       const container = document.getElementById("paypal-button-container");
       if (container) container.innerHTML = "";
     }
-  }, [context?.cartData, context?.userData, selectedAddress, payableAmount]);
+  }, []);
 
 
 
@@ -888,12 +898,16 @@ const Checkout = () => {
               <div className="flex items-center flex-col gap-3 mb-2">
 
 
-                {selectedCartItems.length === 0 ? (
+                <div 
+                  id="paypal-button-container" 
+                  style={{ display: selectedCartItems.length === 0 ? 'none' : 'block' }}
+                  className={`${userData?.address_details?.length === 0 ? 'pointer-events-none' : ''}`}
+                ></div>
+
+                {selectedCartItems.length === 0 && (
                   <div className="w-full text-center py-3.5 px-4 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-md font-[500] my-2">
                     Vui lòng chọn ít nhất 1 sản phẩm để thanh toán
                   </div>
-                ) : (
-                  <div id="paypal-button-container" className={`${userData?.address_details?.length === 0 ? 'pointer-events-none' : ''}`}></div>
                 )}
 
                 <Button
