@@ -229,7 +229,6 @@ const Coupons = () => {
               <th className="px-5 py-4 text-center">Đơn tối thiểu</th>
               <th className="px-5 py-4 text-center">Lượt sử dụng</th>
               <th className="px-5 py-4 text-center">Hết hạn</th>
-              <th className="px-5 py-4 text-center">Trạng thái</th>
               <th className="px-5 py-4 text-center">Thao tác</th>
             </tr>
           </thead>
@@ -264,13 +263,9 @@ const Coupons = () => {
                   </td>
                   <td className="px-5 py-4 text-center">
                     {coupon.isActive ? (
-                      <span className="px-2.5 py-1 text-[11px] font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        Đang hoạt động
-                      </span>
+                     
                     ) : (
-                      <span className="px-2.5 py-1 text-[11px] font-semibold rounded-full bg-slate-50 text-slate-500 border border-slate-200">
-                        Tạm tắt
-                      </span>
+                      
                     )}
                   </td>
                   <td className="px-5 py-4 text-center">
