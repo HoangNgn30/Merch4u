@@ -32,7 +32,7 @@ const AdminShell = ({ children }) => {
           {children}
         </div>
       </div>
-      <AdminAIChatBot />
+      {/* <AdminAIChatBot /> */}
     </section>
   );
 };
