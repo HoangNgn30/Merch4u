@@ -220,11 +220,12 @@ export const Products = () => {
                         totalPages: Math.ceil(res?.products?.length / rowsPerPage),
                         totalCount: res?.products?.length
                     });
-
-                    setTimeout(() => {
-                        setIsloading(false)
-                    }, 300);
+                } else {
+                    context.alertBox("error", res?.message || "Không thể tải danh sách sản phẩm");
                 }
+                setTimeout(() => {
+                    setIsloading(false)
+                }, 300);
             })
         } else {
             getProducts(0, 50);
@@ -252,10 +253,12 @@ export const Products = () => {
                         totalPages: Math.ceil(res?.products?.length / rowsPerPage),
                         totalCount: res?.products?.length
                     });
-                    setTimeout(() => {
-                        setIsloading(false)
-                    }, 500);
+                } else {
+                    context.alertBox("error", res?.message || "Không thể tải danh sách sản phẩm");
                 }
+                setTimeout(() => {
+                    setIsloading(false)
+                }, 500);
             })
         } else {
             setProductSubCat(event.target.value);
@@ -273,10 +276,12 @@ export const Products = () => {
                             totalPages: Math.ceil(res?.products?.length / rowsPerPage),
                             totalCount: res?.products?.length
                         });
-                        setTimeout(() => {
-                            setIsloading(false)
-                        }, 500);
+                    } else {
+                        context.alertBox("error", res?.message || "Không thể tải danh sách sản phẩm");
                     }
+                    setTimeout(() => {
+                        setIsloading(false)
+                    }, 500);
                 })
             } else {
                 getProducts(0, 50);
@@ -300,10 +305,12 @@ export const Products = () => {
                         totalPages: Math.ceil(res?.products?.length / rowsPerPage),
                         totalCount: res?.products?.length
                     });
-                    setTimeout(() => {
-                        setIsloading(false)
-                    }, 300);
+                } else {
+                    context.alertBox("error", res?.message || "Không thể tải danh sách sản phẩm");
                 }
+                setTimeout(() => {
+                    setIsloading(false)
+                }, 300);
             })
         } else {
             setProductThirdLavelCat(event.target.value);
@@ -320,10 +327,12 @@ export const Products = () => {
                             totalPages: Math.ceil(res?.products?.length / rowsPerPage),
                             totalCount: res?.products?.length
                         });
-                        setTimeout(() => {
-                            setIsloading(false)
-                        }, 300);
+                    } else {
+                        context.alertBox("error", res?.message || "Không thể tải danh sách sản phẩm");
                     }
+                    setTimeout(() => {
+                        setIsloading(false)
+                    }, 300);
                 })
             } else if (productCat) {
                 setIsloading(true)
@@ -338,10 +347,12 @@ export const Products = () => {
                             totalPages: Math.ceil(res?.products?.length / rowsPerPage),
                             totalCount: res?.products?.length
                         });
-                        setTimeout(() => {
-                            setIsloading(false)
-                        }, 300);
+                    } else {
+                        context.alertBox("error", res?.message || "Không thể tải danh sách sản phẩm");
                     }
+                    setTimeout(() => {
+                        setIsloading(false)
+                    }, 300);
                 })
             } else {
                 getProducts(0, 50);
@@ -632,9 +643,9 @@ export const Products = () => {
 
                                             <TableCell style={{ minWidth: columns.minWidth }} align="center">
                                                 {product?.sale > 20 ? (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-                                                        {product?.sale} đã bán
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                                        {product?.sale}
                                                     </span>
                                                 ) : (
                                                     <span className="inline-flex items-center px-2.5 py-1 text-[11px] font-semibold rounded-full bg-slate-50 text-slate-600 border border-slate-200">
