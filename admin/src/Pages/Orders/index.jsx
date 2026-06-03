@@ -47,11 +47,21 @@ const getStatusClasses = (status) => {
   }
 };
 
+// Normalize legacy/inconsistent payment_status values to canonical MenuItem values
+const normalizePaymentStatus = (status) => {
+  if (!status) return 'pending';
+  const lower = status.toLowerCase().trim();
+  if (lower === 'paid' || lower === 'complete') return 'Paid';
+  if (lower === 'pending') return 'pending';
+  if (lower === 'failed') return 'failed';
+  if (lower === 'cash on delivery') return 'CASH ON DELIVERY';
+  return 'pending';
+};
+
 // Helper for payment status styles
 const getPaymentStatusClasses = (status) => {
   switch (status) {
     case 'Paid':
-    case 'COMPLETE':
       return 'bg-emerald-50 text-emerald-700 border-emerald-200';
     case 'pending':
       return 'bg-amber-50 text-amber-700 border-amber-200';
@@ -307,9 +317,9 @@ export const Orders = () => {
                       <td className="px-5 py-4 text-center">
                         <div className="min-w-[130px] inline-block">
                           <Select
-                            value={order?.payment_status || 'pending'}
+                            value={normalizePaymentStatus(order?.payment_status)}
                             size="small"
-                            className={`w-full text-xs font-semibold rounded-lg border ${getPaymentStatusClasses(order?.payment_status || 'pending')}`}
+                            className={`w-full text-xs font-semibold rounded-lg border ${getPaymentStatusClasses(normalizePaymentStatus(order?.payment_status))}`}
                             sx={{
                               fontSize: '12px',
                               fontWeight: '600',

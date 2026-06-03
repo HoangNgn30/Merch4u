@@ -105,7 +105,7 @@ const getClientBaseUrl = (request) => {
 }
 
 const isInventoryDeductedForOrder = (order) => {
-    return order?.payment_status !== "Pending";
+    return order?.payment_status !== "pending";
 }
 
 const restoreInventoryForOrder = async (order) => {
@@ -1010,7 +1010,7 @@ export const createOrderPayosController = async (request, response) => {
             userId: userId,
             products: request.body.products,
             paymentId: String(orderCode),
-            payment_status: "Pending",
+            payment_status: "pending",
             order_status: "pending",
             delivery_address: request.body.delivery_address,
             subTotal: pricing.subTotal,
