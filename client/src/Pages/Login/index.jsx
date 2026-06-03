@@ -236,7 +236,7 @@ const Login = () => {
             <p className="text-center">Chưa có tài khoản? <Link className="link text-[14px] font-[600] text-primary" to="/register"> Đăng ký</Link></p>
 
 
-            <p className="text-center font-[500]">Hoặc tiếp tục bằng tài khoản mạng xã hội</p>
+            <p className="text-center font-[500]">Hoặc tiếp tục bằng </p>
 
             <Button className="flex gap-3 w-full !bg-[#f1f1f1] btn-lg !text-black"
               onClick={authWithGoogle}>
