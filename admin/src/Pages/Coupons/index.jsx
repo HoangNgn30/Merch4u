@@ -261,13 +261,7 @@ const Coupons = () => {
                   <td className="px-5 py-4 text-center font-medium text-slate-500 text-[12px]">
                     {formatDateInput(coupon.expiryDate)}
                   </td>
-                  <td className="px-5 py-4 text-center">
-                    {coupon.isActive ? (
-                     
-                    ) : (
-                      
-                    )}
-                  </td>
+                  
                   <td className="px-5 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <button 
