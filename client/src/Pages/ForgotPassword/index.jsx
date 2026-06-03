@@ -73,6 +73,7 @@ const ForgotPassword = () => {
         localStorage.removeItem("userEmail")
         localStorage.removeItem("actionType")
         localStorage.removeItem("resetToken")
+        localStorage.removeItem("resetToken")
         context.alertBox("success", res?.message);
         setIsLoading(false);
         history("/login")
