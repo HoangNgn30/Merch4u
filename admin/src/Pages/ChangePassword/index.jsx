@@ -75,11 +75,17 @@ const ChangePassword = () => {
     }
 
 
-    postData(`/api/user/forgot-password/change-password`, formFields).then((res) => {
+    const payload = {
+      ...formFields,
+      token: localStorage.getItem("resetToken")
+    };
+
+    postData(`/api/user/forgot-password/change-password`, payload).then((res) => {
       console.log(res)
       if (res?.error === false) {
         localStorage.removeItem("userEmail")
         localStorage.removeItem("actionType")
+        localStorage.removeItem("resetToken")
         context.alertBox("success", res?.message);
         setIsLoading(false);
         history("/login")

@@ -66,6 +66,9 @@ const VerifyAccount = () => {
         }).then((res) => {
           if (res?.error === false) {
             context.alertBox("success", res?.message);
+            if (res?.token) {
+              localStorage.setItem("resetToken", res.token);
+            }
             history("/change-password")
           } else {
             context.alertBox("error", res?.message);
