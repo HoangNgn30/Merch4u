@@ -6,7 +6,7 @@ import { cloudinary, uploadFilesToCloudinary } from '../utils/cloudinaryUpload.j
 import { GoogleGenAI } from '@google/genai';
 
 // ─── Gemini Embedding Helper ──────────────────────────────────────────────────
-const _genAI = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
+const _genAI = process.env.GMN_API_KEY ? new GoogleGenAI({ apiKey: process.env.GMN_API_KEY }) : null;
 
 /**
  * Tạo vector embedding và lưu vào product.embedding

@@ -9,7 +9,7 @@ import UserActivityModel from "../models/userActivity.model.js";
 import CouponModel from "../models/coupon.model.js";
 import HomeSliderModel from "../models/homeSlider.model.js";
 
-const apiKey = process.env.GEMINI_API_KEY;
+const apiKey = process.env.GMN_API_KEY;
 const genAI = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 const PRODUCT_SELECT = "name description price oldPrice discount images size catName catId subCat subCatId thirdsubCat brand rating countInStock status isNew sale createdAt";
@@ -75,7 +75,7 @@ function chatProductCard(product = {}) {
 
 async function getEmbedding(text) {
     if (!genAI) {
-        throw new Error("GEMINI_API_KEY chưa được cấu hình.");
+        throw new Error("GMN_API_KEY chưa được cấu hình.");
     }
     
     const cleanText = String(text || "").trim();
