@@ -286,7 +286,7 @@ const Footer = () => {
             <EmptyState
               type="cart"
               title="Giỏ hàng đang trống"
-              message="Thêm album, lightstick hoặc photocard bạn thích vào giỏ để thanh toán nhanh hơn."
+              message="Thêm sản phẩm bạn thích vào giỏ để thanh toán."
               actionLabel="Tiếp tục mua sắm"
               onAction={context.toggleCartPanel(false)}
             />

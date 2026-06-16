@@ -243,7 +243,7 @@ export const ProductDetailsComponent = (props) => {
       {
         props?.item?.size?.length !== 0 &&
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 actions">
+          <div className="flex flex-wrap items-center gap-2 actions">
             {
               props?.item?.size?.map((item, index) => {
                 return (

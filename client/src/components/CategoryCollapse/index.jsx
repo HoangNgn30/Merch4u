@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Button from "@mui/material/Button";
-import { FiMinusSquare } from "react-icons/fi";
-import { FaRegSquarePlus } from "react-icons/fa6";
+import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 
 export const CategoryCollapse = (props) => {
   const [submenuIndex, setSubmenuIndex] = useState(null);
@@ -45,11 +44,9 @@ export const CategoryCollapse = (props) => {
                   <div className="absolute w-[30px] h-[30px] flex items-center justify-center top-[10px] right-[15px]  cursor-pointer" onClick={() => openSubmenu(index)}>
 
                     {submenuIndex === index ? (
-                      <FiMinusSquare
-                      />
+                      <FiChevronUp className="text-[18px] text-gray-500" />
                     ) : (
-                      <FaRegSquarePlus
-                      />
+                      <FiChevronDown className="text-[18px] text-gray-500" />
                     )}
                   </div>
                   {submenuIndex === index && (
@@ -66,11 +63,9 @@ export const CategoryCollapse = (props) => {
 
                               <div className="absolute w-[30px] h-[30px] flex items-center justify-center top-[10px] right-[15px]  cursor-pointer" onClick={() => openInnerSubmenu(index_)}>
                                 {innerSubmenuIndex === index_ ? (
-                                  <FiMinusSquare
-                                  />
+                                  <FiChevronUp className="text-[16px] text-gray-400" />
                                 ) : (
-                                  <FaRegSquarePlus
-                                  />
+                                  <FiChevronDown className="text-[16px] text-gray-400" />
                                 )}
                               </div>
 

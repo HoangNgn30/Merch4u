@@ -1,18 +1,16 @@
 import React, { useContext, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Search from "../Search";
 import Badge from "@mui/material/Badge";
 import { styled } from "@mui/material/styles";
 import IconButton from "@mui/material/IconButton";
 import { MdOutlineShoppingCart } from "react-icons/md";
-import { IoGitCompareOutline } from "react-icons/io5";
 import { FaRegHeart } from "react-icons/fa6";
 import Tooltip from "@mui/material/Tooltip";
 import Navigation from "./Navigation";
 import { MyContext } from "../../App";
 import { Button } from "@mui/material";
 import { FaRegUser } from "react-icons/fa";
-
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { IoBagCheckOutline } from "react-icons/io5";
@@ -20,337 +18,294 @@ import { IoMdHeartEmpty } from "react-icons/io";
 import { IoIosLogOut } from "react-icons/io";
 import { fetchDataFromApi } from "../../utils/api";
 import { LuMapPin } from "react-icons/lu";
+import { RiCoupon2Line } from "react-icons/ri";
 import { useEffect } from "react";
 import { HiOutlineMenu } from "react-icons/hi";
-
+import { IoClose, IoSearch } from "react-icons/io5";
 
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
-  "& .MuiBadge-badge": {
-    right: -3,
-    top: 13,
-    border: `2px solid ${theme.palette.background.paper}`,
-    padding: "0 4px",
-  },
+    "& .MuiBadge-badge": {
+        right: -3,
+        top: 13,
+        border: `2px solid ${theme.palette.background.paper}`,
+        padding: "0 4px",
+    },
 }));
 
 const Header = () => {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
 
-  const [isOpenCatPanel, setIsOpenCatPanel] = useState(false);
+    const [anchorEl, setAnchorEl] = useState(null);
+    const open = Boolean(anchorEl);
 
-  const context = useContext(MyContext);
+    const [isOpenCatPanel, setIsOpenCatPanel] = useState(false);
 
-  const history = useNavigate();
+    const context = useContext(MyContext);
 
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
+    const history = useNavigate();
 
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
 
-const syncChative = () => {
-    if (window.chative && context?.userData) {
-      window.chative.identify({
-        user_id: context.userData._id,
-        email: context.userData.email,
-        name: context.userData.name
-      });
-    }
-  };
-
-  useEffect(() => {
-    fetchDataFromApi("/api/logo").then((res) => {
-      if (res?.logo) {
-        localStorage.setItem('logo', res.logo[0]?.logo);
-      }
-    });
-
-    if (context?.isLogin && context?.userData) {
-      const timer = setTimeout(syncChative, 2000);
-      return () => clearTimeout(timer);
-    } else if (context?.isLogin === false && window.chative) {
-      window.chative.shutdown();
-      window.chative.boot();
-    }
-  }, [context?.isLogin, context?.userData?._id]);
-
-
-const logout = () => {
-  setAnchorEl(null);
-
-  fetchDataFromApi(`/api/user/logout?token=${localStorage.getItem('accessToken')}`, { withCredentials: true }).then((res) => {
-    if (res?.error === false) {
-
-      if (window.chative) {
-        if (typeof window.chative.clearData === 'function') {
-          window.chative.clearData();
+    const syncChative = () => {
+        if (window.chative && context?.userData) {
+            window.chative.identify({
+                user_id: context.userData._id,
+                email: context.userData.email,
+                name: context.userData.name
+            });
         }
-        window.chative.identify({
-          user_id: `guest_${new Date().getTime()}`, 
-          email: "",
-          name: ""
+    };
+
+    useEffect(() => {
+        fetchDataFromApi("/api/logo").then((res) => {
+            if (res?.logo) {
+                localStorage.setItem('logo', res.logo[0]?.logo);
+            }
         });
 
-        setTimeout(() => {
-          window.chative.shutdown();
-          window.chative.boot();
-        }, 500);
+        if (context?.isLogin && context?.userData) {
+            const timer = setTimeout(syncChative, 2000);
+            return () => clearTimeout(timer);
+        } else if (context?.isLogin === false && window.chative) {
+            window.chative.shutdown();
+            window.chative.boot();
+        }
+    }, [context?.isLogin, context?.userData?._id]);
 
-      }
 
-      context.setIsLogin(false);
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("merch4u_chat_history"); // Xóa lịch sử chat AI
-      localStorage.removeItem("merch4u_chat_greeted"); // Xóa trạng thái đã chào
-      context.setUserData(null);
-      context?.setCartData([]);
-      context?.setMyListData([]);
-      history("/");
-    }
-  });
-}
+    const logout = () => {
+        setAnchorEl(null);
 
-  return (
-    <>
-      <header className="bg-white fixed lg:sticky left-0 w-full top-0 lg:-top-[47px] z-[101]">
-        <div className="top-strip hidden lg:block py-2 border-t-[1px] border-gray-250  border-b-[1px]">
-          <div className="container">
-            <div className="flex items-center justify-between">
-              <div className="col1 w-[50%] hidden lg:block">
-                <p className="text-[12px] font-[500] mt-0 mb-0">
-                  Giảm giá đến 50% cho các mẫu thời trang mùa mới, chỉ trong thời gian có hạn.
-                </p>
-              </div>
+        fetchDataFromApi(`/api/user/logout?token=${localStorage.getItem('accessToken')}`, { withCredentials: true }).then((res) => {
+            if (res?.error === false) {
 
-              <div className="col2 flex items-center justify-between w-full lg:w-[50%] lg:justify-end">
-                <ul className="flex items-center gap-3 w-full justify-between lg:w-[200px]">
-                  <li className="list-none">
-                    <Link
-                      to="/help-center"
-                      className="text-[11px] lg:text-[13px] link font-[500] transition"
-                    >
-                      Trung Tâm Trợ Giúp{" "}
-                    </Link>
-                  </li>
-                  <li className="list-none">
-                    <Link
-                      to="/order-tracking"
-                      className="text-[11px] lg:text-[13px] link font-[500] transition"
-                    >
-                      Theo Dõi Đơn Hàng
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="header py-2 lg:py-4 border-b-[1px] border-gray-250">
-          <div className="container flex items-center justify-between">
-            {
-              context?.windowWidth < 992 &&
-              <Button className="!w-[35px] !min-w-[35px] !h-[35px] !rounded-full !text-gray-800" onClick={() => setIsOpenCatPanel(true)}><HiOutlineMenu size={22} /></Button>
-            }
-
-            <div className="col1 w-[40%] lg:w-[25%]">
-              <Link to={"/"}>
-                <img src={localStorage.getItem('logo')} className="max-w-[110px] lg:max-w-[150px]" />
-              </Link>
-            </div>
-
-            <div className={`col2 fixed top-0 left-0 w-full h-full lg:w-[40%] lg:static p-2 lg:p-0 bg-white z-50 ${context?.windowWidth > 992 && '!block'} ${context?.openSearchPanel === true ? 'block' : 'hidden'}`}>
-              <Search />
-            </div>
-
-            <div className="col3 w-[10%] lg:w-[30%] flex items-center pl-7">
-              <ul className="flex items-center justify-end gap-0 lg:gap-3 w-full">
-                {context.isLogin === false && context?.windowWidth > 992 ? (
-                  <li className="list-none">
-                    <Link
-                      to="/login"
-                      className="link transition text-[15px] font-[500]"
-                    >
-                      Đăng Nhập
-                    </Link>{" "}
-                    | &nbsp;
-                    <Link
-                      to="/register"
-                      className="link  transition text-[15px]  font-[500]"
-                    >
-                      Đăng Ký
-                    </Link>
-                  </li>
-                ) : (
-                  <>
-                    {
-                      context?.windowWidth > 992 &&
-                      <li>
-                        <Button
-                          className="!text-[#000] myAccountWrap flex items-center gap-3 cursor-pointer"
-                          onClick={handleClick}
-                        >
-                          <div className="flex items-center justify-center w-[40px] h-[40px] min-w-[40px] rounded-full bg-gray-200">
-                            <FaRegUser className="text-[17px] text-[rgba(0,0,0,0.7)]" />
-                          </div>
-
-                          {
-                            context?.windowWidth > 992 &&
-                            <div className="info flex flex-col">
-                              <h4 className="leading-3 text-[14px] text-[rgba(0,0,0,0.6)] font-[500] mb-0 capitalize text-left justify-start">
-                                {context?.userData?.name}
-                              </h4>
-                              <span className="text-[13px] text-[rgba(0,0,0,0.6)]  font-[400] capitalize text-left justify-start">
-                                {context?.userData?.email}
-                              </span>
-                            </div>
-                          }
-
-                        </Button>
-
-                        <Menu
-                          anchorEl={anchorEl}
-                          id="account-menu"
-                          open={open}
-                          onClose={handleClose}
-                          onClick={handleClose}
-                          slotProps={{
-                            paper: {
-                              elevation: 0,
-                              sx: {
-                                overflow: "visible",
-                                filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
-                                mt: 1.5,
-                                "& .MuiAvatar-root": {
-                                  width: 32,
-                                  height: 32,
-                                  ml: -0.5,
-                                  mr: 1,
-                                },
-                                "&::before": {
-                                  content: '""',
-                                  display: "block",
-                                  position: "absolute",
-                                  top: 0,
-                                  right: 14,
-                                  width: 10,
-                                  height: 10,
-                                  bgcolor: "background.paper",
-                                  transform: "translateY(-50%) rotate(45deg)",
-                                  zIndex: 0,
-                                },
-                              },
-                            },
-                          }}
-                          transformOrigin={{ horizontal: "right", vertical: "top" }}
-                          anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-                        >
-                          <Link to="/my-account" className="w-full block">
-                            <MenuItem
-                              onClick={handleClose}
-                              className="flex gap-2 ! !py-2"
-                            >
-                              <FaRegUser className="text-[18px]" />{" "}
-                              <span className="text-[14px]">Tài khoản của tôi</span>
-                            </MenuItem>
-                          </Link>
-                          <Link to="/address" className="w-full block">
-                            <MenuItem
-                              onClick={handleClose}
-                              className="flex gap-2 ! !py-2"
-                            >
-                              <LuMapPin className="text-[18px]" />{" "}
-                              <span className="text-[14px]">Địa Chỉ</span>
-                            </MenuItem>
-                          </Link>
-                          <Link to="/my-orders" className="w-full block">
-                            <MenuItem
-                              onClick={handleClose}
-                              className="flex gap-2 ! !py-2"
-                            >
-                              <IoBagCheckOutline className="text-[18px]" />{" "}
-                              <span className="text-[14px]">Đơn Hàng</span>
-                            </MenuItem>
-                          </Link>
-                          <Link to="/my-list" className="w-full block">
-                            <MenuItem
-                              onClick={handleClose}
-                              className="flex gap-2 ! !py-2"
-                            >
-                              <IoMdHeartEmpty className="text-[18px]" />{" "}
-                              <span className="text-[14px]">Danh Sách Yêu Thích</span>
-                            </MenuItem>
-                          </Link>
-
-                          <MenuItem
-                            onClick={logout}
-                            className="flex gap-2 ! !py-2"
-                          >
-                            <IoIosLogOut className="text-[18px]" />{" "}
-                            <span className="text-[14px]">Đăng Xuất</span>
-                          </MenuItem>
-                        </Menu>
-                      </li>
+                if (window.chative) {
+                    if (typeof window.chative.clearData === 'function') {
+                        window.chative.clearData();
                     }
+                    window.chative.identify({
+                        user_id: `guest_${new Date().getTime()}`,
+                        email: "",
+                        name: ""
+                    });
 
-                  </>
-                )}
-
-
-                {
-                  context?.windowWidth > 992 &&
-                  <li>
-                    <Tooltip title="Danh Sách Yêu Thích">
-                        {/* Hợp thể Link và IconButton bằng prop component */}
-                        <IconButton 
-                          component={Link} 
-                          to="/my-list" 
-                          aria-label="cart" 
-                        >
-                          <StyledBadge 
-                            badgeContent={context?.myListData?.length !== 0 ? context?.myListData?.length : 0} 
-                            color="secondary"
-                          >
-                            <FaRegHeart />
-                          </StyledBadge>
-                        </IconButton>
-                      </Tooltip>
-                  </li>
-
+                    setTimeout(() => {
+                        window.chative.shutdown();
+                        window.chative.boot();
+                    }, 500);
                 }
 
+                context.setIsLogin(false);
+                localStorage.removeItem("accessToken");
+                localStorage.removeItem("refreshToken");
+                context.setUserData(null);
+                context?.setCartData([]);
+                context?.setMyListData([]);
+                history("/");
+            }
+        });
+    }
 
-                <li>
-                  <Tooltip title="Giỏ Hàng">
-                    <IconButton
-                      aria-label="cart"
-                      onClick={() => context.setOpenCartPanel(true)}
+
+
+    return (
+        <>
+        <header className="fixed lg:sticky z-[1000] top-0 left-0 w-full bg-white/95 backdrop-blur-md shadow-none">
+            <div className="w-full max-w-[1440px] mx-auto flex items-center justify-between py-3 px-4 lg:px-6 xl:px-8 gap-2 lg:gap-4">
+
+                <div className="flex items-center lg:hidden">
+                    <Button
+                        className="!w-[36px] !min-w-[36px] !h-[36px] !rounded-full !text-gray-700 !p-0"
+                        onClick={() => setIsOpenCatPanel(true)}
                     >
+                        <HiOutlineMenu size={22} />
+                    </Button>
+                </div>
 
-                      <StyledBadge badgeContent={context?.cartData?.length !== 0 ? context?.cartData?.length : 0} color="secondary">
-                        <MdOutlineShoppingCart />
-                      </StyledBadge>
-                    </IconButton>
-                  </Tooltip>
-                </li>
-              </ul>
+                <div className="flex-shrink-0">
+                    <Link to={"/"}>
+                        <img
+                            src={localStorage.getItem('logo')}
+                            className="max-w-[110px] lg:max-w-[150px]"
+                            alt="Logo"
+                        />
+                    </Link>
+                </div>
+
+                <div className="hidden lg:flex items-center flex-1 px-2 xl:px-4">
+                    <Navigation isOpenCatPanel={isOpenCatPanel} setIsOpenCatPanel={setIsOpenCatPanel} hidePromo={true} />
+                </div>
+
+                <div className="hidden lg:flex flex-1 max-w-[280px] xl:max-w-[420px]">
+                    <Search />
+                </div>
+
+                {/* ===== RIGHT ACTIONS ===== */}
+                <div className="flex items-center gap-1">
+
+                    <div className="flex lg:hidden">
+                        <IconButton
+                            aria-label="search"
+                            onClick={() => context?.setOpenSearchPanel(true)}
+                            size="small"
+                        >
+                            <IoSearch size={20} />
+                        </IconButton>
+                    </div>
+
+
+                    {context.isLogin === false ? (
+                        <div className="hidden lg:flex items-center gap-2 text-[14px] font-[500]">
+                            <Link to="/login" className="link transition hover:text-[#ff5252]">Đăng nhập</Link>
+                            <span className="text-gray-300">|</span>
+                            <Link to="/register" className="link transition hover:text-[#ff5252]">Đăng ký</Link>
+                        </div>
+                    ) : (
+                        <div className="hidden lg:flex items-center">
+                            <Button
+                                className="!text-[#000] myAccountWrap flex items-center gap-2 cursor-pointer !normal-case"
+                                onClick={handleClick}
+                            >
+                                <div className="flex items-center justify-center w-[36px] h-[36px] min-w-[36px] rounded-full bg-gray-100">
+                                    <FaRegUser className="text-[20px] text-[rgba(0,0,0,0.7)]" />
+                                </div>
+                                <div className="info flex flex-col text-left">
+                                    <span className="text-[13px] text-[rgba(0,0,0,0.7)] font-[500] capitalize leading-tight">
+                                        {context?.userData?.name}
+                                    </span>
+                                    <span className="text-[11px] text-[rgba(0,0,0,0.5)] leading-tight">
+                                        {context?.userData?.email}
+                                    </span>
+                                </div>
+                            </Button>
+
+                            <Menu
+                                anchorEl={anchorEl}
+                                id="account-menu"
+                                open={open}
+                                onClose={handleClose}
+                                onClick={handleClose}
+                                slotProps={{
+                                    paper: {
+                                        elevation: 0,
+                                        sx: {
+                                            overflow: "visible",
+                                            filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.18))",
+                                            mt: 1.5,
+                                            "&::before": {
+                                                content: '""',
+                                                display: "block",
+                                                position: "absolute",
+                                                top: 0,
+                                                right: 14,
+                                                width: 10,
+                                                height: 10,
+                                                bgcolor: "background.paper",
+                                                transform: "translateY(-50%) rotate(45deg)",
+                                                zIndex: 0,
+                                            },
+                                        },
+                                    },
+                                }}
+                                transformOrigin={{ horizontal: "right", vertical: "top" }}
+                                anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+                            >
+                                <Link to="/my-account" className="w-full block">
+                                    <MenuItem onClick={handleClose} className="flex gap-2 !py-2">
+                                        <FaRegUser className="text-[16px]" />
+                                        <span className="text-[14px]">Tài khoản</span>
+                                    </MenuItem>
+                                </Link>
+                                <Link to="/address" className="w-full block">
+                                    <MenuItem onClick={handleClose} className="flex gap-2 !py-2">
+                                        <LuMapPin className="text-[16px]" />
+                                        <span className="text-[14px]">Địa chỉ</span>
+                                    </MenuItem>
+                                </Link>
+                                <Link to="/my-orders" className="w-full block">
+                                    <MenuItem onClick={handleClose} className="flex gap-2 !py-2">
+                                        <IoBagCheckOutline className="text-[16px]" />
+                                        <span className="text-[14px]">Đơn hàng</span>
+                                    </MenuItem>
+                                </Link>
+                                <Link to="/my-list" className="w-full block">
+                                    <MenuItem onClick={handleClose} className="flex gap-2 !py-2">
+                                        <IoMdHeartEmpty className="text-[16px]" />
+                                        <span className="text-[14px]">Yêu thích</span>
+                                    </MenuItem>
+                                </Link>
+                                <Link to="/my-coupons" className="w-full block">
+                                    <MenuItem onClick={handleClose} className="flex gap-2 !py-2">
+                                        <RiCoupon2Line className="text-[16px]" />
+                                        <span className="text-[14px]">Kho Coupon</span>
+                                    </MenuItem>
+                                </Link>
+                                <MenuItem onClick={logout} className="flex gap-2 !py-2">
+                                    <IoIosLogOut className="text-[16px]" />
+                                    <span className="text-[14px]">Đăng xuất</span>
+                                </MenuItem>
+                            </Menu>
+                        </div>
+                    )}
+
+                    <div className="hidden lg:flex">
+                        <Tooltip title="Yêu thích">
+                            <IconButton component={Link} to="/my-list" aria-label="wishlist" size="small">
+                                <StyledBadge
+                                    badgeContent={context?.myListData?.length > 0 ? context?.myListData?.length : 0}
+                                    color="secondary"
+                                >
+                                    <FaRegHeart size={18} />
+                                </StyledBadge>
+                            </IconButton>
+                        </Tooltip>
+                    </div>
+
+                    <Tooltip title="Giỏ hàng">
+                        <IconButton
+                            aria-label="cart"
+                            onClick={() => context.setOpenCartPanel(true)}
+                            size="small"
+                        >
+                            <StyledBadge
+                                badgeContent={context?.cartData?.length > 0 ? context?.cartData?.length : 0}
+                                color="secondary"
+                            >
+                                <MdOutlineShoppingCart size={20} />
+                            </StyledBadge>
+                        </IconButton>
+                    </Tooltip>
+                </div>
             </div>
-          </div>
+
+            {/* Mobile: Search panel overlay */}
+            {context?.openSearchPanel === true && context?.windowWidth < 992 && (
+                <div className="fixed top-0 left-0 w-full h-full bg-white z-[200] p-3">
+                    <div className="mb-3 flex items-center justify-between">
+                        <span className="text-[15px] font-[700]">Tim kiem</span>
+                        <IconButton size="small" onClick={() => context?.setOpenSearchPanel(false)}>
+                            <IoClose />
+                        </IconButton>
+                    </div>
+                    <Search />
+                </div>
+            )}
+
+        </header>
+
+        <div className="lg:hidden h-[60px]"></div>
+
+        {/* Mobile: Category panel & Mobile Nav (Outside header to avoid sticky/z-index issues) */}
+        <div className="lg:hidden">
+            <Navigation isOpenCatPanel={isOpenCatPanel} setIsOpenCatPanel={setIsOpenCatPanel} mobileOnly={true} />
         </div>
-
-        <Navigation isOpenCatPanel={isOpenCatPanel} setIsOpenCatPanel={setIsOpenCatPanel} />
-      </header>
-
-
-      <div className="afterHeader mt-[115px] lg:mt-0"></div>
-
     </>
-  );
-};
+    );
+}
 
 export default Header;

@@ -85,7 +85,7 @@ const AddVariant = () => {
                    },[300])
                   
                 }else{
-                    context.alertBox("error", res.data?.message);
+                    context.alertBox("error", res?.data?.message || "Lỗi cập nhật biến thể");
                 }
               
             })
@@ -150,7 +150,7 @@ const AddVariant = () => {
                             :
                             <>
                                 <FaCloudUploadAlt className='text-[25px] text-white' />
-                                Lưu và xem
+                                Lưu Và Xem
                             </>
                     }
                     </Button>

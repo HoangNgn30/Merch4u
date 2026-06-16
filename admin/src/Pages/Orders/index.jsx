@@ -215,7 +215,7 @@ export const Orders = () => {
       <div className="flex flex-col sm:flex-row items-center w-full pb-6 justify-between gap-4">
         <div className="col">
           <h2 className="text-[18px] font-[600] text-slate-800">
-            Danh sách đơn hàng gần đây
+            Danh Sách Đơn Hàng Gần Đây
           </h2>
         </div>
         <div className="col sm:ml-auto w-full sm:w-[320px]">
@@ -358,7 +358,7 @@ export const Orders = () => {
                             <MenuItem value={'confirm'} className="text-xs font-semibold text-sky-700">Đã xác nhận</MenuItem>
                             <MenuItem value={'shipped'} className="text-xs font-semibold text-indigo-700">Đang giao</MenuItem>
                             <MenuItem value={'delivered'} className="text-xs font-semibold text-emerald-700">Đã giao</MenuItem>
-                            <MenuItem value={'cancelled'} disabled className="text-xs font-semibold text-rose-700">Đã hủy</MenuItem>
+                            <MenuItem value={'cancelled'} className="text-xs font-semibold text-rose-700">Đã hủy</MenuItem>
                           </Select>
                         </div>
                       </td>

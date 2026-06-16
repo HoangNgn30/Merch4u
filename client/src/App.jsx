@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import "./App.css";
-import "./responsive.css";
 import Footer from "./components/Footer";
 import Home from "./Pages/Home";
 import ProductListing from "./Pages/ProductListing";
@@ -27,7 +25,7 @@ import { OrderSuccess } from "./Pages/Orders/success";
 import { OrderFailed } from "./Pages/Orders/failed";
 import SearchPage from "./Pages/Search";
 import BlogDetail from "./Pages/BlogDetail";
-import Header2 from "./components/Header2";
+import Header from "./components/Header";
 import AIChatBot from "./components/AIChatBot";
 import ConfirmDialog from "./components/ConfirmDialog";
 import CouponGame from "./Pages/CouponGame";
@@ -431,7 +429,7 @@ function App() {
         <BrowserRouter>
           <MyContext.Provider value={values}>
             <AIChatBot />
-            <Header2/>
+            <Header/>
             <Routes>
               <Route path={"/"} exact={true} element={<Home />} />
               <Route

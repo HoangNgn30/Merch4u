@@ -83,39 +83,69 @@ const CartPage = () => {
             <h3 className="pb-3">Tổng giỏ hàng</h3>
             <hr />
 
-            <p className="flex items-center justify-between">
-              <span className="text-[14px] font-[500]">Tạm tính</span>
-              <span className="text-primary font-bold">
-                {
-                  (context.cartData?.length !== 0 ?
-                    context.cartData?.map(item => parseInt(item.price) * item.quantity)
-                      .reduce((total, value) => total + value, 0) : 0)
-                    ?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })
-                }
-              </span>
-            </p>
+            {(() => {
+              const subTotal = context.cartData?.length !== 0 ?
+                context.cartData?.map(item => parseInt(item.price) * item.quantity)
+                  .reduce((total, value) => total + value, 0) : 0;
+              const FIXED_SHIPPING_FEE = 50000;
+              const FREE_SHIPPING_THRESHOLD = 1000000;
+              const shippingFee = subTotal === 0 || subTotal >= FREE_SHIPPING_THRESHOLD ? 0 : FIXED_SHIPPING_FEE;
+              const totalAmount = subTotal + shippingFee;
 
-            <p className="flex items-center justify-between">
-              <span className="text-[14px] font-[500]">Vận chuyển</span>
-              <span className="font-bold">Miễn phí</span>
-            </p>
+              return (
+                <>
+                  <div className="my-3 bg-slate-50 p-3 rounded-xl border border-slate-100/60">
+                    {subTotal < FREE_SHIPPING_THRESHOLD ? (
+                      <div>
+                        <p className="text-[11px] font-semibold text-slate-500 mb-1.5">
+                          Mua thêm <span className="text-[#ff5252] font-bold">{(FREE_SHIPPING_THRESHOLD - subTotal).toLocaleString('vi-VN')}đ</span> để được Freeship!
+                        </p>
+                        <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                          <div 
+                            className="bg-gradient-to-r from-orange-400 to-amber-500 h-full rounded-full transition-all duration-500" 
+                            style={{ width: `${(subTotal / FREE_SHIPPING_THRESHOLD) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-[11px] font-bold text-emerald-600 mb-1.5 flex items-center gap-1">
+                          🎉 Đơn hàng của bạn được Freeship!
+                        </p>
+                        <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                          <div className="bg-emerald-500 h-full rounded-full w-full" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <hr />
 
-            <p className="flex items-center justify-between">
-              <span className="text-[14px] font-[500]">Giao đến</span>
-              <span className="font-bold"><span className="font-bold">{context?.userData?.address_details[0]?.country}</span></span>
-            </p>
+                  <p className="flex items-center justify-between">
+                    <span className="text-[14px] font-[500]">Tạm tính</span>
+                    <span className="text-primary font-bold">
+                      {subTotal.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+                    </span>
+                  </p>
 
-            <p className="flex items-center justify-between">
-              <span className="text-[14px] font-[500]">Tổng cộng</span>
-              <span className="text-primary font-bold">
-                {
-                  (context.cartData?.length !== 0 ?
-                    context.cartData?.map(item => parseInt(item.price) * item.quantity)
-                      .reduce((total, value) => total + value, 0) : 0)
-                    ?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })
-                }
-              </span>
-            </p>
+                  <p className="flex items-center justify-between">
+                    <span className="text-[14px] font-[500]">Vận chuyển</span>
+                    <span className="font-bold">{shippingFee === 0 ? "Miễn phí" : `${shippingFee.toLocaleString('vi-VN')}đ`}</span>
+                  </p>
+
+                  <p className="flex items-center justify-between">
+                    <span className="text-[14px] font-[500]">Giao đến</span>
+                    <span className="font-bold"><span className="font-bold">{context?.userData?.address_details?.[0]?.country || "Việt Nam"}</span></span>
+                  </p>
+
+                  <p className="flex items-center justify-between">
+                    <span className="text-[14px] font-[500]">Tổng cộng</span>
+                    <span className="text-primary font-bold">
+                      {totalAmount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+                    </span>
+                  </p>
+                </>
+              );
+            })()}
 
             <br />
 

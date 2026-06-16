@@ -1,3 +1,603 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  /* Font chữ chính hỗ trợ Tiếng Việt tốt */
+  --font-main: "Inter", "Roboto", "Segoe UI", sans-serif;
+
+  --primary: #ff5252;
+  --btn-blue: var(--primary);
+  --btn-blue-hover: #e04848;
+
+  --bg-body: #f1f1f1;
+  --bg-table-header: #f1f1f1;
+  --bg-dialog: #f9fafb;
+  --bg-input-disabled: #f1f1f1;
+  --bg-appbar: #e6e6e6;
+  --bg-select: #ffffff;
+
+  --border-color: rgba(0, 0, 0, 0.1);
+  --scrollbar-thumb: #ccc;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: var(--font-main) !important;
+}
+
+body {
+  font-family: var(--font-main);
+  background: var(--bg-body);
+}
+
+/* --- Components UI --- */
+.MuiBadge-badge {
+  background: var(--primary) !important;
+}
+
+.ReactCollapse--collapse {
+  transition: height 300ms;
+}
+
+.MuiPaper-root {
+  transition: all 0.3s ease-in-out !important;
+}
+
+/* --- Scrollbar --- */
+::-webkit-scrollbar {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb) !important;
+}
+
+/* --- Table --- */
+table td {
+  padding: 8px 17px !important;
+  font-size: 13px !important;
+}
+
+th.MuiTableCell-root {
+  background-color: var(--bg-table-header) !important;
+  @apply py-1;
+}
+
+.MuiTableBody-root tr:nth-child(even) {
+  @apply bg-gray-50;
+}
+
+/* --- Buttons --- */
+.btn {
+  padding: 8px 20px !important;
+  border-radius: 30px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.btn svg {
+  font-size: 20px;
+}
+
+.btn-blue {
+  background: var(--btn-blue) !important;
+  color: #fff !important;
+  padding: 8px 24px !important;
+  border-radius: 30px !important;
+  box-shadow: 0 4px 12px rgba(255, 82, 82, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.btn-blue:hover {
+  background: var(--btn-blue-hover) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 82, 82, 0.3);
+}
+
+.btn-sm {
+  padding: 6px 20px !important;
+  font-size: 13px !important;
+}
+
+.btn-lg {
+  padding: 8px 20px !important;
+  font-size: 16px !important;
+}
+
+/* --- Sidebar Active Nav Sync --- */
+.sidebar a.active button {
+  background: rgba(255, 82, 82, 0.08) !important;
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+}
+
+.sidebar a.active button svg {
+  color: var(--primary) !important;
+  opacity: 1 !important;
+}
+
+.sidebar a.active button span.rounded-full {
+  background: var(--primary) !important;
+}
+
+.sidebar button.active-parent {
+  background: rgba(255, 82, 82, 0.04) !important;
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+}
+
+.sidebar button.active-parent svg {
+  color: var(--primary) !important;
+  opacity: 1 !important;
+}
+
+.MuiButton-icon svg {
+  font-size: 27px !important;
+}
+
+/* --- Layout & Typography --- */
+.css-rizt0-MuiTypography-root {
+  font-size: 14px !important;
+}
+
+.MuiAppBar-colorPrimary {
+  background: var(--bg-appbar) !important;
+}
+
+.contentRight {
+  padding-top: 75px !important;
+  padding-left: 20px !important;
+}
+
+/* --- Form & Input --- */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+.MuiSelect-select {
+  background: var(--bg-select) !important;
+}
+
+.MuiDialog-paper {
+  background: var(--bg-dialog) !important;
+}
+
+.otpBox input {
+  border: 1px solid rgba(0, 0, 0, 0.3) !important;
+  outline: none !important;
+  border-radius: 4px;
+}
+
+.otpBox input:focus {
+  border: 1px solid rgba(0, 0, 0, 0.7) !important;
+}
+
+.otpPage .container {
+  height: 90vh;
+  display: flex;
+}
+
+input[type="text"]:disabled,
+input[type="email"]:disabled {
+  pointer-events: none;
+  background: var(--bg-input-disabled) !important;
+}
+
+.react-international-phone-input {
+  width: 100% !important;
+}
+
+.react-international-phone-country-selector-button {
+  width: 55px !important;
+}
+
+.react-international-phone-input-container {
+  border: 1px solid var(--border-color) !important;
+}
+
+.Mui-focused fieldset legend {
+  display: none !important;
+}
+
+/* --- Loader --- */
+button .MuiCircularProgress-root {
+  width: 30px !important;
+  height: 30px !important;
+}
+
+button.btn-sml span.MuiCircularProgress-root {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* --- Swiper & Product Sliders --- */
+.zoomProductSliderThumbs.space .swiper-wrapper {
+  padding-top: 38px !important;
+}
+
+.zoomProductSliderThumbs .swiper-slide {
+  height: 80px !important;
+  overflow: hidden;
+  border-radius: 5px;
+}
+
+.zoomProductSliderThumbs .swiper-button-next,
+.zoomProductSliderThumbs .swiper-button-prev {
+  width: 100% !important;
+  height: 30px !important;
+  border-radius: 0px !important;
+  left: 0 !important;
+  right: inherit !important;
+}
+
+.zoomProductSliderThumbs .swiper-button-next {
+  bottom: 0px !important;
+  top: inherit !important;
+}
+
+.zoomProductSliderThumbs .swiper-button-prev {
+  top: 20px !important;
+}
+
+.zoomProductSliderThumbs .swiper-button-next:after,
+.zoomProductSliderThumbs .swiper-button-prev:after {
+  transform: rotate(90deg);
+}
+
+.swiper-slide .iiz {
+  height: 400px !important;
+  overflow: hidden !important;
+}
+
+.swiper-button-prev,
+.swiper-button-next {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: 100%;
+  width: 45px;
+  height: 45px;
+  min-width: 45px;
+  box-shadow: 0 1px 3px #0000001f, 0 1px 2px #0000003d !important;
+  transition: all 0.2s;
+}
+
+.swiper-button-prev:after,
+.swiper-button-next:after {
+  font-size: 22px !important;
+  color: #000;
+}
+
+.smlBtn .swiper-button-prev,
+.smlBtn .swiper-button-next {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  top: 55% !important;
+}
+
+.smlBtn .swiper-button-prev:after,
+.smlBtn .swiper-button-next:after {
+  font-size: 18px !important;
+}
+
+/* --- Editor & Sidebar --- */
+.rsw-editor {
+  min-height: 200px !important;
+  background: #fff !important;
+}
+
+.sidebar ul {
+  padding-right: 5px;
+}
+
+.sidebar ul::-webkit-scrollbar {
+  width: 5px !important;
+}
+
+.uploadBox h4 {
+  text-align: center;
+}
+
+/* Icon thao tác admin — luôn hiển thị */
+.admin-action-btn,
+.admin-action-btn svg,
+table button svg,
+.MuiIconButton-root svg {
+  color: rgba(0, 0, 0, 0.75) !important;
+  opacity: 1 !important;
+  flex-shrink: 0;
+}
+
+.MuiButton-root.MuiButton-text svg {
+  color: inherit !important;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Premium upgrades for Buttons, Inputs and Dropdown Selects */
+.MuiButton-root {
+  border-radius: 30px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+  padding: 8px 22px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.MuiButton-contained {
+  box-shadow: 0 4px 12px rgba(255, 82, 82, 0.15) !important;
+}
+
+.MuiButton-contained:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 8px 20px rgba(255, 82, 82, 0.25) !important;
+}
+
+.MuiOutlinedInput-root {
+  border-radius: 12px !important;
+  background-color: #ffffff !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(0, 0, 0, 0.35) !important;
+}
+
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--primary) !important;
+  border-width: 2px !important;
+}
+
+.MuiSelect-select {
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+  font-size: 14px !important;
+  background-color: #ffffff !important;
+  border-radius: 12px !important;
+}
+
+select {
+  border-radius: 12px !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  padding: 10px 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  outline: none !important;
+  background-color: #ffffff !important;
+  transition: all 0.2s ease-in-out !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+select:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(255, 77, 0, 0.15) !important;
+}
+
+/* ==========================================================================
+   GLOBAL PREMIUM SYNCHRONIZED ACTION BUTTONS (EDIT, VIEW, DELETE)
+   MATCHES THE USER IMAGE PERFECTLY (ROUND CIRCULAR PASTEL DESIGN)
+   ========================================================================== */
+
+/* 1. Edit Action Buttons */
+button:has(svg.AiOutlineEdit),
+button:has(svg.AiOutlineEdit) svg,
+button:has(svg[class*="Edit"]),
+button:has(.AiOutlineEdit),
+button.bg-indigo-50,
+.action-btn-edit {
+  background-color: #eff6ff !important;
+  /* Very soft light blue/indigo background matching image */
+  color: #3b82f6 !important;
+  /* Indigo/blue edit icon color matching image */
+  border: 1px solid #dbeafe !important;
+  /* Very subtle light border matching image */
+  border-radius: 9999px !important;
+  /* 100% Circular */
+  width: 35px !important;
+  height: 35px !important;
+  min-width: 35px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: none !important;
+}
+
+button:has(svg.AiOutlineEdit):hover,
+button:has(svg[class*="Edit"]):hover,
+button:has(.AiOutlineEdit):hover,
+button.bg-indigo-50:hover,
+.action-btn-edit:hover {
+  background-color: #3b82f6 !important;
+  /* Solid elegant blue on hover */
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+  transform: scale(1.05);
+}
+
+button:has(svg.AiOutlineEdit):hover svg,
+button:has(svg[class*="Edit"]):hover svg,
+button:has(.AiOutlineEdit):hover svg,
+button.bg-indigo-50:hover svg,
+.action-btn-edit:hover svg {
+  color: #ffffff !important;
+}
+
+button:has(svg.AiOutlineEdit) svg,
+button:has(svg[class*="Edit"]) svg,
+button:has(.AiOutlineEdit) svg,
+button.bg-indigo-50 svg,
+.action-btn-edit svg {
+  color: #3b82f6 !important;
+  font-size: 16px !important;
+  transition: color 0.2s ease !important;
+}
+
+/* 2. View Action Buttons */
+button:has(svg.FaRegEye),
+button:has(svg.FaRegEye) svg,
+button:has(svg[class*="Eye"]),
+button:has(.FaRegEye),
+button.bg-emerald-50,
+.action-btn-view {
+  background-color: #ecfdf5 !important;
+  /* Very soft light emerald background */
+  color: #059669 !important;
+  /* Elegant emerald view icon color */
+  border: 1px solid #d1fae5 !important;
+  /* Subtle emerald border */
+  border-radius: 9999px !important;
+  /* 100% Circular */
+  width: 35px !important;
+  height: 35px !important;
+  min-width: 35px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: none !important;
+}
+
+button:has(svg.FaRegEye):hover,
+button:has(svg[class*="Eye"]):hover,
+button:has(.FaRegEye):hover,
+button.bg-emerald-50:hover,
+.action-btn-view:hover {
+  background-color: #059669 !important;
+  /* Solid emerald on hover */
+  color: #ffffff !important;
+  border-color: #059669 !important;
+  transform: scale(1.05);
+}
+
+button:has(svg.FaRegEye):hover svg,
+button:has(svg[class*="Eye"]):hover svg,
+button:has(.FaRegEye):hover svg,
+button.bg-emerald-50:hover svg,
+.action-btn-view:hover svg {
+  color: #ffffff !important;
+}
+
+button:has(svg.FaRegEye) svg,
+button:has(svg[class*="Eye"]) svg,
+button:has(.FaRegEye) svg,
+button.bg-emerald-50 svg,
+.action-btn-view svg {
+  color: #059669 !important;
+  font-size: 16px !important;
+  transition: color 0.2s ease !important;
+}
+
+/* 3. Delete Action Buttons */
+button:has(svg.GoTrash),
+button:has(svg.GoTrash) svg,
+button:has(svg[class*="Trash"]),
+button:has(.GoTrash),
+button.bg-rose-50,
+.action-btn-delete {
+  background-color: #fff1f2 !important;
+  /* Very soft light rose background matching image */
+  color: #f43f5e !important;
+  /* Rose delete icon color matching image */
+  border: 1px solid #ffe4e6 !important;
+  /* Very subtle rose border matching image */
+  border-radius: 9999px !important;
+  /* 100% Circular */
+  width: 35px !important;
+  height: 35px !important;
+  min-width: 35px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: none !important;
+}
+
+button:has(svg.GoTrash):hover,
+button:has(svg[class*="Trash"]):hover,
+button:has(.GoTrash):hover,
+button.bg-rose-50:hover,
+.action-btn-delete:hover {
+  background-color: #f43f5e !important;
+  /* Solid rose on hover */
+  color: #ffffff !important;
+  border-color: #f43f5e !important;
+  transform: scale(1.05);
+}
+
+button:has(svg.GoTrash):hover svg,
+button:has(svg[class*="Trash"]):hover svg,
+button:has(.GoTrash):hover svg,
+button.bg-rose-50:hover svg,
+.action-btn-delete:hover svg {
+  color: #ffffff !important;
+}
+
+button:has(svg.GoTrash) svg,
+button:has(svg[class*="Trash"]) svg,
+button:has(.GoTrash) svg,
+button.bg-rose-50 svg,
+.action-btn-delete svg {
+  color: #f43f5e !important;
+  font-size: 16px !important;
+  transition: color 0.2s ease !important;
+}
+
+/* Responsive styles (from responsive.css) */
+@media only screen and (min-width:320px) and (max-width:992px){
+    html,body{overflow-x: hidden;}
+
+    .dashboardFilters{display: block !important; white-space: nowrap; overflow-x: scroll;}
+    .dashboardFilters::-webkit-scrollbar{display: none !important;}
+    .dashboardFilters .col{display: inline-block; vertical-align: top; width: 250px; padding-right: 15px;}
+    .dashboardFilters .search_box{position: relative; top: 15px;}
+
+    .sidebarOverlay{pointer-events: inherit;}
+
+    .btn-sm{padding: 3px 10px !important; font-size: 11px !important;}
+    .btn-lg{padding: 5px 10px !important; font-size: 14px !important;}
+    .btn{padding: 5px 10px !important; font-size: 12px !important;}
+    .btn svg{font-size: 15px !important;}
+
+    .MuiPagination-root{width: 80% !important; margin: auto !important;}
+    .MuiPagination-ul{white-space: nowrap !important; overflow-x: scroll !important; display: block !important; width:100% !important;}
+    .MuiPagination-ul li{display: inline-block !important; vertical-align: top !important;}
+
+    .contentRight {padding-left: 15px !important;}
+    
+    .MuiTableCell-head{white-space: nowrap;}
+}
+
+@media only screen and (min-width:320px) and (max-width:500px){
+    .sidebar{width: 80% !important;}
+}
+
+@media only screen and (min-width:500px) and (max-width:767px){
+    .sidebar{width: 60% !important;}
+}
+
+@media only screen and (min-width:767px) and (max-width:992px){
+    .sidebar{width: 40% !important;}
+}

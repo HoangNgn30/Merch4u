@@ -54,7 +54,7 @@ const readRecentlyViewed = (excludeId) => {
 
 export default function RecentlyViewed({
   excludeId,
-  title = "Xem gần đây",
+  title = "Xem Gần Đây",
   className = "",
 }) {
   const [products, setProducts] = useState([]);

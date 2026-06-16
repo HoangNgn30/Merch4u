@@ -316,8 +316,26 @@ const Checkout = () => {
 
 
   useEffect(() => {
-    setAppliedCoupon(null);
-  }, [subTotal])
+    if (appliedCoupon && subTotal > 0) {
+      const codeToValidate = appliedCoupon.coupon?.code || couponCode;
+      if (codeToValidate) {
+        postData("/api/coupon/validate", {
+          code: codeToValidate,
+          orderTotal: subTotal
+        }).then((res) => {
+          if (res?.error === false) {
+            setAppliedCoupon(res);
+            setCouponCode(res?.coupon?.code || codeToValidate.toUpperCase());
+          } else {
+            setAppliedCoupon(null);
+            context?.alertBox("warning", res?.message || "Mã giảm giá không còn khả dụng cho đơn hàng mới");
+          }
+        });
+      }
+    } else {
+      setAppliedCoupon(null);
+    }
+  }, [subTotal]);
 
   useEffect(() => {
     if (context?.userData) {

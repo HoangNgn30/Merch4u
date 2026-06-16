@@ -1,12 +1,112 @@
-.categoryPanel button{text-transform: capitalize !important;}
+/* Category Panel - Premium Design */
+.categoryPanel {
+  background: rgba(255, 255, 255, 0.99) !important;
+  backdrop-filter: blur(12px);
+  padding: 15px 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
 
-.nav li .submenu{visibility: hidden; z-index: 1000;}
-.nav li .submenu button{font-weight: 400 !important;}
-.nav li:hover .submenu{opacity: 1 !important; visibility: inherit; top: 100%;}
-.nav li .submenu li:hover button{color: #ff5252 !important;}
+.categoryPanel h3 {
+  color: #111111;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  padding-bottom: 16px !important;
+  margin-bottom: 12px;
+  font-weight: 700 !important;
+}
 
-.nav li .submenu li .submenu{top: 0px !important; left: 120% !important; opacity: 0 !important;}
-.nav li .submenu li:hover .submenu{left: 100% !important; opacity: 1 !important;}
+.categoryPanel .scroll {
+  flex: 1;
+  overflow-y: auto;
+}
 
-.nav li .submenu li .submenu button{color: rgba(0,0,0,0.80) !important;}
-.nav li .submenu li .submenu button:hover{color: #ff5252 !important;}
+/* Category Collapse Premium List Styles */
+.categoryPanel ul li button {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #2c3e50 !important;
+  border-radius: 10px !important;
+  margin: 3px 12px !important;
+  padding: 11px 16px !important;
+  width: calc(100% - 24px) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  text-transform: capitalize !important;
+  background-color: transparent !important;
+}
+
+.categoryPanel ul li button:hover {
+  background-color: rgba(255, 82, 82, 0.08) !important;
+  color: #ff5252 !important;
+  padding-left: 22px !important;
+  transform: translateX(4px);
+}
+
+.categoryPanel ul .submenu li button {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #4a5568 !important;
+}
+
+.categoryPanel ul .submenu li button:hover {
+  background-color: rgba(255, 82, 82, 0.05) !important;
+  color: #ff5252 !important;
+  padding-left: 22px !important;
+}
+
+.categoryPanel ul .inner_submenu li a {
+  font-size: 12.5px !important;
+  color: #718096 !important;
+  padding: 9px 24px !important;
+  display: block;
+  border-radius: 8px;
+  margin: 2px 16px;
+  transition: all 0.2s ease;
+  font-weight: 450;
+}
+
+.categoryPanel ul .inner_submenu li a:hover {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+  color: #ff5252 !important;
+  padding-left: 30px !important;
+}
+
+/* Desktop Nav submenu */
+.nav li .submenu { visibility: hidden; z-index: 1000; }
+.nav li .submenu button { font-weight: 400 !important; }
+.nav li:hover .submenu { opacity: 1 !important; visibility: inherit; top: 100%; }
+.nav li .submenu li:hover button { color: #ff5252 !important; }
+.nav li .submenu li .submenu { top: 0px !important; left: 120% !important; opacity: 0 !important; }
+.nav li .submenu li:hover .submenu { left: 100% !important; opacity: 1 !important; }
+.nav li .submenu li .submenu button { color: rgba(0,0,0,0.80) !important; }
+.nav li .submenu li .submenu button:hover { color: #ff5252 !important; }
+
+/* Mobile bottom nav */
+.mobileNav {
+    height: 58px;
+    box-shadow: 0 -1px 8px rgba(0,0,0,0.08);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Prevent body content from hiding behind mobile nav */
+@media (max-width: 991px) {
+    body {
+        padding-bottom: 58px;
+    }
+}
+
+/* Category Dropdown Fade-In Animation */
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-dropdownFadeIn {
+  animation: dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

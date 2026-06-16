@@ -12,33 +12,33 @@ import TableRow from "@mui/material/TableRow";
 import { AiOutlineEdit } from "react-icons/ai";
 import { GoTrash } from "react-icons/go";
 import { MyContext } from '../../App';
-import { deleteData, deleteMultipleData, fetchDataFromApi } from '../../utils/api';
+import { deleteData, editData, fetchDataFromApi } from '../../utils/api';
+import Switch from "@mui/material/Switch";
 
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 
+
 const label = { inputProps: { "aria-label": "Checkbox demo" } };
 
 const columns = [
-    { id: "image", label: "Hình Ảnh", minWidth: 100, align: "center" },
-    { id: "title", label: "Tiêu Đề", minWidth: 200 },
-    { id: "description", label: "Mô Tả", minWidth: 300 },
+    { id: "image", label: "Hình Ảnh", minWidth: 250, align: "center" },
+    { id: "status", label: "Trạng Thái", minWidth: 100, align: "center" },
     { id: "action", label: "Thao Tác", minWidth: 100, align: "center" },
 ];
 
-export const BlogList = () => {
+export const HomeSliderBanners = () => {
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
-    const [blogData, setBlogData] = useState([]);
-
-
+    const [slidesData, setSlidesData] = useState([]);
+    const [sortedIds, setSortedIds] = useState([]);
     const [photos, setPhotos] = useState([]);
     const [open, setOpen] = useState(false);
 
     const context = useContext(MyContext);
 
-    const paginatedData = blogData?.slice()?.reverse()?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage) || [];
+    const paginatedData = slidesData?.slice()?.reverse()?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage) || [];
 
 
     useEffect(() => {
@@ -49,17 +49,19 @@ export const BlogList = () => {
 
     const getData = () => {
         context?.setProgress(50);
-        fetchDataFromApi("/api/blog").then((res) => {
-            setBlogData(res?.blogs);
-            let arr = [];
+        fetchDataFromApi("/api/homeSlides").then((res) => {
+            setSlidesData(res?.data);
             context?.setProgress(100);
-            for (let i = 0; i < res?.blogs?.length; i++) {
+            let arr = [];
+
+            for (let i = 0; i < res?.data?.length; i++) {
                 arr.push({
-                    src: res?.blogs[i]?.images[0]
+                    src: res?.data[i]?.images[0]
                 })
             }
 
             setPhotos(arr);
+
         });
     }
 
@@ -77,19 +79,36 @@ export const BlogList = () => {
     const deleteSlide = (id) => {
         if (["ADMIN", "SUPERBOSS"].includes(context?.userData?.role)) {
             context?.showConfirmDelete(
-                "Xóa bài viết?",
-                "Bạn có chắc chắn muốn xóa bài viết này?",
+                "Xóa slide?",
+                "Bạn có chắc chắn muốn xóa slide này?",
                 () => {
-                    deleteData(`/api/blog/${id}`).then((res) => {
-                        context.alertBox("success", "Đã xóa bài viết");
+                    deleteData(`/api/homeSlides/${id}`).then((res) => {
+                        context.alertBox("success", "Slide deleted");
                         getData();
                     })
                 }
             )
-        }else {
+        } else {
             context.alertBox("error", "Chỉ admin mới có quyền xóa dữ liệu");
         }
     }
+
+    const toggleVisibility = (item) => {
+        if (["ADMIN", "SUPERBOSS"].includes(context?.userData?.role)) {
+            const newStatus = item.isVisible === false ? true : false;
+            editData(`/api/homeSlides/${item._id}`, { isVisible: newStatus }).then((res) => {
+                if (res?.status === 200 || res?.data?.error === false) {
+                    context.alertBox("success", "Cập nhật trạng thái slide thành công");
+                    getData();
+                } else {
+                    context.alertBox("error", res?.data?.message || "Cập nhật thất bại");
+                }
+            });
+        } else {
+            context.alertBox("error", "Chỉ admin mới có quyền thay đổi trạng thái");
+        }
+    }
+
 
     return (
         <>
@@ -97,15 +116,19 @@ export const BlogList = () => {
                 <div className="flex items-center w-full px-5 pb-4 justify-between">
                     <div className="col">
                         <h2 className="text-[18px] font-[600]">
-                            Danh Sách Bài Viết
+                            Slide Quảng Cáo
                         </h2>
                     </div>
 
-                    <div className="col ml-auto flex items-center justify-end gap-3">
+                    <div className="col ml-auto flex items-center gap-3">
+                        {
+                            sortedIds?.length !== 0 && <Button variant="contained" className="btn-sm" size="small" color="error"
+                                onClick={deleteMultipleSlides}>Xóa</Button>
+                        }
                         <Button className="btn-blue !text-white btn-sm" onClick={() => context.setIsOpenFullScreenPanel({
                             open: true,
-                            model: 'Add Blog'
-                        })}>Thêm Bài Viết Mới</Button>
+                            model: 'Add Home Slide'
+                        })}>Thêm Slide Quảng Cáo</Button>
                     </div>
                 </div>
 
@@ -133,9 +156,9 @@ export const BlogList = () => {
                                     return (
                                         <TableRow key={item?._id || index}>
 
-                                            <TableCell width={100} align="center">
-                                                <div className="flex items-center justify-center gap-4 w-[200px] mx-auto">
-                                                    <div className="img w-full rounded-md overflow-hidden group cursor-pointer" onClick={() => setOpen(true)}>
+                                            <TableCell width={300} align="center">
+                                                <div className="flex items-center justify-center gap-4 w-[300px] cursor-pointer mx-auto" onClick={() => setOpen(true)}>
+                                                    <div className="img w-full rounded-md overflow-hidden group">
 
                                                         <img
                                                             src={item?.images[0]}
@@ -146,30 +169,32 @@ export const BlogList = () => {
                                                 </div>
                                             </TableCell>
 
-                                            <TableCell width={200}>
-                                                <span className='text-[15px] font-[500] inline-block w-[200px] sm:w-[200px] md:w-[300px]'>{item?.title}</span>
-                                            </TableCell>
-
-
-                                            <TableCell width={300}>
-                                                <div className="w-[250px] sm:w-[200px] md:w-[300px]" dangerouslySetInnerHTML={{ __html: item?.description?.substr(0, 150) + '...' }} />
+                                            <TableCell width={100} align="center">
+                                                <Switch 
+                                                    checked={item?.isVisible !== false} 
+                                                    onChange={() => toggleVisibility(item)}
+                                                    color="primary"
+                                                />
                                             </TableCell>
 
                                             <TableCell width={100} align="center">
                                                 <div className="flex items-center justify-center gap-1.5">
-                                                    <button className="action-btn-edit" onClick={() => context.setIsOpenFullScreenPanel({
-                                                        open: true,
-                                                        model: 'Edit Blog',
-                                                        id: item?._id
-                                                    })}
-                                                        title="Sửa bài viết"
+                                                    <button className="action-btn-edit"
+                                                        onClick={() => context.setIsOpenFullScreenPanel({
+                                                            open: true,
+                                                            model: 'Edit Home Slide',
+                                                            id: item?._id
+                                                        })
+                                                        }
+                                                        title="Sửa slide"
                                                     >
                                                         <AiOutlineEdit />
                                                     </button>
 
 
-                                                    <button className="action-btn-delete" onClick={() => deleteSlide(item?._id)}
-                                                        title="Xóa bài viết"
+                                                    <button className="action-btn-delete" 
+                                                        onClick={() => deleteSlide(item?._id)}
+                                                        title="Xóa slide"
                                                     >
                                                         <GoTrash />
                                                     </button>
@@ -193,7 +218,7 @@ export const BlogList = () => {
                     labelDisplayedRows={({ from, to, count }) => `${from}-${to} trong số ${count !== -1 ? count : `hơn ${to}`}`}
                     rowsPerPageOptions={[10, 25, 100]}
                     component="div"
-                    count={blogData?.length || 0}
+                    count={slidesData?.length || 0}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={handleChangePage}
@@ -208,10 +233,8 @@ export const BlogList = () => {
                 slides={photos}
             />
 
-
-
         </>
     )
 }
 
-
+export default HomeSliderBanners;

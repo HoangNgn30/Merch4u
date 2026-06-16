@@ -6,6 +6,10 @@
 
 :root {
   --font-main: "Chiron GoRound TC", sans-serif;
+  --color-primary: #ff5252;
+  --color-primary-hover: #171717;
+  --color-bg-light: #fff5f5;
+  --color-accent: #f472b6;
 }
 
 
@@ -32,18 +36,18 @@ h1, h2, h3, h4, h5, h6{
 
 
 ::-webkit-scrollbar{width: 8px !important; height: 8px !important;}
-::-webkit-scrollbar-thumb{background: #ff5252;}
+::-webkit-scrollbar-thumb{background: var(--color-primary);}
 ::-webkit-scrollbar-track{background: #fff;}
 
 .overflow-x-auto::-webkit-scrollbar-thumb{background: #ccc;}
 
 .container{width: 95%; margin: auto;}
 
-.btn-org{background: #ff5252 !important; color: #fff !important; font-weight: 500; font-size: 16px; padding: 10px 24px !important; border:1px solid transparent !important; border-radius: 30px !important; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;}
-.btn-org:hover{background: #171717 !important; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255, 82, 82, 0.25) !important;}
+.btn-org{background: var(--color-primary) !important; color: #fff !important; font-weight: 500; font-size: 16px; padding: 10px 24px !important; border:1px solid transparent !important; border-radius: 30px !important; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;}
+.btn-org:hover{background: var(--color-primary-hover) !important; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255, 82, 82, 0.25) !important;}
 
-.btn-org.btn-border{background: none !important; color: #ff5252 !important; border:2px solid #ff5252 !important; font-weight: 600; font-size: 16px; padding: 8px 24px !important; border-radius: 30px !important; transition: all 0.3s ease-in-out !important;}
-.btn-org.btn-border:hover{background: #171717 !important; color: #fff !important;  border:2px solid #171717 !important; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;}
+.btn-org.btn-border{background: none !important; color: var(--color-primary) !important; border:2px solid var(--color-primary) !important; font-weight: 600; font-size: 16px; padding: 8px 24px !important; border-radius: 30px !important; transition: all 0.3s ease-in-out !important;}
+.btn-org.btn-border:hover{background: var(--color-primary-hover) !important; color: #fff !important;  border:2px solid var(--color-primary-hover) !important; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;}
 
 .btn-dark{background: #363636 !important; color: #fff !important;  border:1px solid transparent !important; border-radius: 30px !important; padding: 10px 24px !important; transition: all 0.3s ease-in-out !important;}
 .btn-dark:hover{background: #171717 !important; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;}
@@ -55,9 +59,9 @@ h1, h2, h3, h4, h5, h6{
 .btn-lg{ font-size: 18px; padding: 10px 20px !important;}
 .btn-sm{ font-size: 12px !important; padding: 5px 20px !important;}
 
-.link:hover,.Mui-checked{color: #ff5252 !important;}
+.link:hover,.Mui-checked{color: var(--color-primary) !important;}
 
-.MuiBadge-badge{background-color: #ff5252 !important;}
+.MuiBadge-badge{background-color: var(--color-primary) !important;}
 
 nav ul button{text-transform: capitalize !important;}
 
@@ -87,16 +91,16 @@ nav ul button:hover{background: none !important;}
 
 .homeCatSlider .item{border: 1px solid rgba(0,0,0,0.1);}
 
-.swiper-button-prev:hover,.swiper-button-next:hover{background: #ff5252 !important;}
+.swiper-button-prev:hover,.swiper-button-next:hover{background: var(--color-primary) !important;}
 .swiper-button-prev:hover::after,.swiper-button-next:hover::after{color: #fff !important;}
 
 .homeCatSlider .item:hover img{transform:scale(1.1);}
 
 
-.MuiTabs-indicator{background-color: #ff5252 !important;}
-.MuiTab-textColorPrimary.Mui-selected{color:#ff5252 !important;}
+.MuiTabs-indicator{background-color: var(--color-primary) !important;}
+.MuiTab-textColorPrimary.Mui-selected{color:var(--color-primary) !important;}
 
-.productsSlider .swiper-wrapper{padding: 15px 8px; margin-left: -15px; margin-right: -15px;}
+.productsSlider .swiper-wrapper{padding: 5px 8px 15px 8px; margin-left: -15px; margin-right: -15px;}
 
 
 footer form input::placeholder{font-size: 14px;}
@@ -106,7 +110,7 @@ footer form input::placeholder{font-size: 14px;}
 
 .MuiFormControlLabel-label{font-size: 13px !important; color: rgba(0,0,0,0.8);}
 
-.swiper-pagination-bullet-active{background: #ff5252 !important;}
+.swiper-pagination-bullet-active{background: var(--color-primary) !important;}
 
 
 .homeSliderV2 .swiper-slide-active .info{right: 0px !important; opacity: 1;}
@@ -147,7 +151,7 @@ footer form input::placeholder{font-size: 14px;}
 }
 
 .itemViewActions button.active svg{color:#fff !important; opacity: 1;}
-.Mui-selected.MuiPaginationItem-page{background: #ff5252 !important; color:#fff !important;}
+.Mui-selected.MuiPaginationItem-page{background: var(--color-primary) !important; color:#fff !important;}
 
 .shadow-md{box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.02) !important; border-radius: 16px !important;}
 .shadow-lg{box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.03) !important; border-radius: 20px !important;}
@@ -162,7 +166,7 @@ footer form input::placeholder{font-size: 14px;}
 .zoomProductSliderThumbs .swiper-button-prev:after{transform: rotate(90deg);}
 
 
-.productContent .actions button{min-width: 40px !important; height: 30px !important; border: 1px solid rgba(0,0,0,0.1) !important; color: rgba(0,0,0,0.7);}
+.productContent .actions button{min-width: 40px !important; height: 38px !important; border: 1px solid rgba(0,0,0,0.1) !important; color: rgba(0,0,0,0.7); white-space: nowrap !important;}
 .productContent .actions button.error{ border: 1px solid #ff5252 !important;}
 
 input[type=number]::-webkit-inner-spin-button, 
@@ -196,10 +200,10 @@ input[type=number]::-webkit-outer-spin-button {
   #account-menu .MuiPaper-root{width: 200px !important;}
 
   .myAccountTabs li a{position: relative; display: block;}
-  .myAccountTabs li a:before{content: ''; width: 3px; height: 50%; position: absolute; top: 50%; left: 0px; background: #ff5252; transition: all 0.3s ease-in-out; opacity: 0;}
+  .myAccountTabs li a:before{content: ''; width: 3px; height: 50%; position: absolute; top: 50%; left: 0px; background: var(--color-primary); transition: all 0.3s ease-in-out; opacity: 0;}
 
   .myAccountTabs li a.active::before{height: 100%; opacity: 1; top: 0px;}
-  .myAccountTabs li a.active button svg{color: #ff5252 !important; opacity: 1 !important;}
+  .myAccountTabs li a.active button svg{color: var(--color-primary) !important; opacity: 1 !important;}
 
   button .MuiCircularProgress-root{width:25px !important; height:25px !important;}
   button.btn-org .MuiCircularProgress-root{color: #fff !important;}
@@ -234,3 +238,88 @@ header, header:hover {
 table td{padding: 8px 17px !important; font-size: 13px !important;}
 
 .searchBox .MuiCircularProgress-root{width: 20px !important; height: 20px !important;}
+
+.text-primary {
+  color: var(--color-primary) !important;
+}
+.bg-primary {
+  background-color: var(--color-primary) !important;
+}
+.border-primary {
+  border-color: var(--color-primary) !important;
+}
+.text-primary-hover:hover {
+  color: var(--color-primary-hover) !important;
+}
+.bg-primary-hover:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+
+/* Custom styles for Blog Description (from App.css) */
+.blog-description img {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+/* Responsive styles (from responsive.css) */
+@media only screen and (min-width:320px) and (max-width:992px){
+    html,body{overflow-x: hidden;}
+
+    .btn-sm{padding: 3px 10px !important; font-size: 11px !important;}
+    .btn-lg{padding: 5px 10px !important; font-size: 14px !important;}
+    .btn{padding: 5px 10px !important; font-size: 12px !important;}
+    .btn svg{font-size: 15px !important;}
+
+    .mobileNav a.active button{@apply !text-primary}
+    .navigation ul{white-space: nowrap; overflow-x: scroll; overflow-y: hidden; display: block !important; text-align: center;}
+    .navigation ul::-webkit-scrollbar{display: none !important;}
+    .navigation ul li{display: inline-block !important; vertical-align: top !important;}
+
+    .container{width: 95% !important; max-width: 95% !important;}
+
+    .scrollableBox{white-space: nowrap; overflow-x: scroll; overflow-y: hidden; display: block !important;}
+    .scrollableBox::-webkit-scrollbar{display: none !important;}
+    .scrollableBox .box{display: inline-block !important; vertical-align: top !important; margin-right: 12px !important; width: 300px !important;}
+    .scrollableBox .box .info *{white-space: break-spaces !important;}
+
+    .scrollableBox .col{display: inline-block !important; vertical-align: top !important; margin-right: 12px !important; width: 200px !important;}
+    .productsSlider .swiper, .blogSection .swiper{overflow: hidden !important;}
+
+    .resBannersSlider{white-space: nowrap; overflow-x: scroll; overflow-y: hidden; display: block !important;}
+
+    .productsSlider .swiper-wrapper{padding: 4px 8px 8px 8px !important;}
+    .resBannersSlider .swiper-slide{display: inline-block !important; vertical-align: top !important; margin-right: 12px !important; width: 300px !important;}
+    .resBannersSlider .swiper-slide *{white-space: break-spaces !important;}
+
+    .footerBoxWrap{padding-left:20px !important ;}
+    .footerBoxWrap .col{width: 180px !important;}
+
+    .sidebarWrapper.open{bottom: 0px !important; opacity: 1 !important;}
+
+    .itemHomeSlider{height: 150px !important;}
+}
+
+@media only screen and (min-width:320px) and (max-width:767px){
+    .MuiTabs-flexContainer button{font-size: 13px !important;}
+    .productItem  .addToCartBtn{padding: 7px 13px !important;}
+
+    .part2_col1 li a,.part2_col2 li a{font-size: 13px !important;} 
+
+    .sidebar{max-height: 100vh !important; overflow-y: scroll !important; overflow-x: hidden !important;}
+    .sidebar::-webkit-scrollbar{display: none !important;}
+
+    .zoomProductSliderThumbs.space .swiper-wrapper{padding-top: 0px !important;}
+}
+
+@media only screen and (min-width:320px) and (max-width:575px){
+    .cartPanel .MuiPaper-root,.addressPanel .MuiPaper-root{width: 300px !important;}
+}
+
+@media only screen and (min-width:575px) and (max-width:767px){
+    .cartPanel .MuiPaper-root,.addressPanel .MuiPaper-root{width: 400px !important;}
+}

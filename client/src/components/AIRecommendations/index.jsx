@@ -11,7 +11,7 @@ import './style.css';
  * Props:
  *   title (string) — custom title, mặc định "✨ Dành riêng cho bạn"
  */
-export default function AIRecommendations({ title = 'Sản phẩm dành riêng cho bạn' }) {
+export default function AIRecommendations({ title = 'Sản Phẩm Dành Riêng Cho Bạn' }) {
     const { isLogin } = useContext(MyContext);
 
     const [products, setProducts] = useState([]);

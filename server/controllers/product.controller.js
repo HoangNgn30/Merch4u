@@ -880,33 +880,23 @@ export async function removeImageFromCloudinary(request, response) {
 //updated product 
 export async function updateProduct(request, response) {
     try {
+        const updateFields = {};
+        const allowedFields = [
+            'name', 'description', 'bannerimages', 'bannerTitleName', 'isDisplayOnHomeBanner',
+            'images', 'brand', 'price', 'oldPrice', 'discount', 'catId', 'catName', 'subCat',
+            'subCatId', 'category', 'thirdsubCat', 'thirdsubCatId', 'countInStock', 'rating',
+            'isFeatured', 'status', 'isNew', 'size'
+        ];
+
+        allowedFields.forEach(field => {
+            if (request.body[field] !== undefined) {
+                updateFields[field] = request.body[field];
+            }
+        });
+
         const product = await ProductModel.findByIdAndUpdate(
             request.params.id,
-            {
-                name: request.body.name,
-                description: request.body.description,
-                bannerimages: request.body.bannerimages,
-                bannerTitleName: request.body.bannerTitleName,
-                isDisplayOnHomeBanner: request.body.isDisplayOnHomeBanner,
-                images: request.body.images,
-                brand: request.body.brand,
-                price: request.body.price,
-                oldPrice: request.body.oldPrice,
-                discount: request.body.discount,
-                catId: request.body.catId,
-                catName: request.body.catName,
-                subCat: request.body.subCat,
-                subCatId: request.body.subCatId,
-                category: request.body.category,
-                thirdsubCat: request.body.thirdsubCat,
-                thirdsubCatId: request.body.thirdsubCatId,
-                countInStock: request.body.countInStock,
-                rating: request.body.rating,
-                isFeatured: request.body.isFeatured,
-                status: request.body.status,
-                isNew: request.body.isNew,
-                size: request.body.size,
-            },
+            updateFields,
             { new: true }
         );
 

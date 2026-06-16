@@ -31,11 +31,11 @@ import "yet-another-react-lightbox/styles.css";
 const label = { inputProps: { "aria-label": "Checkbox demo" } };
 
 const columns = [
-    { id: "product", label: "Sản phẩm", minWidth: 150 },
-    { id: "category", label: "Danh mục", minWidth: 100, align: "center" },
+    { id: "product", label: "Sản Phẩm", minWidth: 150 },
+    { id: "category", label: "Danh Mục", minWidth: 100, align: "center" },
     {
         id: "subcategory",
-        label: "Danh mục con",
+        label: "Danh Mục Phụ",
         minWidth: 150,
         align: "center",
     },
@@ -47,25 +47,25 @@ const columns = [
     },
     {
         id: "sales",
-        label: "Đã bán",
+        label: "Đã Bán",
         minWidth: 100,
         align: "center",
     },
     {
         id: "stock",
-        label: "Tồn kho",
+        label: "Tồn Kho",
         minWidth: 100,
         align: "center",
     },
     {
         id: "rating",
-        label: "Đánh giá",
+        label: "Đánh Giá",
         minWidth: 100,
         align: "center",
     },
     {
         id: "action",
-        label: "Thao tác",
+        label: "Thao Tác",
         minWidth: 120,
         align: "center",
     },
@@ -182,7 +182,7 @@ export const Products = () => {
 
 
     const getProducts = async (page, limit) => {
-        
+
         setIsloading(true)
         fetchDataFromApi(`/api/product/getAllProducts?page=${page + 1}&limit=${limit}`).then((res) => {
             setProductData(res)
@@ -429,7 +429,7 @@ export const Products = () => {
                 <div className="flex items-center w-full px-5 pb-4 justify-between">
                     <div className="col">
                         <h2 className="text-[18px] font-[600]">
-                            Danh sách sản phẩm
+                            Danh Sách Sản Phẩm
                         </h2>
                     </div>
 
@@ -442,14 +442,14 @@ export const Products = () => {
                             onClick={() => context.setIsOpenFullScreenPanel({
                                 open: true,
                                 model: 'Add Product'
-                            })}>Thêm sản phẩm</Button>
+                            })}>Thêm Sản Phẩm Mới</Button>
                     </div>
                 </div>
 
 
                 <div className="grid grid-cols-1 sm:grid-cols-2  md:grid-cols-2 lg:grid-cols-4 w-full px-5 justify-beetween gap-4">
                     <div className="col">
-                        <h4 className="font-[600] text-[13px] mb-2">Danh Mục Lớn</h4>
+                        <h4 className="font-[600] text-[13px] mb-2">Danh Mục Chính</h4>
                         {
                             context?.catData?.length !== 0 &&
                             <Select
@@ -477,7 +477,7 @@ export const Products = () => {
 
 
                     <div className="col">
-                        <h4 className="font-[600] text-[13px] mb-2">Danh Mục Phụ</h4>
+                        <h4 className="font-[600] text-[13px] mb-2">Danh Mục Cấp 2</h4>
                         {
                             context?.catData?.length !== 0 &&
                             <Select
@@ -509,7 +509,7 @@ export const Products = () => {
 
 
                     <div className="col">
-                        <h4 className="font-[600] text-[13px] mb-2">Danh Mục Con</h4>
+                        <h4 className="font-[600] text-[13px] mb-2">Danh Mục Cấp 3</h4>
                         {
                             context?.catData?.length !== 0 &&
                             <Select
@@ -562,7 +562,7 @@ export const Products = () => {
                     <Table stickyHeader aria-label="sticky table">
                         <TableHead>
                             <TableRow>
-                                <TableCell>
+                                <TableCell style={{ width: 60, minWidth: 60 }} className="!pl-4">
                                     <Checkbox {...label} size="small"
                                         onChange={handleSelectAll}
                                         checked={productData?.products?.length > 0 ? productData?.products?.every((item) => item.checked) : false}
@@ -585,13 +585,13 @@ export const Products = () => {
                                 isLoading === false ? productData?.products?.length !== 0 && productData?.products?.map((product, index) => {
                                     return (
                                         <TableRow key={index} className={`hover:bg-slate-50/80 transition-colors ${product.checked === true ? '!bg-indigo-50/50' : ''}`}>
-                                            <TableCell style={{ minWidth: columns.minWidth }}>
+                                            <TableCell style={{ width: 60, minWidth: 60 }} className="!pl-4">
                                                 <Checkbox {...label} size="small" checked={product.checked === true ? true : false}
                                                     onChange={(e) => handleCheckboxChange(e, product._id, index)}
                                                     className="text-indigo-600"
                                                 />
                                             </TableCell>
-                                            <TableCell style={{ minWidth: columns.minWidth }}>
+                                            <TableCell style={{ minWidth: 150 }}>
                                                 <div className="flex items-center gap-4 w-[320px]" title={product?.name}>
                                                     <div className="img relative w-[65px] h-[65px] rounded-xl overflow-hidden group cursor-pointer shadow-md border border-slate-100" onClick={() => setOpen(true)}>
                                                         <LazyLoadImage
@@ -612,13 +612,13 @@ export const Products = () => {
                                                 </div>
                                             </TableCell>
 
-                                            <TableCell style={{ minWidth: columns.minWidth }} align="center">
+                                            <TableCell style={{ minWidth: 100 }} align="center">
                                                 <span className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-sky-50 text-sky-700 border border-sky-100">
                                                     {product?.catName}
                                                 </span>
                                             </TableCell>
 
-                                            <TableCell style={{ minWidth: columns.minWidth }} align="center">
+                                            <TableCell style={{ minWidth: 150 }} align="center">
                                                 {product?.subCat ? (
                                                     <span className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-violet-50 text-violet-700 border border-violet-100">
                                                         {product?.subCat}
@@ -628,7 +628,7 @@ export const Products = () => {
                                                 )}
                                             </TableCell>
 
-                                            <TableCell style={{ minWidth: columns.minWidth }} align="center">
+                                            <TableCell style={{ minWidth: 130 }} align="center">
                                                 <div className="flex gap-0.5 flex-col items-center justify-center">
                                                     {product?.oldPrice > product?.price && (
                                                         <span className="oldPrice line-through text-slate-400 text-[12px] font-[500]">
@@ -641,7 +641,7 @@ export const Products = () => {
                                                 </div>
                                             </TableCell>
 
-                                            <TableCell style={{ minWidth: columns.minWidth }} align="center">
+                                            <TableCell style={{ minWidth: 100 }} align="center">
                                                 {product?.sale > 20 ? (
                                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                                                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
@@ -655,14 +655,14 @@ export const Products = () => {
                                             </TableCell>
 
 
-                                            <TableCell style={{ minWidth: columns.minWidth }} align="center">
+                                            <TableCell style={{ minWidth: 100 }} align="center">
                                                 {product?.countInStock === 0 ? (
                                                     <span className="px-2.5 py-1 text-[11px] font-bold rounded-full bg-rose-50 text-rose-700 border border-rose-200">
-                                                        Hết hàng
+                                                        0
                                                     </span>
                                                 ) : product?.countInStock < 10 ? (
                                                     <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
-                                                        ({product?.countInStock})
+                                                        {product?.countInStock}
                                                     </span>
                                                 ) : (
                                                     <span className="px-2.5 py-1 text-[11px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -672,13 +672,13 @@ export const Products = () => {
                                             </TableCell>
 
 
-                                            <TableCell style={{ minWidth: columns.minWidth }} align="center">
+                                            <TableCell style={{ minWidth: 100 }} align="center">
                                                 <div className="flex justify-center">
                                                     <Rating name="half-rating" size="small" defaultValue={product?.rating} readOnly className="text-amber-400" />
                                                 </div>
                                             </TableCell>
 
-                                            <TableCell style={{ minWidth: columns.minWidth }} align="center">
+                                            <TableCell style={{ minWidth: 120 }} align="center">
                                                 <div className="flex items-center justify-center gap-1.5">
                                                     <button className="w-[32px] h-[32px] bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white border border-indigo-100 hover:border-indigo-600 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-300"
                                                         onClick={() => context.setIsOpenFullScreenPanel({
@@ -686,7 +686,7 @@ export const Products = () => {
                                                             model: 'Edit Product',
                                                             id: product?._id
                                                         })}
-                                                        title="Sửa sản phẩm"
+                                                        title="Sửa Sản Phẩm"
                                                     >
                                                         <AiOutlineEdit className="text-[18px]" />
                                                     </button>
@@ -699,7 +699,7 @@ export const Products = () => {
 
                                                     <button className="w-[32px] h-[32px] bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-100 hover:border-rose-600 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-300"
                                                         onClick={() => deleteProduct(product?._id)}
-                                                        title="Xóa sản phẩm"
+                                                        title="Xóa Sản Phẩm"
                                                     >
                                                         <GoTrash className="text-[16px]" />
                                                     </button>
@@ -731,6 +731,7 @@ export const Products = () => {
                 </TableContainer>
                 <TablePagination
                     labelRowsPerPage="Số hàng mỗi trang:"
+                    labelDisplayedRows={({ from, to, count }) => `${from}-${to} trong số ${count !== -1 ? count : `hơn ${to}`}`}
                     rowsPerPageOptions={[50, 100, 150, 200]}
                     component="div"
                     count={Number(productData?.totalCount) || Number(productData?.total) || (Number(productData?.totalPages) * rowsPerPage) || 0}

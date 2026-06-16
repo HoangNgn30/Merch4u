@@ -427,7 +427,7 @@ const EditProduct = () => {
                 }, 1000);
             } else {
                 setIsLoading(false);
-                context.alertBox("error", res?.data?.message);
+                context.alertBox("error", res?.data?.message || "Không thể cập nhật sản phẩm");
             }
         })
     }

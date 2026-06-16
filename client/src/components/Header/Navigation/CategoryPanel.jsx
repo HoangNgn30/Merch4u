@@ -26,7 +26,7 @@ const CategoryPanel = (props) => {
       </div>
 
       <h3 className="p-3 text-[16px] font-[500] flex items-center justify-between">
-        Danh Mục Sản Phẩm{" "}
+        Danh Mục{" "}
         <IoCloseSharp
           onClick={toggleDrawer(false)}
           className="cursor-pointer text-[20px]"
@@ -43,7 +43,7 @@ const CategoryPanel = (props) => {
           props.setIsOpenCatPanel(false);
           props.propsSetIsOpenCatPanel(false)
         }}>
-          <Button className="btn-org w-full">Đăng Nhập</Button>
+          <Button className="btn-org w-full">Đăng nhập</Button>
         </Link>
       }
 
@@ -67,7 +67,7 @@ const CategoryPanel = (props) => {
 
           })
         }}>
-          <Button className="btn-org w-full">Đăng Xuất</Button>
+          <Button className="btn-org w-full">Đăng xuất</Button>
         </div>
       }
 

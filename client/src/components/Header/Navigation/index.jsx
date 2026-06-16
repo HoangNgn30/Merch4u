@@ -1,19 +1,20 @@
 import Button from "@mui/material/Button";
-import React, { useContext, useEffect, useState } from "react";
-import { RiMenu2Fill } from "react-icons/ri";
+import React, { useContext, useEffect, useState, useRef } from "react";
+import { FiGrid } from "react-icons/fi";
 import { LiaAngleDownSolid } from "react-icons/lia";
 import { Link } from "react-router-dom";
-import { GoRocket } from "react-icons/go";
 import CategoryPanel from "./CategoryPanel";
+import CategoryDropdown from "./CategoryDropdown";
 
-import "../Navigation/style.css";
-import { fetchDataFromApi } from "../../../utils/api";
+import "./style.css";
 import { MyContext } from "../../../App";
 import MobileNav from "./MobileNav";
 
 const Navigation = (props) => {
   const [isOpenCatPanel, setIsOpenCatPanel] = useState(false);
+  const [isOpenDropdown, setIsOpenDropdown] = useState(false);
   const [catData, setCatData] = useState([]);
+  const dropdownRef = useRef(null);
 
   const context = useContext(MyContext);
 
@@ -23,140 +24,99 @@ const Navigation = (props) => {
 
   useEffect(() => {
     setIsOpenCatPanel(props.isOpenCatPanel);
-  }, [props.isOpenCatPanel])
+  }, [props.isOpenCatPanel]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpenDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const toggleDropdown = () => {
+    setIsOpenDropdown((prev) => !prev);
+  };
 
   const openCategoryPanel = () => {
     setIsOpenCatPanel(true);
   };
 
+  if (props.mobileOnly) {
+    return (
+      <>
+        {catData?.length !== 0 && (
+          <CategoryPanel
+            isOpenCatPanel={isOpenCatPanel}
+            setIsOpenCatPanel={setIsOpenCatPanel}
+            propsSetIsOpenCatPanel={props.setIsOpenCatPanel}
+            data={catData}
+          />
+        )}
+        <MobileNav setIsOpenCatPanel={props.setIsOpenCatPanel} />
+      </>
+    );
+  }
+
   return (
     <>
-      <nav className="navigation">
-        <div className="w-full flex items-center justify-start lg:justify-end gap-2 xl:gap-6">
-          {
-            context?.windowWidth > 992 &&
-            <div className="col_1 flex-shrink-0">
-              <Button
-                className="!text-black gap-2 w-full"
-                onClick={openCategoryPanel}
-              >
-                <RiMenu2Fill className="text-[18px]" />
-                Danh Mục Sản Phẩm
-                <LiaAngleDownSolid className="text-[13px] ml-auto font-bold" />
-              </Button>
-            </div>
-          }
-
-
-          <div className="col_2 flex-grow-0">
-            <ul className="flex items-center gap-3 nav">
-              <li className="list-none">
-                <Link to="/" className="link transition text-[14px] font-[500]">
-                  <Button className="link transition !font-[500] !text-[rgba(0,0,0,0.8)] hover:!text-[#ff5252] !py-4">
-                    Trang Chủ
-                  </Button>
-                </Link>
-              </li>
-
-              {
-                catData?.length !== 0 && catData?.map((cat, index) => {
-                  return (
-                    <li className="list-none relative" key={index}>
-                      <Link to={`/products?catId=${cat?._id}`} className="link transition text-[14px] font-[500]">
-                        <Button className="link transition !font-[500] !text-[rgba(0,0,0,0.8)] hover:!text-[#ff5252] !py-4">
-                          {cat?.name}
-                        </Button>
-                      </Link>
-
-                      {
-                        cat?.children?.length !== 0 &&
-                        <div className="submenu absolute top-[120%] left-[0%] min-w-[150px] bg-white shadow-md opacity-0 transition-all">
-                          <ul>
-                            {
-                              cat?.children?.map((subCat, index_) => {
-                                return (
-                                  <li className="list-none w-full relative" key={index_}>
-                                    <Link to={`/products?subCatId=${subCat?._id}`} className="w-full">
-                                      <Button className="!text-[rgba(0,0,0,0.8)]  w-full !text-left !justify-start !rounded-none">
-                                        {subCat?.name}
-                                      </Button>
-
-                                      {
-                                        subCat?.children?.length !== 0 &&
-                                        <div className="submenu absolute top-[0%] left-[100%] min-w-[150px] bg-white shadow-md opacity-0 transition-all">
-                                          <ul>
-                                            {
-                                              subCat?.children?.map((thirdLavelCat, index__) => {
-                                                return (
-                                                  <li className="list-none w-full" key={index__}>
-                                                    <Link to={`/products?thirdLavelCatId=${thirdLavelCat?._id}`} className="w-full">
-                                                      <Button className="!text-[rgba(0,0,0,0.8)]  w-full !text-left !justify-start !rounded-none">
-                                                        {thirdLavelCat?.name}
-                                                      </Button>
-                                                    </Link>
-                                                  </li>)
-                                              })
-                                            }
-
-
-
-                                          </ul>
-                                        </div>
-                                      }
-
-
-                                    </Link>
-                                  </li>
-                                )
-                              })
-                            }
-
-
-
-
-                          </ul>
-                        </div>
-                      }
-
-                    </li>
-                  )
-                })
-              }
-
-
-            </ul>
+      <nav className="navigation w-full">
+        <div className="flex items-center gap-4">
+          {/* Categories button */}
+          <div className="col_1 relative" ref={dropdownRef}>
+            <Button
+              className="!text-black gap-2 !normal-case !font-[500] !text-[14px] !whitespace-nowrap"
+              onClick={toggleDropdown}
+            >
+              <FiGrid className="text-[16px] text-gray-500" />
+              Danh Mục
+              <LiaAngleDownSolid className={`text-[12px] ml-1 text-gray-500 transition-transform duration-200 ${isOpenDropdown ? "rotate-180" : ""}`} />
+            </Button>
+            {isOpenDropdown && (
+              <CategoryDropdown data={catData} onClose={() => setIsOpenDropdown(false)} />
+            )}
           </div>
 
-          {
-            !props.hidePromo &&
-            <div className="col_3 w-[20%] hidden lg:block">
-            <p className="text-[14px] font-[500] flex items-center gap-3 mb-0 mt-0">
-              <GoRocket className="text-[18px]" />
-              Miễn Phí Giao Hàng Toàn Quốc
-            </p>
-          </div>
-          }
+          {/* Nav links */}
+          <ul className="flex items-center gap-1 nav m-0 p-0">
+            <li className="list-none">
+              <Link to="/">
+                <Button className="link !font-[500] !text-[rgba(0,0,0,0.8)] hover:!text-[#ff5252] !normal-case !text-[14px] !whitespace-nowrap">
+                  Trang Chủ
+                </Button>
+              </Link>
+            </li>
+            <li className="list-none">
+              <Link to="/products">
+                <Button className="link !font-[500] !text-[rgba(0,0,0,0.8)] hover:!text-[#ff5252] !normal-case !text-[14px] !whitespace-nowrap">
+                  Sản Phẩm
+                </Button>
+              </Link>
+            </li>
+            <li className="list-none">
+              <Link to="/coupon-game">
+                <Button className="link !font-[500] !text-[rgba(0,0,0,0.8)] hover:!text-[#ff5252] !normal-case !text-[14px] !whitespace-nowrap">
+                  Mã Giảm Giá
+                </Button>
+              </Link>
+            </li>
+          </ul>
         </div>
       </nav>
 
-      {/* category panel component */}
-      {
-        catData?.length !== 0 &&
+      {/* Category panel */}
+      {catData?.length !== 0 && (
         <CategoryPanel
           isOpenCatPanel={isOpenCatPanel}
           setIsOpenCatPanel={setIsOpenCatPanel}
           propsSetIsOpenCatPanel={props.setIsOpenCatPanel}
           data={catData}
         />
-      }
-
-
-      {
-        context?.windowWidth < 992 && <MobileNav />
-      }
-
-
-
+      )}
     </>
   );
 };

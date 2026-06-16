@@ -9,7 +9,6 @@ import { MyContext } from '../../App';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useNavigate } from 'react-router-dom';
 import JoditEditor from 'jodit-react';
-import Editor from 'react-simple-wysiwyg';
 
 const AddBlog = () => {
 
@@ -133,7 +132,7 @@ const AddBlog = () => {
                 <div className='scroll max-h-[72vh] overflow-y-scroll pr-4 pt-4'>
                     <div className='grid grid-cols-1 mb-3'>
                         <div className='col w-[100%]'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Tiêu đề</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Tiêu Đề</h3>
                             <input type="text" className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm' name="title" value={formFields.title} onChange={onChangeInput}
                             />
                         </div>
@@ -141,12 +140,12 @@ const AddBlog = () => {
 
                     <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-3'>
                         <div className='col w-[100%]'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Tác giả</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Tác Giả</h3>
                             <input type="text" className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm' name="author" value={formFields.author} onChange={onChangeInput}
                             />
                         </div>
                         <div className='col w-[100%]'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Danh mục</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Danh Mục</h3>
                             <input type="text" className='w-full h-[40px] border border-[rgba(0,0,0,0.2)] focus:outline-none focus:border-[rgba(0,0,0,0.4)] rounded-sm p-3 text-sm' name="category" value={formFields.category} onChange={onChangeInput}
                             />
                         </div>
@@ -163,7 +162,7 @@ const AddBlog = () => {
 
                     <div className='grid grid-cols-1 mb-3'>
                         <div className='col w-[100%]'>
-                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Mô tả</h3>
+                            <h3 className='text-[14px] font-[500] mb-1 text-black'>Mô Tả</h3>
                             <JoditEditor 
                                 ref={editor} 
                                 value={html} 
@@ -213,7 +212,7 @@ const AddBlog = () => {
                                 :
                                 <>
                                     <FaCloudUploadAlt className='text-[25px] text-white' />
-                                    Lưu và xem
+                                    Lưu Và Xem
                                 </>
                         }
                     </Button>

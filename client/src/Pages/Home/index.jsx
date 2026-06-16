@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import HomeSlider from "../../components/HomeSlider";
+import AdsSlider from "../../components/AdsSlider";
 import { LiaShippingFastSolid } from "react-icons/lia";
 import './style.css';
 
@@ -14,7 +14,7 @@ import 'swiper/css/free-mode';
 
 import { Navigation, FreeMode } from "swiper/modules";
 import BlogItem from "../../components/BlogItem";
-import HomeBannerV2 from "../../components/HomeSliderV2";
+import HomeBannerV2 from "../../components/HomeBannerV2";
 import { fetchDataFromApi } from "../../utils/api";
 import { MyContext } from "../../App";
 import ProductLoading from "../../components/ProductLoading";
@@ -22,8 +22,7 @@ import BannerLoading from "../../components/LoadingSkeleton/bannerLoading";
 import { Button } from "@mui/material";
 import { MdArrowRightAlt } from "react-icons/md";
 import { Link } from "react-router-dom";
-import HeroBannerScroll from "../../components/HeroBannerScroll";
-import RightBanner from "../../components/RightBanner";
+import Banner from "../../components/Banner";
 import AIRecommendations from "../../components/AIRecommendations";
 import RecentlyViewed from "../../components/RecentlyViewed";
 
@@ -76,50 +75,45 @@ const Home = () => {
 
 
   useEffect(() => {
-    if (context?.catData?.length !== 0) {
-
-      fetchDataFromApi(`/api/product/getAllProductsByCatId/${context?.catData[0]?._id}`).then((res) => {
+    if (context?.catData && context.catData.length !== 0) {
+      fetchDataFromApi(`/api/product/getAllProductsByCatId/${context.catData[0]._id}`).then((res) => {
         if (res?.error === false) {
-          setPopularProductsData(res?.products)
+          setPopularProductsData(res.products || []);
         }
+      }).catch(err => console.error(err));
 
-      })
+      const numbers = new Set();
+      const validLength = context.catData.length;
+      const maxUniqueNumbers = Math.min(validLength - 1, 8);
+      
+      if (maxUniqueNumbers > 0) {
+        while (numbers.size < maxUniqueNumbers) {
+          const number = Math.floor(1 + Math.random() * (validLength - 1));
+          numbers.add(number);
+        }
+        getRendomProducts(Array.from(numbers), context.catData);
+      }
     }
-
-    const numbers = new Set();
-    const maxUniqueNumbers = Math.min(context?.catData?.length - 1, 8);
-    while (numbers.size < maxUniqueNumbers) {
-      const number = Math.floor(1 + Math.random() * 8);
-      numbers.add(number);
-    }
-
-
-    getRendomProducts(Array.from(numbers), context?.catData)
-
   }, [context?.catData])
 
-
-
   const getRendomProducts = (arr, catArr) => {
-
+    if (!arr || !catArr) return;
     const filterData = [];
 
     for (let i = 0; i < arr.length; i++) {
-      let catId = catArr[arr[i]]?._id;
-
-      fetchDataFromApi(`/api/product/getAllProductsByCatId/${catId}`).then((res) => {
-        filterData.push({
-          catName: catArr[arr[i]]?.name,
-          data: res?.products
-        })
-
-        setRandomCatProducts(filterData)
-      })
-
+      const index = arr[i];
+      if (catArr[index]) {
+        fetchDataFromApi(`/api/product/getAllProductsByCatId/${catArr[index]._id}`).then((res) => {
+          if (res?.error === false) {
+            filterData.push({
+              catName: catArr[index].name,
+              data: res.products || []
+            });
+            setRandomCatProducts([...filterData]);
+          }
+        }).catch(err => console.error(err));
+      }
     }
-
-
-
   }
 
   const handleChange = (event, newValue) => {
@@ -127,13 +121,12 @@ const Home = () => {
   };
 
   const filterByCatId = (id) => {
-    setPopularProductsData([])
+    setPopularProductsData([]);
     fetchDataFromApi(`/api/product/getAllProductsByCatId/${id}`).then((res) => {
       if (res?.error === false) {
-        setPopularProductsData(res?.products)
+        setPopularProductsData(res.products || []);
       }
-
-    })
+    }).catch(err => console.error(err));
   }
 
 
@@ -147,32 +140,33 @@ const Home = () => {
       }
       
       {
-        homeSlidesData?.length !== 0 && <HomeSlider data={homeSlidesData} />
+        homeSlidesData?.length !== 0 && <AdsSlider data={homeSlidesData} />
       }
-
-      {/* <div className="heroBanner relative">
-        <HeroBannerScroll/>
-      </div> */}
 
 
       <div className="body-container ">
         <section className="py-8 bg-white">
           <div className="container">
-            <div className="flex items-center justify-between flex-col lg:flex-row">
-              <div className="leftSec w-full lg:w-[40%]">
+            <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-gray-100 pb-2 mb-6 gap-4">
+              <div className="leftSec">
                 <h2 className="text-[14px] sm:text-[14px] md:text-[16px] lg:text-[20px] font-[600] ">Sản Phẩm Phổ Biến</h2>
-                <p className="text-[12px] sm:text-[14px] md:text-[13px] lg:text-[14px] font-[400] mt-0 mb-0">
+                <p className="text-[12px] sm:text-[14px] md:text-[13px] lg:text-[14px] font-[400] mt-1 mb-0">
                   Đừng bỏ lỡ các ưu đãi hiện tại cho đến cuối tháng này.
                 </p>
               </div>
 
-              <div className="rightSec w-full lg:w-[60%]">
+              <div className="rightSec">
                 <Tabs
                   value={value}
                   onChange={handleChange}
                   variant="scrollable"
                   scrollButtons="auto"
                   aria-label="scrollable auto tabs example"
+                  sx={{
+                    '& .MuiTabs-flexContainer': {
+                      justifyContent: { xs: 'flex-start', md: 'flex-end' },
+                    },
+                  }}
                 >
                   {
                     context?.catData?.length !== 0 && context?.catData?.map((cat, index) => {
@@ -214,7 +208,7 @@ const Home = () => {
             </div>
 
             <div className="part2 w-full lg:w-[30%] flex">
-              <RightBanner className="w-full h-full" data={rightBannerData} />
+              <Banner className="w-full h-full" data={rightBannerData} />
             </div>
           </div>
         </section>

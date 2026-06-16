@@ -5,7 +5,6 @@ dotenv.config();
 import { ensureUploadsDir } from './utils/cloudinaryUpload.js';
 ensureUploadsDir();
 import cookieParser from 'cookie-parser'
-import morgan from 'morgan';
 import helmet from 'helmet';
 import connectDB from './config/connectDb.js';
 import userRouter from './route/user.route.js'
@@ -42,7 +41,6 @@ app.options('*', cors(corsOptions))
 
 app.use(express.json())
 app.use(cookieParser())
-// app.use(morgan())
 app.use(helmet({
     crossOriginResourcePolicy: false
 }))

@@ -7,10 +7,12 @@ import { BsBagCheck } from "react-icons/bs";
 import { FiUser } from "react-icons/fi";
 import { NavLink } from "react-router";
 import { MdOutlineFilterAlt } from "react-icons/md";
+import { RiMenu2Fill } from "react-icons/ri";
+import { IoGiftOutline } from "react-icons/io5";
 import { MyContext } from '../../../App';
 import { useLocation } from "react-router-dom";
 
-const MobileNav = () => {
+const MobileNav = (props) => {
 
     const context = useContext(MyContext)
 
@@ -33,7 +35,7 @@ const MobileNav = () => {
 
 
     return (
-        <div className='mobileNav bg-white p-1 px-2 w-full flex items-center justify-around fixed bottom-0 left-0 gap-1 z-[51] border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-[calc(env(safe-area-inset-bottom)+4px)]'>
+        <div className='mobileNav bg-white p-1 px-2 w-full flex items-center justify-around fixed bottom-0 left-0 gap-1 z-[1000] border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-[calc(env(safe-area-inset-bottom)+4px)]'>
             <NavLink to="/" end className={({ isActive }) => isActive ? "isActive flex-1" : "flex-1"} onClick={()=>context?.setOpenSearchPanel(false)}>
                 <Button className="w-full flex-col !capitalize !text-gray-500 hover:!text-primary !py-2">
                     <IoHomeOutline size={20} className="mb-1" />
@@ -41,23 +43,17 @@ const MobileNav = () => {
                 </Button>
             </NavLink>
 
-            {
-                context?.isFilterBtnShow === true &&
-                <Button className="flex-col !w-[40px] !h-[40px] !min-w-[40px] !capitalize !text-gray-700 !bg-primary !rounded-full shrink-0" onClick={openFilters}>
-                    <MdOutlineFilterAlt size={18} className='text-white' />
-                </Button>
-            }
-
-            <Button className="flex-1 flex-col !capitalize !text-gray-500 hover:!text-primary !py-2"
-            onClick={()=>context?.setOpenSearchPanel(true)}>
-                <IoSearch size={20} className="mb-1" />
-                <span className='text-[10px] font-semibold whitespace-nowrap'>Tìm kiếm</span>
-            </Button>
-
             <NavLink to="/my-list" end className={({ isActive }) => isActive ? "isActive flex-1" : "flex-1"} onClick={()=>context?.setOpenSearchPanel(false)}>
                 <Button className="w-full flex-col !capitalize !text-gray-500 hover:!text-primary !py-2">
                     <LuHeart size={20} className="mb-1" />
                     <span className='text-[10px] font-semibold whitespace-nowrap'>Yêu thích</span>
+                </Button>
+            </NavLink>
+
+            <NavLink to="/coupon-game" end className={({ isActive }) => isActive ? "isActive flex-1" : "flex-1"} onClick={()=>context?.setOpenSearchPanel(false)}>
+                <Button className="w-full flex-col !capitalize !text-gray-500 hover:!text-primary !py-2">
+                    <IoGiftOutline size={20} className="mb-1" />
+                    <span className='text-[10px] font-semibold whitespace-nowrap'>Mã giảm giá</span>
                 </Button>
             </NavLink>
 

@@ -16,11 +16,11 @@ import { MyContext } from "../../App";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { fetchDataFromApi } from "../../utils/api";
 import AddProduct from "../../Pages/Products/addProduct";
-import AddHomeSlide from "../../Pages/HomeSliderBanners/addHomeSlide";
-import AddCategory from "../../Pages/Categegory/addCategory";
-import AddSubCategory from "../../Pages/Categegory/addSubCategory";
+import AddHomeSlide from "../../Pages/AdSliderBanners/addAdSlide";
+import AddCategory from "../../Pages/Category/addCategory";
+import AddSubCategory from "../../Pages/Category/addSubCategory";
 import AddAddress from "../../Pages/Address/addAddress";
-import EditCategory from "../../Pages/Categegory/editCategory";
+import EditCategory from "../../Pages/Category/editCategory";
 
 
 
@@ -31,11 +31,11 @@ import Typography from '@mui/material/Typography';
 import { IoMdClose } from "react-icons/io";
 import Slide from '@mui/material/Slide';
 import EditProduct from "../../Pages/Products/editProduct";
-import { AddRightBanner } from "../../Pages/Banners/rightBanner";
-import { EditRightBanner } from "../../Pages/Banners/editRightBanner";
+import { AddRightBanner } from "../../Pages/Banners/addBanner";
+import { EditRightBanner } from "../../Pages/Banners/editBanner";
 import AddBlog from "../../Pages/Blog/addBlog";
 import EditBlog from "../../Pages/Blog/editBlog";
-import EditHomeSlide from "../../Pages/HomeSliderBanners/editHomeSlide";
+import EditHomeSlide from "../../Pages/AdSliderBanners/editAdSlide";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -278,7 +278,27 @@ const Header = () => {
               <IoMdClose className="text-gray-800" />
             </IconButton>
             <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-              <span className="text-gray-800">{context?.isOpenFullScreenPanel?.model}</span>
+              <span className="text-gray-800">
+                {(() => {
+                  const model = context?.isOpenFullScreenPanel?.model;
+                  const mapping = {
+                    "Add Product": "Thêm Sản Phẩm Mới",
+                    "Edit Product": "Chỉnh Sửa Sản Phẩm",
+                    "Add Home Slide": "Thêm Slide Quảng Cáo Mới",
+                    "Edit Home Slide": "Chỉnh Sửa Slide Quảng Cáo",
+                    "Add New Category": "Thêm Danh Mục Chính",
+                    "Edit Category": "Chỉnh Sửa Danh Mục Chính",
+                    "Add New Sub Category": "Thêm Danh Mục Phụ Mới",
+                    "addRightBanner": "Thêm Banner Mới",
+                    "editRightBanner": "Chỉnh Sửa Banner",
+                    "Add Blog": "Thêm Bài Viết Mới",
+                    "Edit Blog": "Chỉnh Sửa Bài Viết",
+                    "Add New Address": "Thêm Địa Chỉ Mới",
+                    "Edit Address": "Chỉnh Sửa Địa Chỉ"
+                  };
+                  return mapping[model] || model;
+                })()}
+              </span>
             </Typography>
 
           </Toolbar>

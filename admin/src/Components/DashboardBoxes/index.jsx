@@ -53,7 +53,7 @@ const DashboardBoxes = (props) => {
           <div className="box bg-[#10b981] p-5 py-6  cursor-pointer hover:bg-[#289974] rounded-md border border-[rgba(0,0,0,0.1)] flex items-center gap-4">
             <FiPieChart className="text-[40px] text-[#fff]" />
             <div className="info w-[80%]">
-              <h3 className="text-white">Tổng người dùng</h3>
+              <h3 className="text-white">Tổng Người Dùng</h3>
               <b className="text-white text-[20px]">{props?.users}</b>
             </div>
             <IoStatsChartSharp className="text-[45px] text-[#fff]" />
@@ -63,10 +63,10 @@ const DashboardBoxes = (props) => {
 
 
         <SwiperSlide>
-          <div className="box bg-[#3872fa] p-5 py-6 cursor-pointer hover:bg-[#346ae8] rounded-md border border-[rgba(0,0,0,0.1)] flex items-center gap-4">
+          <div className="box bg-[#ff5252] p-5 py-6 cursor-pointer hover:bg-[#e04848] rounded-md border border-[rgba(0,0,0,0.1)] flex items-center gap-4">
             <GoGift className="text-[40px] text-[#fff]" />
             <div className="info w-[80%]">
-              <h3 className="text-white">Tổng đơn hàng</h3>
+              <h3 className="text-white">Tổng Đơn Hàng</h3>
               <b className="text-white text-[20px]">{props?.orders}</b>
             </div>
             <FiPieChart className="text-[40px] text-[#fff]" />
@@ -76,10 +76,10 @@ const DashboardBoxes = (props) => {
 
 
         <SwiperSlide>
-          <div className="box p-5 bg-[#312be1d8]  py-6  cursor-pointer hover:bg-[#423eadd8] rounded-md border border-[rgba(0,0,0,0.1)] flex items-center gap-4">
+          <div className="box p-5 bg-[#8b5cf6]  py-6  cursor-pointer hover:bg-[#7c3aed] rounded-md border border-[rgba(0,0,0,0.1)] flex items-center gap-4">
             <RiProductHuntLine className="text-[40px] text-[#fff]" />
             <div className="info w-[80%]">
-              <h3 className="text-white">Tổng sản phẩm</h3>
+              <h3 className="text-white">Tổng Sản Phẩm</h3>
               <b className="text-white text-[20px]">{props?.products}</b>
             </div>
             <IoStatsChartSharp className="text-[50px] text-[#fff]" />
@@ -89,10 +89,10 @@ const DashboardBoxes = (props) => {
 
 
         <SwiperSlide>
-          <div className="box p-5  bg-[#f22c61]  py-6 cursor-pointer hover:bg-[#d52c59] rounded-md border border-[rgba(0,0,0,0.1)] flex items-center gap-4">
+          <div className="box p-5  bg-[#ec4899]  py-6 cursor-pointer hover:bg-[#db2777] rounded-md border border-[rgba(0,0,0,0.1)] flex items-center gap-4">
             <MdOutlineReviews className="text-[40px]  text-[#fff]" />
             <div className="info w-[80%]">
-              <h3 className="text-white">Tổng danh mục</h3>
+              <h3 className="text-white">Tổng Danh Mục</h3>
               <b className="text-white text-[20px]">{props.category}</b>
             </div>
             <IoStatsChartSharp className="text-[50px] text-[#fff]" />

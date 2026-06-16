@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useContext } from "react";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import { Link, useParams } from "react-router-dom";
 import { ProductZoom } from "../../components/ProductZoom";
@@ -10,6 +10,16 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { Reviews } from "./reviews";
 import AIRecommendations from "../../components/AIRecommendations";
 import { IoHomeOutline } from "react-icons/io5";
+import { MyContext } from "../../App";
+
+const fandomColors = {
+  "BTS": { primary: "#8b5cf6", primaryHover: "#7c3aed", bgLight: "#f5f3ff", accent: "#a78bfa" }, // Purple
+  "BLACKPINK": { primary: "#ec4899", primaryHover: "#db2777", bgLight: "#fdf2f8", accent: "#f472b6" }, // Pink
+  "NewJeans": { primary: "#06b6d4", primaryHover: "#0891b2", bgLight: "#ecfeff", accent: "#22d3ee" }, // Cyan
+  "IVE": { primary: "#3b82f6", primaryHover: "#2563eb", bgLight: "#eff6ff", accent: "#60a5fa" }, // Blue
+  "Stray Kids": { primary: "#ef4444", primaryHover: "#dc2626", bgLight: "#fef2f2", accent: "#f87171" }, // Red
+  "Other": { primary: "#ff5252", primaryHover: "#e04848", bgLight: "#fff5f5", accent: "#fb7185" }
+};
 
 export const ProductDetails = () => {
 
@@ -18,9 +28,10 @@ export const ProductDetails = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [reviewsCount, setReviewsCount] = useState(0);
   const [relatedProductData, setRelatedProductData] = useState([]);
+  const [showStickyBar, setShowStickyBar] = useState(false);
 
   const { id } = useParams();
-
+  const context = useContext(MyContext);
   const reviewSec = useRef();
 
   useEffect(() => {
@@ -55,6 +66,17 @@ export const ProductDetails = () => {
     window.scrollTo(0, 0)
   }, [id])
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 400) {
+        setShowStickyBar(true);
+      } else {
+        setShowStickyBar(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const gotoReviews = () => {
     window.scrollTo({
@@ -66,8 +88,18 @@ export const ProductDetails = () => {
 
   }
 
+  const fandom = fandomColors[productData?.catName] || fandomColors["Other"];
+
   return (
-    <>
+    <div 
+      style={{
+        "--color-primary": fandom.primary,
+        "--color-primary-hover": fandom.primaryHover,
+        "--color-bg-light": fandom.bgLight,
+        "--color-accent": fandom.accent
+      }}
+      className="fandom-theme"
+    >
       <div className="bg-white border-b border-gray-100">
         <div className="container py-3">
           <div className="max-w-full overflow-x-auto rounded-full border border-gray-100 bg-gray-50/80 px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.035)]">
@@ -218,10 +250,32 @@ export const ProductDetails = () => {
 
         }
 
-
-
-
       </section>
-    </>
+
+      {/* Sticky Bottom Purchase Bar for Mobile Devices */}
+      {showStickyBar && productData && context.windowWidth < 768 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-100 p-3 flex items-center justify-between z-[999] shadow-[0_-5px_20px_rgba(0,0,0,0.08)] animate-slide-up">
+          <div className="flex items-center gap-2.5 max-w-[65%]">
+            <img src={productData.images?.[0]} className="w-10 h-10 object-cover rounded-lg border border-slate-200" alt="" />
+            <div className="flex flex-col">
+              <span className="text-[12px] font-bold text-slate-800 line-clamp-1">
+                {productData.name}
+              </span>
+              <span className="text-[12px] font-bold text-primary">
+                {productData.price?.toLocaleString('vi-VN')}đ
+              </span>
+            </div>
+          </div>
+          <Button 
+            onClick={() => {
+              window.scrollTo({ top: 120, behavior: 'smooth' });
+            }}
+            className="!bg-gradient-to-r !from-primary !to-orange-500 !text-white !font-bold !text-[12px] !rounded-full !px-5 !py-2.5 !shadow-md hover:!shadow-lg active:scale-95 transition-all"
+          >
+            MUA NGAY
+          </Button>
+        </div>
+      )}
+    </div>
   );
 };

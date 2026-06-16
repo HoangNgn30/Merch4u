@@ -12,6 +12,7 @@ const defaultForm = {
   discount: "",
   minOrder: 0,
   maxUses: 0,
+  maxDiscount: "",
   expiryDate: "",
   isActive: true
 };
@@ -67,7 +68,8 @@ const Coupons = () => {
       code: formFields.code.toUpperCase(),
       discount: Number(formFields.discount),
       minOrder: Number(formFields.minOrder || 0),
-      maxUses: Number(formFields.maxUses || 0)
+      maxUses: Number(formFields.maxUses || 0),
+      maxDiscount: formFields.type === "percent" ? Number(formFields.maxDiscount || 0) : 0
     };
 
     const request = editId
@@ -95,6 +97,7 @@ const Coupons = () => {
       discount: coupon?.discount || "",
       minOrder: coupon?.minOrder || 0,
       maxUses: coupon?.maxUses || 0,
+      maxDiscount: coupon?.maxDiscount || "",
       expiryDate: formatDateInput(coupon?.expiryDate),
       isActive: coupon?.isActive !== false
     });
@@ -116,7 +119,7 @@ const Coupons = () => {
   return (
     <div className="card my-4 p-6 shadow-xl border border-slate-100 rounded-2xl bg-white transition-all">
       <div className="flex items-center justify-between pb-6 border-b border-slate-50 mb-6">
-        <h2 className="text-[18px] font-[600] text-slate-800">Quản lý mã giảm giá (Coupons)</h2>
+        <h2 className="text-[18px] font-[600] text-slate-800">Quản Lý Mã Giảm Giá (Coupons)</h2>
         {editId && (
           <Button 
             variant="outlined" 
@@ -195,6 +198,19 @@ const Coupons = () => {
             className="w-full h-[40px] border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 rounded-lg px-3 text-xs font-semibold text-slate-800" 
           />
         </div>
+        {formFields.type === "percent" && (
+          <div className="flex flex-col gap-1.5">
+            <h4 className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Mức giảm tối đa (đ)</h4>
+            <input 
+              type="number" 
+              name="maxDiscount" 
+              value={formFields.maxDiscount} 
+              onChange={onChangeInput} 
+              placeholder="0 (không giới hạn)"
+              className="w-full h-[40px] border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 rounded-lg px-3 text-xs font-semibold text-slate-800" 
+            />
+          </div>
+        )}
         <div className="flex items-center gap-2 mt-6 h-[40px]">
           <input 
             type="checkbox" 
@@ -215,7 +231,7 @@ const Coupons = () => {
             disabled={isLoading}
             className="w-full !normal-case font-bold !bg-indigo-600 !text-white h-[40px] rounded-lg shadow-md hover:shadow-lg transition-all"
           >
-            {isLoading ? <CircularProgress color="inherit" size={18} /> : editId ? "Cập nhật mã" : "Tạo mã mới"}
+            {isLoading ? <CircularProgress color="inherit" size={18} /> : editId ? "Cập Nhật Mã" : "Tạo Mã Mới"}
           </Button>
         </div>
       </form>
@@ -243,7 +259,14 @@ const Coupons = () => {
                   </td>
                   <td className="px-5 py-4 text-center font-bold text-slate-800 text-[14px]">
                     {coupon.type === "percent" ? (
-                      <span className="text-amber-600">{coupon.discount}%</span>
+                      <div className="flex flex-col items-center">
+                        <span className="text-amber-600">{coupon.discount}%</span>
+                        {coupon.maxDiscount > 0 && (
+                          <span className="text-[10px] text-slate-400 font-normal">
+                            (Tối đa: {Number(coupon.maxDiscount).toLocaleString("vi-VN")}đ)
+                          </span>
+                        )}
+                      </div>
                     ) : (
                       <span className="text-[#ff5252]">
                         {Number(coupon.discount).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}

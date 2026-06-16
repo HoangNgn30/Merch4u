@@ -14,9 +14,15 @@ export const calculateCouponDiscount = (coupon, orderTotal) => {
     if (!coupon) return 0;
 
     const total = Number(orderTotal || 0);
-    const rawDiscount = coupon.type === "percent"
-        ? Math.round(total * Number(coupon.discount || 0) / 100)
-        : Number(coupon.discount || 0);
+    let rawDiscount = 0;
+    if (coupon.type === "percent") {
+        rawDiscount = Math.round(total * Number(coupon.discount || 0) / 100);
+        if (coupon.maxDiscount > 0) {
+            rawDiscount = Math.min(rawDiscount, Number(coupon.maxDiscount));
+        }
+    } else {
+        rawDiscount = Number(coupon.discount || 0);
+    }
 
     return Math.min(Math.max(rawDiscount, 0), total);
 }
@@ -40,8 +46,16 @@ export const createCouponController = async (request, response) => {
     try {
         if (!await requireAdmin(request, response)) return;
 
+        let expiry = request.body.expiryDate;
+        if (expiry) {
+            const date = new Date(expiry);
+            date.setUTCHours(23, 59, 59, 999);
+            expiry = date;
+        }
+
         const coupon = await CouponModel.create({
             ...request.body,
+            expiryDate: expiry,
             code: normalizeCode(request.body.code)
         });
 
@@ -66,6 +80,11 @@ export const updateCouponController = async (request, response) => {
 
         const payload = { ...request.body };
         if (payload.code) payload.code = normalizeCode(payload.code);
+        if (payload.expiryDate) {
+            const date = new Date(payload.expiryDate);
+            date.setUTCHours(23, 59, 59, 999);
+            payload.expiryDate = date;
+        }
 
         const coupon = await CouponModel.findByIdAndUpdate(
             request.params.id,
@@ -175,6 +194,7 @@ export const validateCouponController = async (request, response) => {
                 type: coupon.type,
                 discount: coupon.discount,
                 minOrder: coupon.minOrder,
+                maxDiscount: coupon.maxDiscount,
                 expiryDate: coupon.expiryDate
             },
             discountAmount: calculateCouponDiscount(coupon, orderTotal)
@@ -348,6 +368,7 @@ export const claimRandomCouponController = async (request, response) => {
                 type: winnerCoupon.type,
                 discount: winnerCoupon.discount,
                 minOrder: winnerCoupon.minOrder,
+                maxDiscount: winnerCoupon.maxDiscount,
                 expiryDate: winnerCoupon.expiryDate
             }
         });

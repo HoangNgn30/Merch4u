@@ -1,5 +1,3 @@
-import "./App.css";
-import "./responsive.css";
 import React from 'react';
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import Dashboard from "./Pages/Dashboard";
@@ -9,9 +7,9 @@ import Login from "./Pages/Login";
 import SignUp from "./Pages/SignUp";
 import Products from "./Pages/Products";
 
-import HomeSliderBanners from "./Pages/HomeSliderBanners";
-import CategoryList from "./Pages/Categegory";
-import SubCategoryList from "./Pages/Categegory/subCatList";
+import HomeSliderBanners from "./Pages/AdSliderBanners";
+import CategoryList from "./Pages/Category";
+import SubCategoryList from "./Pages/Category/subCatList";
 import Users from "./Pages/Users";
 import Orders from "./Pages/Orders";
 import ForgotPassword from "./Pages/ForgotPassword";
@@ -23,7 +21,7 @@ import { fetchDataFromApi } from "./utils/api";
 import { useEffect } from "react";
 import Profile from "./Pages/Profile";
 import ProductDetails from "./Pages/Products/productDetails";
-import RightBannerList from "./Pages/Banners/rightBannerList";
+import RightBannerList from "./Pages/Banners/bannerList";
 import Coupons from "./Pages/Coupons";
 import ConfirmDeleteDialog from "./Components/ConfirmDeleteDialog";
 import { BlogList } from "./Pages/Blog";
@@ -390,7 +388,7 @@ function App() {
       <MyContext.Provider value={values}>
         <RouterProvider router={router} />
         <LoadingBar
-          color="#1565c0"
+          color="#ff5252"
           progress={progress}
           onLoaderFinished={() => setProgress(0)}
           className="topLoadingBar"

@@ -115,7 +115,13 @@ const CartItems = (props) => {
         <IoCloseSharp className="cursor-pointer absolute top-[0px] right-[0px] text-[22px] link transition-all" onClick={() => removeItem(props?.item?._id)} />
         <span className="text-[13px]">{props?.item?.brand}</span>
         <h3 className="text-[13px] sm:text-[15px] w-[80%]">
-          <Link to={`/product/${props?.item?.productId}`} className="link">{props?.item?.productTitle?.substr(0, context?.windowWidth < 992 ? 30 : 120) + '...'}</Link>
+          <Link to={`/product/${props?.item?.productId}`} className="link">
+            {(() => {
+              const title = props?.item?.productTitle || "";
+              const limit = context?.windowWidth < 992 ? 30 : 120;
+              return title.length > limit ? title.substr(0, limit) + '...' : title;
+            })()}
+          </Link>
         </h3>
 
         <Rating name="size-small" value={props?.item?.rating} size="small" readOnly />

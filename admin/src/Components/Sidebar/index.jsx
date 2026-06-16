@@ -1,6 +1,6 @@
 import { Button } from "@mui/material";
 import React, { useContext, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
 import { FaRegImage } from "react-icons/fa";
 import { FiUsers } from "react-icons/fi";
@@ -16,8 +16,7 @@ import { MyContext } from "../../App";
 import { SiBloglovin } from "react-icons/si";
 import { fetchDataFromApi } from "../../utils/api";
 import { IoLogoBuffer } from "react-icons/io";
-
-
+import { RiMenu2Line } from "react-icons/ri";
 
 const Sidebar = () => {
   const [submenuIndex, setSubmenuIndex] = useState(null);
@@ -31,8 +30,17 @@ const Sidebar = () => {
 
   const context = useContext(MyContext);
   const history = useNavigate();
+  const location = useLocation();
+  const currentPath = location.pathname;
   const canManageAccess = context?.userData?.role === "SUPERBOSS";
 
+  useEffect(() => {
+    if (currentPath.startsWith('/category') || currentPath.startsWith('/subCategory')) {
+      setSubmenuIndex(3);
+    } else {
+      setSubmenuIndex(null);
+    }
+  }, [currentPath]);
 
   const logout = () => {
     context?.windowWidth < 992 && context?.setisSidebarOpen(false)
@@ -48,7 +56,6 @@ const Sidebar = () => {
     })
   }
 
-
   return (
     <>
       <div
@@ -61,87 +68,69 @@ const Sidebar = () => {
             : { width: "clamp(200px, 20vw, 300px)", maxWidth: 300 }
         }
       >
-        <div className="py-2 w-full"
+        <div className="py-2 w-full flex items-center justify-between border-b border-[rgba(0,0,0,0.08)] mb-2"
           onClick={() => {
             context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-            setSubmenuIndex(null)
           }}
         >
-          <Link to="/">
+          <Link to="/" onClick={() => {
+            setSubmenuIndex(null)
+          }}>
             <img
-            src={localStorage.getItem('logo')}
-              className="w-[170px] md:min-w-[200px]"
+              src={localStorage.getItem('logo')}
+              className="w-[150px] md:min-w-[180px] object-contain"
             />
           </Link>
+          {context?.windowWidth < 992 && (
+            <button
+              type="button"
+              aria-label="Close Menu"
+              className="w-10 h-10 rounded-full min-w-[40px] shrink-0 hover:bg-[#e2e2e2] flex items-center justify-center border border-[rgba(0,0,0,0.12)] ml-2 transition-all"
+              onClick={(e) => {
+                e.stopPropagation();
+                context?.setisSidebarOpen(false);
+              }}
+            >
+              <RiMenu2Line className="text-[20px] text-[rgba(0,0,0,0.85)]" />
+            </button>
+          )}
         </div>
 
         <ul className="mt-4 overflow-y-scroll max-h-[80vh]">
           <li>
-            <Link to="/"
+            <NavLink to="/" end
               onClick={() => {
                 context?.windowWidth < 992 && context?.setisSidebarOpen(false)
                 setSubmenuIndex(null)
               }}
             >
               <Button className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]">
-                <RxDashboard className="text-[18px]" /> <span>Tổng quan</span>
+                <RxDashboard className="text-[18px]" /> <span>Tổng Quan</span>
               </Button>
-            </Link>
+            </NavLink>
           </li>
 
           <li>
-            <Button
-              className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]"
-              onClick={() => isOpenSubMenu(1)}
+            <NavLink to="/homeSlider/list"
+              onClick={() => {
+                context?.windowWidth < 992 && context?.setisSidebarOpen(false)
+                setSubmenuIndex(null)
+              }}
             >
-              <FaRegImage className="text-[18px]" /> <span>Slide trang chủ</span>
-              <span className="ml-auto w-[30px] h-[30px] flex items-center justify-center">
-                <FaAngleDown
-                  className={`transition-all ${submenuIndex === 1 ? "rotate-180" : ""
-                    }`}
-                />
-              </span>
-            </Button>
-
-            <Collapse isOpened={submenuIndex === 1 ? true : false}>
-              <ul className="w-full">
-                <li className="w-full">
-                  <Link to="/homeSlider/list"
-                    onClick={() => {
-                      context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-                      setSubmenuIndex(null)
-                    }}
-                  >
-                    <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3">
-                      <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>{" "}
-                      Danh sách banner trang chủ
-                    </Button>
-                  </Link>
-                </li>
-                <li className="w-full">
-                  <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3" onClick={() => {
-                    context.setIsOpenFullScreenPanel({
-                      open: true,
-                      model: 'Add Home Slide'
-                    })
-                    context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-                    setSubmenuIndex(null)
-                  }}>
-                    <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                    Thêm slide banner trang chủ
-                  </Button>
-                </li>
-              </ul>
-            </Collapse>
+              <Button className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]">
+                <FaRegImage className="text-[18px]" /> <span>Slide Quảng Cáo</span>
+              </Button>
+            </NavLink>
           </li>
-
 
           <li>
             <Button
-              className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]"
+              className={`w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1] ${
+                (currentPath.startsWith('/category') || currentPath.startsWith('/subCategory')) ? 'active-parent' : ''
+              }`}
               onClick={() => isOpenSubMenu(3)}
             >
-              <TbCategory className="text-[18px]" /> <span>Danh mục</span>
+              <TbCategory className="text-[18px]" /> <span>Danh Mục</span>
               <span className="ml-auto w-[30px] h-[30px] flex items-center justify-center">
                 <FaAngleDown
                   className={`transition-all ${submenuIndex === 3 ? "rotate-180" : ""
@@ -153,138 +142,70 @@ const Sidebar = () => {
             <Collapse isOpened={submenuIndex === 3 ? true : false}>
               <ul className="w-full">
                 <li className="w-full">
-                  <Link to="/category/list" onClick={() => {
+                  <NavLink to="/category/list" onClick={() => {
                     context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-                    setSubmenuIndex(null)
                   }}>
                     <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3">
                       <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>{" "}
-                      Danh sách danh mục
-
+                      Danh Mục Chính
                     </Button>
-                  </Link>
+                  </NavLink>
                 </li>
                 <li className="w-full">
-                  <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3" onClick={() => {
-                    context.setIsOpenFullScreenPanel({
-                      open: true,
-                      model: 'Add New Category'
-                    })
-                    context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-                    setSubmenuIndex(null)
-                  }}>
-                    <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                    Thêm danh mục
-                  </Button>
-                </li>
-                <li className="w-full">
-                  <Link to="/subCategory/list" onClick={() => {
+                  <NavLink to="/subCategory/list" onClick={() => {
                     context?.windowWidth < 992 && context?.setisSidebarOpen(false)
                   }}>
                     <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3">
                       <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                      Danh sách danh mục con
+                      Danh Mục Phụ
                     </Button>
-                  </Link>
-                </li>
-                <li className="w-full">
-                  <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3" onClick={() => {
-                    context.setIsOpenFullScreenPanel({
-                      open: true,
-                      model: 'Add New Sub Category'
-                    })
-                    context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-                    setSubmenuIndex(null)
-                  }}>
-                    <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                    Thêm danh mục con
-                  </Button>
+                  </NavLink>
                 </li>
               </ul>
             </Collapse>
           </li>
 
           <li>
-            <Button
-              className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]"
-              onClick={() => isOpenSubMenu(4)}
-            >
-              <RiProductHuntLine className="text-[18px]" />{" "}
-              <span>Sản phẩm</span>
-              <span className="ml-auto w-[30px] h-[30px] flex items-center justify-center">
-                <FaAngleDown
-                  className={`transition-all ${submenuIndex === 4 ? "rotate-180" : ""
-                    }`}
-                />
-              </span>
-            </Button>
-
-            <Collapse isOpened={submenuIndex === 4 ? true : false}>
-              <ul className="w-full">
-                <li className="w-full">
-                  <Link to="/products" onClick={() => {
-                    context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-                    setSubmenuIndex(null)
-                  }}>
-                    <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3">
-                      <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>{" "}
-                      Danh sách sản phẩm
-                    </Button>
-                  </Link>
-                </li>
-                <li className="w-full">
-                  <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3" onClick={() => {
-                    context.setIsOpenFullScreenPanel({
-                      open: true,
-                      model: "Add Product"
-                    })
-                    context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-                    setSubmenuIndex(null)
-                  }}>
-                    <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                    Thêm sản phẩm
-                  </Button>
-                </li>
-
-
-
-
-
-              </ul>
-            </Collapse>
-          </li>
-
-
-
-          <li>
-            <Link to="/users"
+            <NavLink to="/products"
               onClick={() => {
                 context?.windowWidth < 992 && context?.setisSidebarOpen(false)
                 setSubmenuIndex(null)
               }}
             >
               <Button className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]">
-                <FiUsers className="text-[18px]" /> <span>Thành viên & Quyền</span>
+                <RiProductHuntLine className="text-[18px]" /> <span>Sản Phẩm</span>
               </Button>
-            </Link>
+            </NavLink>
           </li>
 
-
           <li>
-            <Link to="/orders"
+            <NavLink to="/users"
               onClick={() => {
                 context?.windowWidth < 992 && context?.setisSidebarOpen(false)
                 setSubmenuIndex(null)
               }}
             >
               <Button className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]">
-                <IoBagCheckOutline className="text-[20px]" /> <span>Đơn hàng</span>
+                <FiUsers className="text-[18px]" /> <span>Thành Viên & Quyền</span>
               </Button>
-            </Link>
+            </NavLink>
           </li>
 
           <li>
-            <Link to="/coupons"
+            <NavLink to="/orders"
+              onClick={() => {
+                context?.windowWidth < 992 && context?.setisSidebarOpen(false)
+                setSubmenuIndex(null)
+              }}
+            >
+              <Button className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]">
+                <IoBagCheckOutline className="text-[20px]" /> <span>Đơn Hàng</span>
+              </Button>
+            </NavLink>
+          </li>
+
+          <li>
+            <NavLink to="/coupons"
               onClick={() => {
                 context?.windowWidth < 992 && context?.setisSidebarOpen(false)
                 setSubmenuIndex(null)
@@ -293,142 +214,67 @@ const Sidebar = () => {
               <Button className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]">
                 <MdOutlineDiscount className="text-[20px]" /> <span>Mã Giảm Giá</span>
               </Button>
-            </Link>
+            </NavLink>
           </li>
 
-
-
-
           <li>
-            <Button
-              className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]"
-              onClick={() => isOpenSubMenu(5)}
+            <NavLink to="/rightBanner/List"
+              onClick={() => {
+                context?.windowWidth < 992 && context?.setisSidebarOpen(false)
+                setSubmenuIndex(null)
+              }}
             >
-              <RiProductHuntLine className="text-[18px]" />
-              <span>Banner</span>
-              <span className="ml-auto w-[30px] h-[30px] flex items-center justify-center">
-                <FaAngleDown
-                  className={`transition-all ${submenuIndex === 5 ? "rotate-180" : ""
-                    }`}
-                />
-              </span>
-            </Button>
-
-            <Collapse isOpened={submenuIndex === 5 ? true : false}>
-              <ul className="w-full">
-                <li className="w-full">
-                  <Link to="/rightBanner/List"
-                    onClick={() => {
-                      context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-                      setSubmenuIndex(null)
-                    }}
-                  >
-                    <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3">
-                      <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>{" "}
-                      Danh sách banner phải
-                    </Button>
-                  </Link>
-                </li>
-                <li className="w-full">
-                  <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3" onClick={() => {
-                    context.setIsOpenFullScreenPanel({
-                      open: true,
-                      model: "addRightBanner"
-                    })
-                    context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-                    setSubmenuIndex(null)
-                  }}>
-                    <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                    Thêm banner phải
-                  </Button>
-                </li>
-              </ul>
-            </Collapse>
+              <Button className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]">
+                <RiProductHuntLine className="text-[18px]" /> <span>Banner</span>
+              </Button>
+            </NavLink>
           </li>
 
-
           <li>
-            <Button
-              className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]"
-              onClick={() => isOpenSubMenu(6)}
+            <NavLink to="/blog/List"
+              onClick={() => {
+                context?.windowWidth < 992 && context?.setisSidebarOpen(false)
+                setSubmenuIndex(null)
+              }}
             >
-              <SiBloglovin className="text-[18px]" />
-              <span>Blog</span>
-              <span className="ml-auto w-[30px] h-[30px] flex items-center justify-center">
-                <FaAngleDown
-                  className={`transition-all ${submenuIndex === 6 ? "rotate-180" : ""
-                    }`}
-                />
-              </span>
-            </Button>
-
-            <Collapse isOpened={submenuIndex === 6 ? true : false}>
-              <ul className="w-full">
-                <li className="w-full">
-                  <Link to="/blog/List" onClick={() => {
-                    context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-                    setSubmenuIndex(null)
-                  }}>
-                    <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3">
-                      <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                      Danh sách bài viết
-                    </Button>
-                  </Link>
-                </li>
-                <li className="w-full">
-                  <Button className="!text-[rgba(0,0,0,0.7)] !capitalize !justify-start !w-full !text-[13px] !font-[500] !pl-9 flex gap-3" onClick={() => {
-                    context.setIsOpenFullScreenPanel({
-                      open: true,
-                      model: "Add Blog"
-                    })
-                    context?.windowWidth < 992 && context?.setisSidebarOpen(false)
-                    setSubmenuIndex(null)
-                  }}>
-                    <span className="block w-[5px] h-[5px] rounded-full bg-[rgba(0,0,0,0.2)]"></span>
-                    Thêm bài viết
-                  </Button>
-                </li>
-
-
-              </ul>
-            </Collapse>
+              <Button className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]">
+                <SiBloglovin className="text-[18px]" /> <span>Blog</span>
+              </Button>
+            </NavLink>
           </li>
 
-
           <li>
-            <Link to="/logo/manage">
+            <NavLink to="/logo/manage"
+              onClick={() => {
+                context?.windowWidth < 992 && context?.setisSidebarOpen(false)
+                setSubmenuIndex(null)
+              }}
+            >
               <Button
                 className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]"
               >
                 <IoLogoBuffer className="text-[18px]" />
-                <span>Quản lý logo</span>
+                <span>Logo</span>
               </Button>
-            </Link>
+            </NavLink>
           </li>
 
           <li>
             <Button className="w-full !capitalize !justify-start flex gap-3 text-[14px] !text-[rgba(0,0,0,0.8)] !font-[500] items-center !py-2 hover:!bg-[#f1f1f1]" onClick={logout}>
-              <IoMdLogOut className="text-[20px]" /> <span>Đăng xuất</span>
+              <IoMdLogOut className="text-[20px]" /> <span>Đăng Xuất</span>
             </Button>
           </li>
         </ul>
-
-
-
       </div>
 
-
       {
-        context?.windowWidth < 920 && context?.isSidebarOpen === true &&
+        context?.windowWidth < 992 && context?.isSidebarOpen === true &&
         <div className="sidebarOverlay fixed top-0 left-0 bg-[rgba(0,0,0,0.45)] w-full h-full z-[51]" role="presentation" onClick={() => {
             context?.setisSidebarOpen(false)
             setSubmenuIndex(null)
           }}>
         </div>
       }
-
-
-
     </>
   );
 };

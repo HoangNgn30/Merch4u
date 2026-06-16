@@ -307,7 +307,7 @@ export const Users = () => {
             <div className="flex flex-col sm:flex-row items-center w-full pb-6 justify-between gap-4">
                 <div className="col">
                     <h2 className="text-[18px] font-[600] text-slate-800">
-                        Danh sách thành viên & Phân quyền
+                        Danh Sách Thành Viên & Phân Quyền
                     </h2>
                 </div>
                 <div className="col sm:ml-auto flex items-center gap-3 w-full sm:w-auto">
@@ -334,7 +334,7 @@ export const Users = () => {
                     <Table stickyHeader aria-label="sticky table">
                         <TableHead>
                             <TableRow>
-                                <TableCell className="bg-slate-50/80">
+                                <TableCell className="bg-slate-50/80 !pl-4" style={{ width: 60, minWidth: 60 }}>
                                     <Checkbox 
                                         {...label} 
                                         size="small"
@@ -369,7 +369,7 @@ export const Users = () => {
                                     userData?.users?.map((user, index) => {
                                         return (
                                             <TableRow key={user?._id || index} className={`hover:bg-slate-50/80 transition-colors ${user.checked === true ? '!bg-indigo-50/50' : ''}`}>
-                                                <TableCell style={{ minWidth: columns.minWidth }}>
+                                                <TableCell style={{ width: 60, minWidth: 60 }} className="!pl-4">
                                                     <Checkbox 
                                                         {...label} 
                                                         size="small" 
@@ -379,7 +379,7 @@ export const Users = () => {
                                                         onChange={(e) => handleCheckboxChange(e, user._id, index)}
                                                     />
                                                 </TableCell>
-                                                <TableCell style={{ minWidth: columns.minWidth }}>
+                                                <TableCell style={{ minWidth: 200 }}>
                                                     <div className="flex items-center gap-4 w-[280px]">
                                                         <div className="img relative w-[45px] h-[45px] rounded-full overflow-hidden shadow-md border border-slate-100 bg-slate-50 flex-shrink-0 group">
                                                             <img
@@ -401,14 +401,14 @@ export const Users = () => {
                                                     </div>
                                                 </TableCell>
 
-                                                <TableCell style={{ minWidth: columns.minWidth }} align="center" className="font-medium text-slate-700">
+                                                <TableCell style={{ minWidth: 130 }} align="center" className="font-medium text-slate-700">
                                                     <span className="inline-flex items-center justify-center gap-1 text-[13px]"> 
                                                         <MdLocalPhone className="text-slate-400 text-[14px]" />  
                                                         {formatPhoneNumber(user?.mobile) ? formatPhoneNumber(user?.mobile) : <span className="text-slate-300 italic">Chưa có</span>}
                                                     </span>
                                                 </TableCell>
 
-                                                <TableCell style={{ minWidth: columns.minWidth }} align="center">
+                                                <TableCell style={{ minWidth: 140 }} align="center">
                                                     {user?.verify_email === false ? (
                                                         <span className="px-2.5 py-1 text-[11px] font-semibold rounded-full bg-rose-50 text-rose-700 border border-rose-200">
                                                             Chưa Xác Minh
@@ -425,10 +425,14 @@ export const Users = () => {
                                                         <select 
                                                             value={user.role} 
                                                             onChange={(e) => handleRoleChange(user._id, e.target.value, user.accountStatus)}
-                                                            className="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-[110px] mx-auto p-1 font-semibold text-center cursor-pointer hover:bg-slate-100 transition-colors"
+                                                            className={`border text-[11px] rounded-full focus:ring-indigo-500 focus:border-indigo-500 block w-[110px] mx-auto py-1 px-2.5 font-bold text-center cursor-pointer transition-colors ${
+                                                                user.role === "ADMIN" 
+                                                                    ? "bg-blue-50 border-blue-200 text-blue-700" 
+                                                                    : "bg-slate-50 border-slate-200 text-slate-500"
+                                                            }`}
                                                         >
-                                                            <option value="USER">USER</option>
-                                                            <option value="ADMIN">ADMIN</option>
+                                                            <option value="USER" className="bg-white text-slate-500">USER</option>
+                                                            <option value="ADMIN" className="bg-white text-blue-700">ADMIN</option>
                                                         </select>
                                                     ) : (
                                                         user.role === "SUPERBOSS" ? (
@@ -452,15 +456,15 @@ export const Users = () => {
                                                         <select 
                                                             value={user.accountStatus || "active"} 
                                                             onChange={(e) => handleStatusChange(user._id, user.role, e.target.value)}
-                                                            className={`border text-xs rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-[120px] mx-auto p-1 font-semibold text-center cursor-pointer transition-colors ${
-                                                                user.accountStatus === "active" ? "bg-emerald-50 border-emerald-200 text-emerald-700" :
+                                                            className={`border text-[11px] rounded-full focus:ring-indigo-500 focus:border-indigo-500 block w-[120px] mx-auto py-1 px-2.5 font-semibold text-center cursor-pointer transition-colors ${
+                                                                (user.accountStatus === "active" || !user.accountStatus) ? "bg-emerald-50 border-emerald-200 text-emerald-700" :
                                                                 user.accountStatus === "rejected" ? "bg-rose-50 border-rose-200 text-rose-700" :
                                                                 "bg-orange-50 border-orange-200 text-orange-700"
                                                             }`}
                                                         >
-                                                            <option value="active">Hoạt động</option>
-                                                            <option value="rejected">Bị chặn</option>
-                                                            <option value="pending">Chờ duyệt</option>
+                                                            <option value="active" className="bg-white text-emerald-700">Hoạt động</option>
+                                                            <option value="rejected" className="bg-white text-rose-700">Bị chặn</option>
+                                                            <option value="pending" className="bg-white text-orange-700">Chờ duyệt</option>
                                                         </select>
                                                     ) : (
                                                         (user.accountStatus === "active" || !user.accountStatus) ? (
@@ -479,14 +483,14 @@ export const Users = () => {
                                                     )}
                                                 </TableCell>
 
-                                                <TableCell style={{ minWidth: columns.minWidth }} align="center" className="font-medium text-slate-500 text-[12px]">
+                                                <TableCell style={{ minWidth: 130 }} align="center" className="font-medium text-slate-500 text-[12px]">
                                                     <span className="inline-flex items-center justify-center gap-1.5"> 
                                                         <SlCalender className="text-slate-400" />  
                                                         {user?.createdAt ? user?.createdAt?.split("T")[0] : "-"}
                                                     </span>
                                                 </TableCell>
 
-                                                <TableCell style={{ minWidth: columns.minWidth }} align="center">
+                                                <TableCell style={{ minWidth: 100 }} align="center">
                                                     {canDeleteTargetUser(context?.userData, user) ? (
                                                         <button 
                                                             onClick={() => deleteUser(user?._id)} 
@@ -531,6 +535,7 @@ export const Users = () => {
 
             <TablePagination
                 labelRowsPerPage="Số hàng mỗi trang:"
+                labelDisplayedRows={({ from, to, count }) => `${from}-${to} trong số ${count !== -1 ? count : `hơn ${to}`}`}
                 rowsPerPageOptions={[25, 50, 100]}
                 component="div"
                 count={Number(userData?.totalUsersCount) || Number(userData?.total) || (Number(userData?.totalPages) * rowsPerPage) || 0}

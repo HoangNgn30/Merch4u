@@ -108,6 +108,7 @@ const Dashboard = () => {
   const [categoryData, setCategoryData] = useState([]);
   const [topProductsData, setTopProductsData] = useState([]);
   const [combinedChartData, setCombinedChartData] = useState([]);
+  const [lowStockProducts, setLowStockProducts] = useState([]);
 
   const context = useContext(MyContext);
 
@@ -192,6 +193,14 @@ const Dashboard = () => {
         setCategoryData(res.categoryData || []);
       }
     })
+
+    // Fetch low stock products
+    fetchDataFromApi("/api/product/getAllProducts?page=1&limit=200").then((res) => {
+      if (res?.error === false) {
+        const lowStock = (res.products || []).filter(p => p.countInStock < 5);
+        setLowStockProducts(lowStock);
+      }
+    });
 
   }, [])
 
@@ -309,7 +318,7 @@ const Dashboard = () => {
             open: true,
             model: "Add Product"
           })}>
-            <FaPlus /> Thêm sản phẩm
+            <FaPlus /> Thêm Sản Phẩm Mới
           </Button>
         </div>
 
@@ -317,14 +326,14 @@ const Dashboard = () => {
       </div>
 
       {
-        productData?.products?.length !== 0 && users?.length !== 0 && allReviews?.length !== 0 && <DashboardBoxes orders={ordersCount} products={productData?.products?.length} users={users?.length} reviews={allReviews?.length} category={context?.catData?.length} />
+        productData?.products?.length !== 0 && users?.length !== 0 && allReviews?.length !== 0 && <DashboardBoxes orders={ordersCount} products={productData?.totalCount || productData?.total || 0} users={users?.length} reviews={allReviews?.length} category={context?.catData?.length} />
       }
 
-      {/* <Products/> */}
+
 
       <div className="card my-4 shadow-md sm:rounded-lg bg-white">
         <div className="grid grid-cols-1 lg:grid-cols-2 px-5 py-5 flex-col sm:flex-row">
-          <h2 className="text-[18px] font-[600] text-left mb-2 lg:mb-0">Đơn hàng gần đây</h2>
+          <h2 className="text-[18px] font-[600] text-left mb-2 lg:mb-0">Đơn Hàng Gần Đây</h2>
           <div className="ml-auto w-full">
             <SearchBox
               searchQuery={orderSearchQuery}
@@ -343,10 +352,10 @@ const Dashboard = () => {
                   &nbsp;
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
-                  Mã đơn hàng
+                  Mã Đơn Hàng
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
-                  Mã thanh toán
+                  Mã Thanh Toán
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap">
                   Tên
@@ -355,20 +364,20 @@ const Dashboard = () => {
                   SĐT
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap">
-                  Địa chỉ
+                  Địa Chỉ
                 </th>
 
                 <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
-                  Tổng số tiền
+                  Tổng Số Tiền
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
                   Email
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
-                  ID người dùng
+                  ID Người Dùng
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
-                  Trạng thái đơn hàng
+                  Trạng Thái Đơn Hàng
                 </th>
                 <th scope="col" className="px-6 py-3 whitespace-nowrap text-center">
                   Ngày
@@ -469,13 +478,13 @@ const Dashboard = () => {
                                       scope="col"
                                       className="px-6 py-3 whitespace-nowrap"
                                     >
-                                      mã sản phẩm
+                                      Mã Sản Phẩm
                                     </th>
                                     <th
                                       scope="col"
                                       className="px-6 py-3 whitespace-nowrap"
                                     >
-                                      Tên sản phẩm
+                                      Tên Sản Phẩm
                                     </th>
                                     <th
                                       scope="col"
@@ -487,7 +496,7 @@ const Dashboard = () => {
                                       scope="col"
                                       className="px-6 py-3 whitespace-nowrap"
                                     >
-                                      Số lượng
+                                      Số Lượng
                                     </th>
                                     <th
                                       scope="col"
@@ -499,7 +508,7 @@ const Dashboard = () => {
                                       scope="col"
                                       className="px-6 py-3 whitespace-nowrap"
                                     >
-                                      Tạm tính
+                                      Tạm Tính
                                     </th>
                                   </tr>
                                 </thead>
@@ -580,7 +589,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
         {/* Sales & User Growth Chart */}
         <div className="card shadow-md sm:rounded-lg bg-white p-5 md:col-span-2">
-          <h2 className="text-[18px] font-[600] mb-4">Tăng trưởng doanh thu và người dùng</h2>
+          <h2 className="text-[18px] font-[600] mb-4">Tăng Trưởng Doanh Thu Và Người Dùng</h2>
           <div className="h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={combinedChartData}>
@@ -636,7 +645,7 @@ const Dashboard = () => {
 
         {/* Order Status Chart */}
         <div className="card shadow-md sm:rounded-lg bg-white p-5">
-          <h2 className="text-[18px] font-[600] mb-4">Trạng thái đơn hàng</h2>
+          <h2 className="text-[18px] font-[600] mb-4">Trạng Thái Đơn Hàng</h2>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -667,7 +676,7 @@ const Dashboard = () => {
 
         {/* Category Sales Distribution Chart */}
         <div className="card shadow-md sm:rounded-lg bg-white p-5">
-          <h2 className="text-[18px] font-[600] mb-4">Tỉ lệ hàng bán theo danh mục</h2>
+          <h2 className="text-[18px] font-[600] mb-4">Tỉ Lệ Hàng Bán Theo Danh Mục</h2>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -696,7 +705,7 @@ const Dashboard = () => {
 
         {/* Top Selling Products Chart */}
         <div className="card shadow-md sm:rounded-lg bg-white p-5 md:col-span-2">
-          <h2 className="text-[18px] font-[600] mb-4">Top 5 sản phẩm bán chạy nhất</h2>
+          <h2 className="text-[18px] font-[600] mb-4">Top 5 Sản Phẩm Bán Chạy Nhất</h2>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart

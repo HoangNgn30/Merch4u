@@ -136,7 +136,7 @@ const ManageLogo = () => {
                     <div className="flex items-center w-full pb-4 justify-between">
                         <div className="col">
                             <h2 className="text-[18px] font-[600]">
-                                Quản lý logo
+                                Quản Lý Logo
                             </h2>
                         </div>
                     </div>
@@ -174,7 +174,7 @@ const ManageLogo = () => {
                                 :
                                 <>
                                     <FaCloudUploadAlt className='text-[25px] text-white' />
-                                    Lưu và xem
+                                    Lưu Và Xem
                                 </>
                         }
                     </Button>
