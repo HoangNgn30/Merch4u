@@ -16,51 +16,108 @@ function parseMarkdown(text) {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
-    // Parse Markdown Tables
-    const tableRegex = /((?:^\|.+(?:\r?\n|$))+)/gm;
-    safeText = safeText.replace(tableRegex, (match) => {
-        const lines = match.trim().split(/\r?\n/);
-        if (lines.length < 2) return match;
+    const lines = safeText.split(/\r?\n/);
+    let html = "";
+    let inTable = false;
+    let tableRows = [];
+    let inList = false;
+    let listItems = [];
 
-        let tableHtml = '<div class="chat-table-wrapper"><table class="chat-table">';
-        let hasHeader = false;
-
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line.startsWith("|")) continue;
-
-            // Check if it's a separator line (e.g. |---|---|)
-            if (/^[|\s\-:]+$/.test(line)) {
-                hasHeader = true;
-                continue;
-            }
-
-            let cells = line.split("|").map(c => c.trim()).slice(1);
-            if (cells.length > 0 && cells[cells.length - 1] === "") {
-                cells.pop();
-            }
-            const tag = (i === 0 && !hasHeader) || (i === 0) ? "th" : "td";
-
-            tableHtml += "<tr>";
-            for (const cell of cells) {
-                tableHtml += `<${tag}>${cell}</${tag}>`;
-            }
-            tableHtml += "</tr>";
+    const flushList = () => {
+        if (listItems.length > 0) {
+            html += '<ul style="list-style-type: disc; margin-left: 1.25rem; margin-top: 0.5rem; margin-bottom: 0.5rem;">' + listItems.join("") + "</ul>";
+            listItems = [];
         }
-        tableHtml += "</table></div>";
-        return tableHtml;
-    });
+        inList = false;
+    };
 
-    // Parse bold, italic, links, lists, newlines
-    safeText = safeText
+    const flushTable = () => {
+        if (tableRows.length > 0) {
+            let separatorIndex = -1;
+            for (let i = 0; i < tableRows.length; i++) {
+                const row = tableRows[i].trim();
+                const cleanRow = row.replace(/^\||\|$/g, "").trim();
+                if (cleanRow && /^[|\s\-:]+$/.test(cleanRow)) {
+                    separatorIndex = i;
+                    break;
+                }
+            }
+
+            let tableHtml = '<div class="chat-table-wrapper"><table class="chat-table">';
+            for (let i = 0; i < tableRows.length; i++) {
+                if (i === separatorIndex) continue; // Skip separator row
+
+                const row = tableRows[i].trim();
+                let cleanRow = row;
+                if (cleanRow.startsWith("|")) cleanRow = cleanRow.slice(1);
+                if (cleanRow.endsWith("|")) cleanRow = cleanRow.slice(0, -1);
+
+                let cells = cleanRow.split("|").map(c => c.trim());
+                
+                // If it's before the separator or there is no separator and it's the first row, it's a header
+                const isHeader = (separatorIndex !== -1 && i < separatorIndex) || (separatorIndex === -1 && i === 0);
+                const tag = isHeader ? "th" : "td";
+
+                tableHtml += "<tr>";
+                for (const cell of cells) {
+                    tableHtml += `<${tag}>${parseInlineMarkdown(cell)}</${tag}>`;
+                }
+                tableHtml += "</tr>";
+            }
+            tableHtml += "</table></div>";
+            html += tableHtml;
+            tableRows = [];
+        }
+        inTable = false;
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmed = line.trim();
+
+        // Check for table row
+        const isTableRow = trimmed.includes("|") && !trimmed.startsWith("-") && !trimmed.startsWith("*") && !trimmed.startsWith("•");
+
+        if (isTableRow) {
+            flushList();
+            inTable = true;
+            tableRows.push(line);
+            continue;
+        } else {
+            flushTable();
+        }
+
+        // Check for list item
+        const listMatch = trimmed.match(/^[\-•\*]\s+(.+)/);
+        if (listMatch) {
+            inList = true;
+            let itemText = listMatch[1];
+            listItems.push(`<li style="margin-bottom: 0.25rem;">${parseInlineMarkdown(itemText)}</li>`);
+            continue;
+        } else {
+            flushList();
+        }
+
+        // Regular text line
+        if (trimmed === "") {
+            html += "<br/>";
+        } else {
+            html += parseInlineMarkdown(line) + "<br/>";
+        }
+    }
+
+    flushList();
+    flushTable();
+
+    return html;
+}
+
+function parseInlineMarkdown(text) {
+    if (!text) return "";
+    return text
         .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
         .replace(/\*(.+?)\*/g, "<em>$1</em>")
-        .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" class="chat-link">$1</a>')
-        .replace(/^[\-•]\s(.+)/gm, "<li>$1</li>")
-        .replace(/(<li>.*<\/li>)/gs, "<ul>$1</ul>")
-        .replace(/\n/g, "<br/>");
-
-    return safeText;
+        .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" class="chat-link">$1</a>');
 }
 
 export default function AdminAIChatBot() {
@@ -530,7 +587,7 @@ Tôi có thể giúp sếp thống kê doanh thu, kiểm tra đơn hàng gần �
                                     <div
                                         className={`max-w-[85%] rounded-2xl px-4 py-2.5 shadow-sm text-sm border ${
                                             msg.role === "user"
-                                                ? "bg-gradient-to-r from-[#3872fa] to-[#5a8dfc] border-[#3872fa] text-white rounded-tr-none"
+                                                ? "bg-gradient-to-r from-[#ff5252] to-[#ff7676] border-[#ff5252] text-white rounded-tr-none"
                                                 : "bg-white border-slate-200/60 text-slate-800 rounded-tl-none"
                                         }`}
                                     >

@@ -795,18 +795,56 @@ export async function chatWithAI(request, response) {
         const userName = user?.name || "bạn";
         const orderIntent = detectOrderIntent(message);
 
-        // Parallel fetch: orders, products, catalog
-        const [orderContext, relevantProducts, catalog] = await Promise.all([
+        // Parallel fetch: orders, products, catalog, and compact featured products list
+        const [orderContext, relevantProducts, catalog, featuredProducts] = await Promise.all([
             getRecentOrderContext(userId, orderIntent),
             chatSearchProducts(message, 10),
             getStoreCatalogContext(),
+            ProductModel.find({ $or: [{ isFeatured: true }, { isNew: true }] })
+                .select("name price countInStock catName brand discount")
+                .limit(15)
+                .lean(),
         ]);
 
         const { orderSummary, latestOrderStatus } = orderContext;
 
+        // Get product IDs from recent orders to include their details in candidate list
+        const orderProductIds = [];
+        if (userId) {
+            const orders = await OrderModel.find({ userId })
+                .sort({ createdAt: -1 })
+                .limit(orderIntent ? 5 : 3)
+                .select("products")
+                .lean();
+            for (const order of orders) {
+                for (const item of order.products || []) {
+                    if (item.productId) {
+                        orderProductIds.push(item.productId.toString());
+                    }
+                }
+            }
+        }
+
+        let orderRelatedProducts = [];
+        if (orderProductIds.length > 0) {
+            orderRelatedProducts = await ProductModel.find({ _id: { $in: orderProductIds } })
+                .select(PRODUCT_SELECT)
+                .lean();
+        }
+
+        // Combine and deduplicate
+        const candidateMap = new Map();
+        for (const p of orderRelatedProducts) {
+            candidateMap.set(p._id.toString(), p);
+        }
+        for (const p of relevantProducts) {
+            candidateMap.set(p._id.toString(), p);
+        }
+        const candidateProducts = Array.from(candidateMap.values());
+
         // Build a strict product reference table for the AI
-        const productContext = relevantProducts.length > 0
-            ? relevantProducts.map((product, index) => {
+        const productContext = candidateProducts.length > 0
+            ? candidateProducts.map((product, index) => {
                 const inStock = product.countInStock > 0 ? "Còn hàng" : "Hết hàng";
                 const sizeInfo = product.size?.length > 0 ? `Phiên bản: ${product.size.join(", ")}` : "";
                 return `[SP${index + 1}]
@@ -822,7 +860,12 @@ Mô tả: ${String(product.description || "").slice(0, 200)}`;
             : "Không tìm thấy sản phẩm phù hợp trong kho.";
 
         // Build product ID lookup table for the AI to reference
-        const idTable = relevantProducts.map((p, i) => `SP${i + 1} = ${p.name} → ID: ${p._id}`).join("\n");
+        const idTable = candidateProducts.map((p, i) => `SP${i + 1} = ${p.name} → ID: ${p._id}`).join("\n");
+
+        // Format compact shop featured product summary
+        const featuredSummary = featuredProducts.map((p, i) => {
+            return `${i+1}. ${p.name} - Giá: ${p.price.toLocaleString("vi-VN")}đ - Tồn kho: ${p.countInStock} - ID: ${p._id} - Cat: ${p.catName || "N/A"} - Brand: ${p.brand || "N/A"}${p.discount > 0 ? ` (giảm ${p.discount}%)` : ""}`;
+        }).join("\n");
 
         const systemPrompt = `
 Bạn là trợ lý ảo thông minh, thân thiện của cửa hàng **Merch4u** — chuyên bán merchandise K-pop, anime, game.
@@ -833,6 +876,9 @@ THÔNG TIN CỬA HÀNG:
 - Thương hiệu nổi bật: ${catalog.brands.slice(0, 15).join(", ")}
 - Sản phẩm đang giảm giá: ${catalog.saleCount} sản phẩm
 
+DANH SÁCH SẢN PHẨM NỔI BẬT CỦA CỬA HÀNG (Sử dụng danh sách này để giới thiệu khi khách muốn tìm đồ hot, sản phẩm mới/nổi bật hoặc gợi ý chung chung):
+${featuredSummary}
+
 THÔNG TIN KHÁCH HÀNG:
 - Tên: ${userName}
 - Lịch sử mua hàng gần đây:
@@ -840,24 +886,29 @@ ${orderSummary}
 
 ${latestOrderStatus ? `TRẠNG THÁI ĐƠN HÀNG GẦN NHẤT:\n${latestOrderStatus}` : ""}
 
-BẢNG TRA CỨU SẢN PHẨM (sử dụng ĐÚNG ID bên dưới):
+BẢNG TRA CỨU SẢN PHẨM KHỚP VỚI CÂU HỎI (BẮT BUỘC dùng ID bên dưới khi giới thiệu các sản phẩm này):
 ${idTable}
 
-CHI TIẾT SẢN PHẨM:
+CHI TIẾT SẢN PHẨM LIÊN QUAN:
 ${productContext}
 
-QUY TẮC BẮT BUỘC:
+QUY TẮC BẮT BUỘC (MẤT ĐIỂM NẾU VI PHẠM):
 1. Trả lời bằng tiếng Việt, ngắn gọn, thân thiện, dễ hiểu.
-2. **QUAN TRỌNG NHẤT**: Khi giới thiệu sản phẩm, BẮT BUỘC dùng link Markdown dạng [Tên sản phẩm](/product/ID).
-   - Tên sản phẩm trong link PHẢI ĐÚNG với tên trong BẢNG TRA CỨU.
-   - ID trong link PHẢI ĐÚNG với ID trong BẢNG TRA CỨU.
-   - VÍ DỤ ĐÚNG: nếu SP1 = "Áo BTS Map" với ID 6789abc → viết [Áo BTS Map](/product/6789abc)
-   - TUYỆT ĐỐI KHÔNG được trộn tên sản phẩm này với ID sản phẩm khác.
-3. CHỈ giới thiệu sản phẩm có trong BẢNG TRA CỨU phía trên. Không bịa sản phẩm, giá cả, tồn kho.
-4. Nếu không tìm thấy sản phẩm phù hợp, hãy nói thật và gợi ý khách tìm kiếm với từ khóa khác hoặc duyệt danh mục.
-5. Nếu hỏi về đơn hàng mà khách chưa đăng nhập hoặc không có dữ liệu, hãy nói rõ cần đăng nhập.
-6. Trả lời tối đa 3-5 sản phẩm phù hợp nhất, không liệt kê tràn lan.
-7. Khi khách hỏi chung chung (ví dụ "có gì mới không?", "sale gì?"), hãy giới thiệu sản phẩm từ context có discount > 0 hoặc isNew = true.
+2. **QUAN TRỌNG NHẤT**: Khi giới thiệu bất kỳ sản phẩm nào có trong danh sách cửa hàng, BẮT BUỘC dùng link Markdown dạng [Tên sản phẩm](/product/ID).
+   - Tên sản phẩm trong link PHẢI ĐÚNG với tên sản phẩm thực tế.
+   - ID trong link PHẢI ĐÚNG với ID của sản phẩm đó.
+   - VÍ DỤ ĐÚNG: [Áo BTS Map](/product/6789abc)
+   - TUYỆT ĐỐI KHÔNG được bịa ID hoặc viết sai đường dẫn.
+3. CHỈ giới thiệu sản phẩm có thực trong danh sách trên. Không tự bịa sản phẩm, giá cả hay tồn kho.
+4. **HÀNG RÀO BẢO VỆ (GUARDRAIL) & GIỚI THIỆU BẢN THÂN**:
+   - Khi nhận được các câu hỏi chung xã giao (ví dụ: "chào bạn", "bạn khỏe không"), hãy trả lời lịch sự, thân thiện và khéo léo gợi ý khách mua sắm.
+   - **GIỚI THIỆU BẢN THÂN & CÔNG NGHỆ (KHI ĐƯỢC HỎI)**: Nếu khách hàng hoặc ban giám khảo hỏi bạn là ai, mục tiêu sử dụng của bạn là gì, các chức năng chính của bạn, hoặc công nghệ xây dựng nên bạn/dự án này: Hãy tự tin trả lời đầy đủ bằng tiếng Việt rằng bạn là **Trợ lý ảo thông minh (AI Chatbot) của Merch4u**, được xây dựng trên nền tảng **Node.js, React** và tích hợp mô hình ngôn ngữ lớn tiên tiến nhất là **Gemini 2.5 Flash** cùng kỹ thuật **Vector Search / Hybrid Search (Tìm kiếm ngữ nghĩa kết hợp tìm kiếm từ khóa)** dựa trên cơ sở dữ liệu MongoDB. Chức năng chính của bạn là:
+     * Hỗ trợ tìm kiếm sản phẩm thông minh và giải thích ngữ nghĩa bằng ngôn ngữ tự nhiên.
+     * Gợi ý các sản phẩm cá nhân hóa phù hợp nhất với sở thích và lịch sử mua hàng của khách.
+     * Kiểm tra nhanh trạng thái đơn hàng gần nhất (ví dụ: đang xử lý, đã giao) cho người dùng đã đăng nhập.
+     * Giải đáp mọi thắc mắc về chính sách, danh mục và các sản phẩm hot của cửa hàng Merch4u.
+   - Nếu khách hàng hỏi các câu hỏi hoàn toàn không liên quan đến cửa hàng, sản phẩm, idol K-pop/anime/game, chính sách hay đơn hàng, và KHÔNG PHẢI hỏi về bản thân bạn/công nghệ dự án (ví dụ: công thức nấu ăn, viết code, chính trị, địa lý...): Bạn **BẮT BUỘC phải lịch sự từ chối trả lời** và nhắc nhở khách rằng bạn là trợ lý ảo của Merch4u, chỉ hỗ trợ mua sắm và đơn hàng. Ví dụ: *"Xin lỗi bạn, mình là trợ lý ảo của Merch4u nên chỉ có thể hỗ trợ các thông tin về sản phẩm, đơn hàng hoặc chính sách của shop. Bạn có cần mình gợi ý sản phẩm nào của shop không?"*
+5. Trả lời tối đa 3-5 sản phẩm phù hợp nhất, không liệt kê tràn lan.
 `;
 
         const contents = [
@@ -916,16 +967,24 @@ QUY TẮC BẮT BUỘC:
         }
 
         // Only send product cards for products the AI actually mentioned (by ID)
-        const mentionedIds = extractMentionedProductIds(aiText, relevantProducts);
-        let cards;
+        const mentionedIds = extractMentionedProductIds(aiText, candidateProducts);
+        let cards = [];
         if (mentionedIds.size > 0) {
-            cards = relevantProducts
+            cards = candidateProducts
                 .filter(p => mentionedIds.has(p._id?.toString?.() || String(p._id)))
                 .slice(0, 4)
                 .map(chatProductCard);
         } else {
-            // Fallback: send top 3 if AI didn't link any
-            cards = relevantProducts.slice(0, 3).map(chatProductCard);
+            // Check if the query is a product search/shopping query (not order status, and not a greeting/off-topic where AI declined to answer)
+            const shoppingKeywords = ["sản phẩm", "gợi ý", "mua", "bán", "giá", "áo", "album", "merch", "đồ", "mẫu", "chọn", "thử", "sale", "giảm giá", "bts", "blackpink", "twice", "aespa", "ive", "newjeans"];
+            const isShoppingQuery = shoppingKeywords.some(kw => message.toLowerCase().includes(kw)) || 
+                                     shoppingKeywords.some(kw => aiText.toLowerCase().includes(kw));
+            
+            const isOffTopicOrGreeting = aiText.includes("Xin lỗi bạn") || aiText.includes("chỉ hỗ trợ");
+            
+            if (isShoppingQuery && !orderIntent && !isOffTopicOrGreeting && relevantProducts.length > 0) {
+                cards = relevantProducts.slice(0, 3).map(chatProductCard);
+            }
         }
         if (cards.length > 0) {
             response.write(`data: ${JSON.stringify({ cards })}\n\n`);
@@ -1147,6 +1206,166 @@ export async function deleteAdminChatSession(request, response) {
     }
 }
 
+function computeAdminStats(allOrders = [], allProducts = [], allUsers = [], couponsList = []) {
+    // 1. Revenue: only count orders that are NOT "cancelled"
+    const validOrders = allOrders.filter(o => o.order_status !== "cancelled");
+    const totalRevenue = validOrders.reduce((sum, o) => sum + Number(o.totalAmt || 0), 0);
+
+    // Month-over-month revenue comparison
+    const now = new Date();
+    const curYear = now.getFullYear();
+    const curMonth = now.getMonth(); // 0-11
+    
+    let currentMonthRevenue = 0;
+    let lastMonthRevenue = 0;
+
+    for (const o of validOrders) {
+        if (!o.createdAt) continue;
+        const d = new Date(o.createdAt);
+        const y = d.getFullYear();
+        const m = d.getMonth();
+
+        if (y === curYear && m === curMonth) {
+            currentMonthRevenue += Number(o.totalAmt || 0);
+        } else if (
+            (curMonth === 0 && y === curYear - 1 && m === 11) ||
+            (curMonth > 0 && y === curYear && m === curMonth - 1)
+        ) {
+            lastMonthRevenue += Number(o.totalAmt || 0);
+        }
+    }
+
+    // 2. Orders by Status
+    const totalOrdersCount = allOrders.length;
+    const ordersByStatus = { pending: 0, shipped: 0, delivered: 0, cancelled: 0 };
+    for (const o of allOrders) {
+        const status = String(o.order_status || 'pending').toLowerCase();
+        if (ordersByStatus[status] !== undefined) {
+            ordersByStatus[status]++;
+        } else {
+            ordersByStatus.pending++;
+        }
+    }
+
+    // 3. Products & Inventory Value & Stocks breakdown
+    const totalProductsCount = allProducts.length;
+    let totalInventoryValue = 0;
+    let totalItemsInStock = 0;
+    const lowStockProducts = [];
+
+    for (const p of allProducts) {
+        const stock = Number(p.countInStock || 0);
+        const price = Number(p.price || 0);
+        totalInventoryValue += price * stock;
+        totalItemsInStock += stock;
+
+        if (stock <= 5) {
+            lowStockProducts.push({
+                name: p.name,
+                stock,
+                price
+            });
+        }
+    }
+
+    // Top 8 highest inventory stock count products
+    const mostStockProducts = [...allProducts]
+        .sort((a, b) => Number(b.countInStock || 0) - Number(a.countInStock || 0))
+        .slice(0, 8)
+        .map(p => ({
+            name: p.name,
+            stock: Number(p.countInStock || 0),
+            price: Number(p.price || 0)
+        }));
+
+    // Top 8 highest total stock value products (price * stock)
+    const highestValueProducts = [...allProducts]
+        .sort((a, b) => (Number(b.price || 0) * Number(b.countInStock || 0)) - (Number(a.price || 0) * Number(a.countInStock || 0)))
+        .slice(0, 8)
+        .map(p => ({
+            name: p.name,
+            stock: Number(p.countInStock || 0),
+            price: Number(p.price || 0),
+            value: Number(p.price || 0) * Number(p.countInStock || 0)
+        }));
+
+    // Group count and stock by category
+    const categoryStats = {};
+    for (const p of allProducts) {
+        const cat = p.catName || "N/A";
+        if (!categoryStats[cat]) {
+            categoryStats[cat] = { count: 0, stock: 0 };
+        }
+        categoryStats[cat].count++;
+        categoryStats[cat].stock += Number(p.countInStock || 0);
+    }
+
+    // Group count and stock by brand
+    const brandStats = {};
+    for (const p of allProducts) {
+        const brand = p.brand || "N/A";
+        if (!brandStats[brand]) {
+            brandStats[brand] = { count: 0, stock: 0 };
+        }
+        brandStats[brand].count++;
+        brandStats[brand].stock += Number(p.countInStock || 0);
+    }
+
+    // 4. Best Selling Products
+    const salesMap = new Map();
+    for (const o of validOrders) {
+        for (const item of o.products || []) {
+            const pid = item.productId?.toString();
+            if (!pid) continue;
+            const existing = salesMap.get(pid) || { name: item.productTitle || "Sản phẩm", qty: 0, revenue: 0 };
+            existing.qty += Number(item.quantity || 0);
+            existing.revenue += Number(item.price || 0) * Number(item.quantity || 0);
+            salesMap.set(pid, existing);
+        }
+    }
+
+    const bestSellers = Array.from(salesMap.values())
+        .sort((a, b) => b.qty - a.qty)
+        .slice(0, 8);
+
+    // 5. Users
+    const totalUsersCount = allUsers.length;
+    const usersByRole = { admin: 0, customer: 0 };
+    for (const u of allUsers) {
+        const role = String(u.role || 'USER').toUpperCase();
+        if (['ADMIN', 'SUPERBOSS'].includes(role)) {
+            usersByRole.admin++;
+        } else {
+            usersByRole.customer++;
+        }
+    }
+
+    // 6. Coupons
+    const totalCoupons = couponsList.length;
+    const activeCoupons = couponsList.filter(c => c.isActive).map(c => c.code);
+
+    return {
+        totalRevenue,
+        currentMonthRevenue,
+        lastMonthRevenue,
+        totalOrdersCount,
+        ordersByStatus,
+        totalProductsCount,
+        totalInventoryValue,
+        totalItemsInStock,
+        lowStockProducts,
+        mostStockProducts,
+        highestValueProducts,
+        categoryStats,
+        brandStats,
+        bestSellers,
+        totalUsersCount,
+        usersByRole,
+        totalCoupons,
+        activeCoupons
+    };
+}
+
 export async function adminChatWithAI(request, response) {
     const { message, sessionId } = request.body;
     const userId = request.userId || null;
@@ -1171,100 +1390,120 @@ export async function adminChatWithAI(request, response) {
         const user = userId ? await UserModel.findById(userId).select("name email role").lean() : null;
         const userName = user?.name || "Quản trị viên";
         
-        // Parallel queries to construct the administrative snapshot
+        // Parallel queries to construct the administrative snapshot with full raw details
         const [
-            totalOrders,
-            ordersList,
-            recentOrders,
-            totalProducts,
-            lowStockProducts,
-            totalUsers,
-            recentUsers,
+            allOrders,
+            allProducts,
+            allUsers,
             couponsList,
             slidersList
         ] = await Promise.all([
-            OrderModel.countDocuments(),
-            OrderModel.find({ order_status: { $ne: "cancelled" } }).select("totalAmt").lean(),
             OrderModel.find()
-                .sort({ createdAt: -1 })
-                .limit(5)
-                .populate("userId", "name email")
+                .select("totalAmt order_status payment_status createdAt products.productId products.productTitle products.quantity products.price")
                 .lean(),
-            ProductModel.countDocuments(),
-            ProductModel.find({ countInStock: { $lte: 5 } })
-                .select("name price countInStock")
-                .limit(10)
+            ProductModel.find()
+                .select("name price countInStock catName brand rating")
                 .lean(),
-            UserModel.countDocuments(),
             UserModel.find()
-                .sort({ createdAt: -1 })
-                .limit(5)
                 .select("name email role createdAt")
                 .lean(),
             CouponModel.find().lean(),
             HomeSliderModel.find().lean()
         ]);
 
-        // Calculate total sales
-        let totalSales = 0;
-        for (const order of ordersList) {
-            totalSales += Number(order.totalAmt || 0);
-        }
+        // 20 orders in full details
+        const recentOrdersData = allOrders
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .slice(0, 20)
+            .map(o => ({
+                id: o.paymentId || o._id.toString(),
+                status: o.order_status,
+                payment: o.payment_status,
+                total: Number(o.totalAmt || 0),
+                date: o.createdAt ? o.createdAt.toISOString().split('T')[0] : "N/A",
+                items: (o.products || []).map(p => ({ title: p.productTitle, qty: p.quantity, price: p.price }))
+            }));
 
-        // Summary of recent orders
-        const recentOrdersSummary = recentOrders.length > 0
-            ? recentOrders.map((order) => {
-                const customer = order.userId?.name || order.userId?.email || "Khách lẻ/Ẩn danh";
-                return `- Đơn ${order.paymentId || order._id}: Khách ${customer} - ${Number(order.totalAmt || 0).toLocaleString("vi-VN")}đ [${order.order_status}] (${new Date(order.createdAt).toLocaleDateString("vi-VN")})`;
-            }).join("\n")
-            : "Chưa có đơn hàng nào.";
+        // Compact list of all orders for fast search/referencing
+        const allOrdersCompact = allOrders.map(o => ({
+            id: o.paymentId || o._id.toString(),
+            status: o.order_status,
+            total: Number(o.totalAmt || 0),
+            date: o.createdAt ? o.createdAt.toISOString().split('T')[0] : "N/A"
+        }));
 
-        // Summary of low stock products
-        const lowStockSummary = lowStockProducts.length > 0
-            ? lowStockProducts.map((p) => `- Product ID ${p._id}: **${p.name}** còn **${p.countInStock}** sản phẩm trong kho (Giá: ${Number(p.price || 0).toLocaleString("vi-VN")}đ)`).join("\n")
-            : "Không có sản phẩm nào sắp hết hàng (tất cả > 5 chiếc).";
+        const productsData = allProducts.map(p => ({
+            id: p._id.toString(),
+            name: p.name,
+            price: Number(p.price || 0),
+            stock: Number(p.countInStock || 0),
+            cat: p.catName || "N/A",
+            brand: p.brand || "N/A",
+            rating: p.rating || 0
+        }));
 
-        // Summary of recent users
-        const recentUsersSummary = recentUsers.length > 0
-            ? recentUsers.map((u) => `- **${u.name}** (${u.email}) - Vai trò: ${u.role || "USER"} - Đăng ký ngày: ${new Date(u.createdAt).toLocaleDateString("vi-VN")}`).join("\n")
-            : "Không có người dùng mới.";
+        const usersData = allUsers.map(u => ({
+            name: u.name,
+            email: u.email,
+            role: u.role || "USER",
+            date: u.createdAt ? u.createdAt.toISOString().split('T')[0] : "N/A"
+        }));
 
-        // Summary of coupons
-        const couponsSummary = couponsList.length > 0
-            ? couponsList.map((c) => `- Code: **${c.code}** (${c.type === "percent" ? `${c.discount}%` : `${Number(c.discount).toLocaleString("vi-VN")}đ`}) - Tình trạng: ${c.isActive ? "Đang hoạt động" : "Tắt"} - Đã dùng: ${c.usedCount || 0} lần`).join("\n")
-            : "Chưa có mã giảm giá nào được tạo.";
-
-        // Summary of homepage sliders
-        const slidersSummary = slidersList.length > 0
-            ? slidersList.map((s, idx) => `- Slider #${idx + 1}: ${s.images?.length || 0} ảnh - Trạng thái: ${s.isVisible ? "Hiển thị" : "Ẩn"}`).join("\n")
-            : "Chưa cấu hình slider nào trên trang chủ.";
+        const stats = computeAdminStats(allOrders, allProducts, allUsers, couponsList);
 
         const systemPrompt = `
 Bạn là trợ lý AI đặc quyền cao cấp (Co-pilot) dành riêng cho Quản trị viên của **Merch4u**.
-Bạn có quyền truy cập toàn bộ dữ liệu thống kê, doanh thu, đơn hàng, khách hàng, sản phẩm, và thiết lập của cửa hàng.
+Bạn được cung cấp BÁO CÁO THỐNG KÊ DOANH THU, TỒN KHO VÀ ĐƠN HÀNG và dữ liệu hệ thống bên dưới để hỗ trợ sếp.
+Hãy sử dụng trực tiếp các số liệu thống kê đã tính toán sẵn này để trả lời sếp thay vì tự tính toán lại.
 
-THỐNG KÊ THỜI GIAN THỰC CỦA HỆ THỐNG:
-- **Doanh thu tổng cộng** (trừ đơn hủy): **${totalSales.toLocaleString("vi-VN")}đ**
-- **Tổng số đơn hàng**: **${totalOrders}**
-- **Tổng số sản phẩm**: **${totalProducts}**
-- **Tổng số thành viên**: **${totalUsers}**
+SỐ LIỆU THỐNG KÊ KINH DOANH CHÍNH XÁC:
+- Tổng doanh thu thực tế (đơn hàng thành công/khác cancelled): ${stats.totalRevenue.toLocaleString("vi-VN")}đ
+- Doanh thu tháng này: ${stats.currentMonthRevenue.toLocaleString("vi-VN")}đ
+- Doanh thu tháng trước: ${stats.lastMonthRevenue.toLocaleString("vi-VN")}đ
+- Tổng số đơn hàng: ${stats.totalOrdersCount} đơn (Đang xử lý: ${stats.ordersByStatus.pending}, Đang giao: ${stats.ordersByStatus.shipped}, Thành công: ${stats.ordersByStatus.delivered}, Đã hủy: ${stats.ordersByStatus.cancelled})
+- Tổng số sản phẩm trong kho: ${stats.totalProductsCount} mẫu
+- Tổng số lượng hàng tồn: ${stats.totalItemsInStock} cái
+- Tổng giá trị hàng tồn kho: ${stats.totalInventoryValue.toLocaleString("vi-VN")}đ
+- Tổng số thành viên đăng ký: ${stats.totalUsersCount} người (Quản trị viên: ${stats.usersByRole.admin}, Khách hàng: ${stats.usersByRole.customer})
+- Tổng số mã giảm giá: ${stats.totalCoupons} (Đang hoạt động: ${stats.activeCoupons.join(", ") || "Không có"})
 
-DANH SÁCH ĐƠN HÀNG MỚI NHẤT (5 đơn gần đây):
-${recentOrdersSummary}
+DANH SÁCH SẢN PHẨM SẮP HẾT HÀNG (TỒN KHO <= 5):
+${stats.lowStockProducts.map(p => `- ${p.name} (Tồn: ${p.stock}, Giá: ${p.price.toLocaleString("vi-VN")}đ)`).join("\n") || "Không có sản phẩm nào sắp hết hàng."}
 
-CẢNH BÁO TỒN KHO THẤP (Sản phẩm có tồn kho <= 5 chiếc):
-${lowStockSummary}
+TOP SẢN PHẨM CÓ TỒN KHO NHIỀU NHẤT (Sử dụng để trả lời khi sếp hỏi sản phẩm nào tồn nhiều nhất hoặc cần xả hàng):
+${stats.mostStockProducts.map((p, idx) => `${idx + 1}. ${p.name} (Tồn kho: ${p.stock} chiếc, Giá: ${p.price.toLocaleString("vi-VN")}đ)`).join("\n") || "Chưa có dữ liệu."}
 
-DANH SÁCH THÀNH VIÊN ĐĂNG KÝ GẦN ĐÂY (5 thành viên gần đây):
-${recentUsersSummary}
+TOP SẢN PHẨM CÓ GIÁ TRỊ TỒN KHO LỚN NHẤT (Giá trị tồn = Tồn kho * Giá):
+${stats.highestValueProducts.map((p, idx) => `${idx + 1}. ${p.name} (Tồn: ${p.stock}, Giá: ${p.price.toLocaleString("vi-VN")}đ -> Tổng giá trị tồn: ${p.value.toLocaleString("vi-VN")}đ)`).join("\n") || "Chưa có dữ liệu."}
+
+THỐNG KÊ TỒN KHO THEO DANH MỤC:
+${Object.entries(stats.categoryStats).map(([cat, info]) => `- Danh mục "${cat}": ${info.count} mẫu sản phẩm, tổng tồn kho ${info.stock} chiếc`).join("\n")}
+
+THỐNG KÊ TỒN KHO THEO THƯƠNG HIỆU:
+${Object.entries(stats.brandStats).map(([brand, info]) => `- Thương hiệu "${brand}": ${info.count} mẫu sản phẩm, tổng tồn kho ${info.stock} chiếc`).join("\n")}
+
+TOP SẢN PHẨM BÁN CHẠY NHẤT:
+${stats.bestSellers.map((p, idx) => `${idx + 1}. ${p.name} - Đã bán: ${p.qty} cái - Doanh thu: ${p.revenue.toLocaleString("vi-VN")}đ`).join("\n") || "Chưa có dữ liệu bán hàng."}
+
+DANH SÁCH 20 ĐƠN HÀNG GẦN NHẤT CHI TIẾT:
+${JSON.stringify(recentOrdersData)}
+
+DANH SÁCH TẤT CẢ ĐƠN HÀNG TRÊN HỆ THỐNG (ĐỂ TRA CỨU):
+${JSON.stringify(allOrdersCompact)}
+
+DANH SÁCH SẢN PHẨM TRÊN HỆ THỐNG:
+${JSON.stringify(productsData)}
+
+DANH SÁCH THÀNH VIÊN ĐĂNG KÝ:
+${JSON.stringify(usersData)}
 
 DANH SÁCH MÃ GIẢM GIÁ (COUPONS):
-${couponsSummary}
+${JSON.stringify(couponsList.map(c => ({ code: c.code, discount: c.discount, type: c.type, active: c.isActive, used: c.usedCount || 0 })))}
 
 CẤU HÌNH BANNER/SLIDER TRANG CHỦ:
-${slidersSummary}
+${JSON.stringify(slidersList.map(s => ({ title: s.title || "Slider", visible: s.isVisible, imagesCount: s.images?.length || 0 })))}
 
-ĐƯỜNG DẪN DI CHUYỂN NHANH (BẮT BUỘC dùng khi admin cần quản lý):
+ĐƯỜNG DẪN DI CHUYỂN NHANH (BẮT BUỘC dùng khi sếp cần quản lý):
 - Trang tổng quan (Dashboard): [/](/)
 - Quản lý Sản phẩm (Danh sách sản phẩm): [/products](/products)
 - Quản lý Mã giảm giá (Coupons): [/coupons](/coupons)
@@ -1278,17 +1517,27 @@ ${slidersSummary}
 - Quản lý Banner Phải: [/rightBanner/list](/rightBanner/list)
 - Quản lý Bài viết/Blogs: [/blog/List](/blog/List)
 
-QUY TẮC PHẢN HỒI BẮT BUỘC:
-1. **Xưng hô**: Sử dụng ngôn ngữ vô cùng lịch sự, chuyên nghiệp, xem admin như sếp ("Chào sếp", "Chào Quản trị viên", "Tôi đã thống kê...", "Hệ thống ghi nhận...", "Tôi có thể giúp gì cho sếp ạ?").
-2. **Trực quan hóa**:
-   - Khi hiển thị dữ liệu so sánh, danh sách đơn hàng, thống kê doanh thu, tồn kho, BẮT BUỘC sử dụng Markdown Tables (Bảng) để sếp dễ nhìn và so sánh.
-   - Sử dụng emoji phù hợp để làm báo cáo sinh động (Ví dụ: 💰 doanh thu, 📦 đơn hàng, ⚠️ cảnh báo tồn kho, 🎫 mã giảm giá).
-3. **Liên kết nhanh**: Khi đề cập đến việc quản lý, sửa đổi hoặc thêm mới các mảng như đơn hàng, sản phẩm, slider, danh mục, người dùng... hãy chủ động đính kèm liên kết Markdown di chuyển nhanh ở trên để sếp click là chuyển trang ngay lập tức. Ví dụ: "Sếp có thể quản lý trực tiếp tại [Quản lý Đơn hàng](/orders)".
-4. **Hành động & Phân tích**: 
-   - Chủ động đưa ra lời khuyên hoặc cảnh báo cho sếp (Ví dụ: Sản phẩm X sắp hết hàng, khuyên sếp nên nhập thêm; hoặc mã giảm giá Y đã hết hạn).
-   - Hãy là một trợ lý thông minh hỗ trợ sếp tối đa việc ra quyết định.
-5. Chỉ trả lời dựa trên dữ liệu hệ thống cung cấp ở trên, không tự bịa ra thông số giả.
+QUY TẮC PHẢN HỒI BẮT BUỘC (MẤT ĐIỂM NẾU VI PHẠM):
+1. **Xưng hô**: Sử dụng ngôn ngữ vô cùng lịch sự, tôn trọng sếp ("Chào sếp", "Tôi đã tính toán...", "Hệ thống ghi nhận...", "Tôi đề xuất sếp...").
+2. **Tính toán chính xác**: Sử dụng các số liệu thống kê được tính sẵn ở trên để trả lời trực tiếp sếp, không tự bịa ra thông số giả.
+3. **Trực quan hóa**:
+   - Khi hiển thị danh sách, bảng thống kê dữ liệu so sánh, doanh thu, tồn kho... BẮT BUỘC sử dụng Markdown Tables (Bảng) để sếp dễ quan sát.
+   - **QUAN TRỌNG**: Khi tạo bảng Markdown, hãy sử dụng đường phân cách cực kỳ ngắn gọn (ví dụ: '|---|---|'), TUYỆT ĐỐI không lặp lại dấu gạch ngang kéo dài để căn chỉnh cột. Không dùng quá 5 dấu gạch ngang cho mỗi cột trong dòng phân cách.
+   - **GIỚI HẠN DỮ LIỆU**: Khi hiển thị danh sách đơn hàng hoặc sản phẩm gần đây, chỉ hiển thị tối đa 5-8 dòng/đối tượng tiêu biểu hoặc mới nhất trong bảng. Không liệt kê tràn lan toàn bộ danh sách để tránh phản hồi bị cắt ngắn giữa chừng.
+   - Dùng thêm các emoji phù hợp (💰 doanh thu, 📦 đơn hàng, ⚠️ cảnh báo tồn kho, 🎫 mã giảm giá).
+4. **Liên kết nhanh**: Khi nhắc đến việc quản trị, sửa đổi hoặc thêm mới (ví dụ đơn hàng, sản phẩm, slider, danh mục, người dùng...), hãy đính kèm liên kết Markdown di chuyển nhanh ở trên để sếp click là chuyển trang ngay lập tức. Ví dụ: "Sếp có thể quản lý trực tiếp các đơn hàng tại [Quản lý Đơn hàng](/orders)".
+5. **Hành động & Phân tích**: Chủ động đưa ra lời khuyên hoặc cảnh báo hữu ích cho sếp (Ví dụ: "Sản phẩm A đang bán chạy nhất với số lượng X đơn, sếp nên nhập thêm vì tồn kho hiện tại chỉ còn Y chiếc").
+6. **HÀNG RÀO BẢO VỆ (GUARDRAIL) & GIỚI THIỆU BẢN THÂN**:
+   - **GIỚI THIỆU BẢN THÂN & CÔNG NGHỆ (KHI ĐƯỢC HỎI)**: Nếu sếp hoặc ban giám khảo hỏi mục tiêu sử dụng của bạn, bạn giúp được gì, hoặc công nghệ xây dựng nên bạn/dự án này: Hãy trả lời vô cùng chuyên nghiệp và tự hào rằng bạn là **Trợ lý AI đặc quyền cao cấp (Co-pilot) dành riêng cho Quản trị viên của Merch4u**, được tích hợp mô hình AI tiên tiến **Gemini 2.5 Flash** cùng dữ liệu thời gian thực được đồng bộ từ MongoDB. Bạn được thiết kế để hỗ trợ Admin trong việc:
+     * Quét toàn bộ kho dữ liệu hệ thống (sản phẩm, đơn hàng, khách hàng, coupon, banner) để phân tích và thống kê theo yêu cầu.
+     * Tính toán chính xác doanh thu thực tế, doanh thu theo tháng, và so sánh hiệu quả kinh doanh.
+     * Báo cáo chi tiết tình hình tồn kho: sản phẩm sắp hết hàng, top sản phẩm tồn nhiều nhất để xả kho, top sản phẩm có giá trị tồn kho lớn nhất, thống kê tồn kho theo danh mục/thương hiệu.
+     * Tra cứu nhanh 20 đơn hàng gần nhất cũng như thông tin khách hàng đăng ký.
+     * Cung cấp các đường liên kết di chuyển nhanh đến tất cả các trang quản trị để sếp truy cập ngay tức khắc.
+   - Nếu sếp hỏi các câu hỏi không liên quan đến quản lý, thống kê hay vận hành cửa hàng Merch4u, và KHÔNG PHẢI hỏi về bản thân bạn/công nghệ dự án (ví dụ: công thức nấu ăn, viết thơ, lập trình...): Hãy khéo léo từ chối và nhắc nhở sếp rằng nhiệm vụ của bạn là làm trợ lý Co-pilot hỗ trợ quản trị và thống kê kinh doanh cho cửa hàng Merch4u.
+7. Chỉ trả lời dựa trên dữ liệu hệ thống cung cấp ở trên, không tự bịa ra thông số giả.
 `;
+
 
         const contents = [
             { role: "user", parts: [{ text: systemPrompt }] },

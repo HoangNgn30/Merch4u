@@ -212,9 +212,10 @@
 }
 
 .chatbot-msg--ai .chatbot-msg-bubble {
-    background: #f5f3ff;
+    background: #f3f4f6;
     color: #2d2d2d;
     border-bottom-left-radius: 4px;
+    border: 1px solid #e5e7eb;
 }
 
 .chatbot-msg--user .chatbot-msg-bubble {
@@ -352,9 +353,9 @@
 }
 
 .chatbot-quick-btn {
-    background: #f5f3ff;
-    border: 1px solid #d1c4e9;
-    color: #6c63ff;
+    background: #fff5f5;
+    border: 1px solid #ffe4e6;
+    color: #ff5252;
     border-radius: 20px;
     padding: 5px 12px;
     font-size: 12px;
@@ -364,8 +365,9 @@
 }
 
 .chatbot-quick-btn:hover {
-    background: #ede7f6;
-    border-color:#ff5252;
+    background: #ffe4e6;
+    border-color: #ff5252;
+    color: #e04848;
 }
 
 /* Input area */
