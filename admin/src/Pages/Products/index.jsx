@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Button, useTheme } from "@mui/material";
 import { IoMdAdd } from "react-icons/io";
 import Rating from '@mui/material/Rating';
@@ -19,7 +19,7 @@ import { FaRegEye } from "react-icons/fa6";
 import { GoTrash } from "react-icons/go";
 import SearchBox from '../../Components/SearchBox';
 import { MyContext } from '../../App';
-import { fetchDataFromApi, deleteData, deleteMultipleData } from '../../utils/api';
+import { fetchDataFromApi, deleteData, deleteMultipleData, postData } from '../../utils/api';
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
 import CircularProgress from '@mui/material/CircularProgress';
@@ -92,36 +92,30 @@ export const Products = () => {
 
     const context = useContext(MyContext);
 
+    const selectedCategory = useMemo(() => (
+        context?.catData?.find((cat) => cat?._id === productCat)
+    ), [context?.catData, productCat]);
+
+    const subCategoryOptions = selectedCategory?.children || [];
+
+    const selectedSubCategory = useMemo(() => (
+        subCategoryOptions.find((subCat) => subCat?._id === productSubCat)
+    ), [subCategoryOptions, productSubCat]);
+
+    const thirdCategoryOptions = selectedSubCategory?.children || [];
+
+    useEffect(() => {
+        setPage(0);
+        if (searchQuery !== "") {
+            setProductCat('');
+            setProductSubCat('');
+            setProductThirdLavelCat('');
+        }
+    }, [searchQuery]);
+
     useEffect(() => {
         getProducts(page, rowsPerPage);
-    }, [context?.isOpenFullScreenPanel, page, rowsPerPage])
-
-
-
-    useEffect(() => {
-        // Filter products based on search query
-        if (searchQuery !== "") {
-            const filteredProducts = productTotalData?.products?.filter((product) =>
-                product._id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                product?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                product?.catName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                product?.subCat?.toLowerCase().includes(searchQuery.toLowerCase())
-            ) || [];
-            setProductData({
-                error: false,
-                success: true,
-                products: filteredProducts,
-                total: filteredProducts?.length,
-                page: parseInt(page),
-                totalPages: Math.ceil(filteredProducts?.length / rowsPerPage),
-                totalCount: productData?.totalCount
-            });
-
-        } else {
-            getProducts(page, rowsPerPage);
-        }
-
-    }, [searchQuery])
+    }, [context?.isOpenFullScreenPanel, page, rowsPerPage, searchQuery, productCat, productSubCat, productThirdLavelCat]);
 
 
 
@@ -180,184 +174,94 @@ export const Products = () => {
         setSortedIds(selectedIds);
     };
 
-
-    const getProducts = async (page, limit) => {
-
-        setIsloading(true)
-        fetchDataFromApi(`/api/product/getAllProducts?page=${page + 1}&limit=${limit}`).then((res) => {
-            setProductData(res)
-
-            setProductTotalData(res)
-            setIsloading(false)
-
-            let arr = [];
-
-            for (let i = 0; i < res?.products?.length; i++) {
-                arr.push({
-                    src: res?.products[i]?.images[0]
-                })
-            }
-
-            setPhotos(arr);
-
-        })
-    }
-
-    const handleChangeProductCat = (event) => {
-        if (event.target.value !== null) {
-            setProductCat(event.target.value);
-            setProductSubCat('');
-            setProductThirdLavelCat('');
-            setIsloading(true)
-            fetchDataFromApi(`/api/product/getAllProductsByCatId/${event.target.value}`).then((res) => {
-                if (res?.error === false) {
-                    setProductData({
-                        error: false,
-                        success: true,
-                        products: res?.products,
-                        total: res?.products?.length,
-                        page: parseInt(page),
-                        totalPages: Math.ceil(res?.products?.length / rowsPerPage),
-                        totalCount: res?.products?.length
-                    });
-                } else {
-                    context.alertBox("error", res?.message || "Không thể tải danh sách sản phẩm");
-                }
-                setTimeout(() => {
-                    setIsloading(false)
-                }, 300);
-            })
-        } else {
-            getProducts(0, 50);
-            setProductSubCat('');
-            setProductCat(event.target.value);
-            setProductThirdLavelCat('');
+    const setProductsResponse = (res, pageVal, limitVal) => {
+        if (res?.success === true || res?.error === false) {
+            const products = res?.products || [];
+            setProductData({
+                ...res,
+                products,
+                total: Number(res?.total) || products.length,
+                totalCount: Number(res?.totalCount) || Number(res?.total) || products.length,
+                page: Number(res?.page) || pageVal + 1,
+                totalPages: Number(res?.totalPages) || Math.ceil(products.length / limitVal),
+            });
+            setPhotos(products.map((product) => ({
+                src: product?.images?.[0]
+            })).filter((photo) => photo.src));
+            return;
         }
 
+        setProductData({
+            error: false,
+            success: true,
+            products: [],
+            total: 0,
+            page: pageVal + 1,
+            totalPages: 0,
+            totalCount: 0
+        });
+        setPhotos([]);
     };
 
+    const getProducts = async (pageVal, limitVal) => {
+        setIsloading(true);
+        if (searchQuery !== "") {
+            postData("/api/product/search/get", {
+                query: searchQuery,
+                page: pageVal + 1,
+                limit: limitVal
+            }).then((res) => {
+                setProductsResponse(res, pageVal, limitVal);
+                setIsloading(false);
+            }).catch(() => {
+                setIsloading(false);
+            });
+        } else if (productCat || productSubCat || productThirdLavelCat) {
+            postData("/api/product/filters", {
+                catId: productCat ? [productCat] : [],
+                subCatId: productSubCat ? [productSubCat] : [],
+                thirdsubCatId: productThirdLavelCat ? [productThirdLavelCat] : [],
+                page: pageVal + 1,
+                limit: limitVal
+            }).then((res) => {
+                setProductsResponse(res, pageVal, limitVal);
+                setIsloading(false);
+            }).catch(() => {
+                setIsloading(false);
+            });
+        } else {
+            fetchDataFromApi(`/api/product/getAllProducts?page=${pageVal + 1}&limit=${limitVal}`).then((res) => {
+                setProductsResponse(res, pageVal, limitVal);
+                setProductTotalData(res);
+                setIsloading(false);
+            }).catch(() => {
+                setIsloading(false);
+            });
+        }
+    };
+
+    const handleChangeProductCat = (event) => {
+        const val = event.target.value;
+        setProductCat(val || '');
+        setProductSubCat('');
+        setProductThirdLavelCat('');
+        setSearchQuery('');
+        setPage(0);
+    };
 
     const handleChangeProductSubCat = (event) => {
-        if (event.target.value !== null) {
-            setProductSubCat(event.target.value);
-            setProductThirdLavelCat('');
-            setIsloading(true)
-            fetchDataFromApi(`/api/product/getAllProductsBySubCatId/${event.target.value}`).then((res) => {
-                if (res?.error === false) {
-                    setProductData({
-                        error: false,
-                        success: true,
-                        products: res?.products,
-                        total: res?.products?.length,
-                        page: parseInt(page),
-                        totalPages: Math.ceil(res?.products?.length / rowsPerPage),
-                        totalCount: res?.products?.length
-                    });
-                } else {
-                    context.alertBox("error", res?.message || "Không thể tải danh sách sản phẩm");
-                }
-                setTimeout(() => {
-                    setIsloading(false)
-                }, 500);
-            })
-        } else {
-            setProductSubCat(event.target.value);
-            setProductThirdLavelCat('');
-            if (productCat) {
-                setIsloading(true)
-                fetchDataFromApi(`/api/product/getAllProductsByCatId/${productCat}`).then((res) => {
-                    if (res?.error === false) {
-                        setProductData({
-                            error: false,
-                            success: true,
-                            products: res?.products,
-                            total: res?.products?.length,
-                            page: parseInt(page),
-                            totalPages: Math.ceil(res?.products?.length / rowsPerPage),
-                            totalCount: res?.products?.length
-                        });
-                    } else {
-                        context.alertBox("error", res?.message || "Không thể tải danh sách sản phẩm");
-                    }
-                    setTimeout(() => {
-                        setIsloading(false)
-                    }, 500);
-                })
-            } else {
-                getProducts(0, 50);
-            }
-        }
+        const val = event.target.value;
+        setProductSubCat(val || '');
+        setProductThirdLavelCat('');
+        setSearchQuery('');
+        setPage(0);
     };
 
     const handleChangeProductThirdLavelCat = (event) => {
-        if (event.target.value !== null) {
-            setProductThirdLavelCat(event.target.value);
-            setIsloading(true)
-            fetchDataFromApi(`/api/product/getAllProductsByThirdLavelCat/${event.target.value}`).then((res) => {
-                console.log(res)
-                if (res?.error === false) {
-                    setProductData({
-                        error: false,
-                        success: true,
-                        products: res?.products,
-                        total: res?.products?.length,
-                        page: parseInt(page),
-                        totalPages: Math.ceil(res?.products?.length / rowsPerPage),
-                        totalCount: res?.products?.length
-                    });
-                } else {
-                    context.alertBox("error", res?.message || "Không thể tải danh sách sản phẩm");
-                }
-                setTimeout(() => {
-                    setIsloading(false)
-                }, 300);
-            })
-        } else {
-            setProductThirdLavelCat(event.target.value);
-            if (productSubCat) {
-                setIsloading(true)
-                fetchDataFromApi(`/api/product/getAllProductsBySubCatId/${productSubCat}`).then((res) => {
-                    if (res?.error === false) {
-                        setProductData({
-                            error: false,
-                            success: true,
-                            products: res?.products,
-                            total: res?.products?.length,
-                            page: parseInt(page),
-                            totalPages: Math.ceil(res?.products?.length / rowsPerPage),
-                            totalCount: res?.products?.length
-                        });
-                    } else {
-                        context.alertBox("error", res?.message || "Không thể tải danh sách sản phẩm");
-                    }
-                    setTimeout(() => {
-                        setIsloading(false)
-                    }, 300);
-                })
-            } else if (productCat) {
-                setIsloading(true)
-                fetchDataFromApi(`/api/product/getAllProductsByCatId/${productCat}`).then((res) => {
-                    if (res?.error === false) {
-                        setProductData({
-                            error: false,
-                            success: true,
-                            products: res?.products,
-                            total: res?.products?.length,
-                            page: parseInt(page),
-                            totalPages: Math.ceil(res?.products?.length / rowsPerPage),
-                            totalCount: res?.products?.length
-                        });
-                    } else {
-                        context.alertBox("error", res?.message || "Không thể tải danh sách sản phẩm");
-                    }
-                    setTimeout(() => {
-                        setIsloading(false)
-                    }, 300);
-                })
-            } else {
-                getProducts(0, 50);
-            }
-        }
+        const val = event.target.value;
+        setProductThirdLavelCat(val || '');
+        setSearchQuery('');
+        setPage(0);
     };
 
     const handleChangeRowsPerPage = (event) => {
@@ -373,7 +277,7 @@ export const Products = () => {
                 "Bạn có chắc chắn muốn xóa sản phẩm này?",
                 () => {
                     deleteData(`/api/product/${id}`).then((res) => {
-                        getProducts();
+                        getProducts(page, rowsPerPage);
                         context.alertBox("success", "Product deleted");
 
                     })
@@ -401,7 +305,7 @@ export const Products = () => {
                     deleteMultipleData(`/api/product/deleteMultiple`, {
                         data: { ids: sortedIds },
                     }).then((res) => {
-                        getProducts();
+                        getProducts(page, rowsPerPage);
                         context.alertBox("success", "Product deleted");
                         setSortedIds([]);
 
@@ -419,9 +323,10 @@ export const Products = () => {
 
 
     const handleChangePage = (event, newPage) => {
-        getProducts(page, rowsPerPage);
         setPage(newPage);
     };
+
+    const displayProducts = productData?.products || [];
 
     return (
         <>
@@ -454,15 +359,15 @@ export const Products = () => {
                             context?.catData?.length !== 0 &&
                             <Select
                                 style={{ zoom: '80%' }}
-                                labelId="demo-simple-select-label"
-                                id="productCatDrop"
+                                labelId="product-cat-label"
+                                id="productCatDropMain"
                                 size="small"
                                 className='w-full'
                                 value={productCat}
                                 label="Category"
                                 onChange={handleChangeProductCat}
                             >
-                                <MenuItem value={null}>None</MenuItem>
+                                <MenuItem value="">None</MenuItem>
                                 {
                                     context?.catData?.map((cat, index) => {
                                         return (
@@ -475,38 +380,30 @@ export const Products = () => {
                         }
                     </div>
 
-
                     <div className="col">
                         <h4 className="font-[600] text-[13px] mb-2">Danh Mục Cấp 2</h4>
                         {
                             context?.catData?.length !== 0 &&
                             <Select
                                 style={{ zoom: '80%' }}
-                                labelId="demo-simple-select-label"
-                                id="productCatDrop"
+                                labelId="product-subcat-label"
+                                id="productCatDropSub"
                                 size="small"
                                 className='w-full'
                                 value={productSubCat}
                                 label="Sub Category"
                                 onChange={handleChangeProductSubCat}
                             >
-                                <MenuItem value={null}>None</MenuItem>
-                                {
-                                    context?.catData?.filter(cat => cat._id === productCat).map((cat, index) => (
-                                        <React.Fragment key={cat?._id || index}>
-                                            {cat?.children?.length !== 0 && cat?.children?.map((subCat, index_) => (
-                                                <MenuItem value={subCat?._id} key={subCat?._id || index_}>
-                                                    {subCat?.name}
-                                                </MenuItem>
-                                            ))}
-                                        </React.Fragment>
-                                    ))
-                                }
+                                <MenuItem value="">None</MenuItem>
+                                {subCategoryOptions.map((subCat, index_) => (
+                                    <MenuItem value={subCat?._id} key={subCat?._id || index_}>
+                                        {subCat?.name}
+                                    </MenuItem>
+                                ))}
 
                             </Select>
                         }
                     </div>
-
 
                     <div className="col">
                         <h4 className="font-[600] text-[13px] mb-2">Danh Mục Cấp 3</h4>
@@ -514,36 +411,24 @@ export const Products = () => {
                             context?.catData?.length !== 0 &&
                             <Select
                                 style={{ zoom: '80%' }}
-                                labelId="demo-simple-select-label"
-                                id="productCatDrop"
+                                labelId="product-thirdcat-label"
+                                id="productCatDropThird"
                                 size="small"
                                 className='w-full'
                                 value={productThirdLavelCat}
                                 label="Sub Category"
                                 onChange={handleChangeProductThirdLavelCat}
                             >
-                                <MenuItem value={null}>None</MenuItem>
-                                {
-                                    context?.catData?.filter(cat => cat._id === productCat).map((cat, index) => (
-                                        <React.Fragment key={cat?._id || index}>
-                                            {cat?.children?.length !== 0 && cat?.children?.filter(subCat => subCat._id === productSubCat).map((subCat, index_) => (
-                                                <React.Fragment key={subCat?._id || index_}>
-                                                    {subCat?.children?.length !== 0 && subCat?.children?.map((thirdLavelCat, index__) => (
-                                                        <MenuItem value={thirdLavelCat?._id} key={thirdLavelCat?._id || index__}>
-                                                            {thirdLavelCat?.name}
-                                                        </MenuItem>
-                                                    ))}
-                                                </React.Fragment>
-                                            ))}
-                                        </React.Fragment>
-                                    ))
-                                }
+                                <MenuItem value="">None</MenuItem>
+                                {thirdCategoryOptions.map((thirdLavelCat, index__) => (
+                                    <MenuItem value={thirdLavelCat?._id} key={thirdLavelCat?._id || index__}>
+                                        {thirdLavelCat?.name}
+                                    </MenuItem>
+                                ))}
 
                             </Select>
                         }
-
                     </div>
-
 
                     <div className="col w-full ml-auto flex items-center">
                         <div style={{ alignSelf: 'end' }} className="w-full">
@@ -582,7 +467,7 @@ export const Products = () => {
                         <TableBody>
 
                             {
-                                isLoading === false ? productData?.products?.length !== 0 && productData?.products?.map((product, index) => {
+                                isLoading === false ? displayProducts?.length !== 0 && displayProducts?.map((product, index) => {
                                     return (
                                         <TableRow key={index} className={`hover:bg-slate-50/80 transition-colors ${product.checked === true ? '!bg-indigo-50/50' : ''}`}>
                                             <TableCell style={{ width: 60, minWidth: 60 }} className="!pl-4">

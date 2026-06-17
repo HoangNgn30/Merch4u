@@ -6,6 +6,12 @@ const SearchBox = (props) => {
   const [searchQuery, setSearchQuery] = useState("");
   const searchInput = useRef();
 
+  React.useEffect(() => {
+    if (props.searchQuery !== undefined) {
+      setSearchQuery(props.searchQuery);
+    }
+  }, [props.searchQuery]);
+
   const onChangeInput = (e) => {
     const val = e.target.value;
     setSearchQuery(val);

@@ -1195,13 +1195,95 @@ export async function sortBy(request, response) {
 
 
 
+const PRODUCT_SEARCH_FIELDS = ["name", "description", "brand", "catName", "subCat", "thirdsubCat"];
+
+const escapeRegExp = (val) => String(val).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const buildFlexiblePattern = (val) => {
+    const parts = String(val || "")
+        .trim()
+        .split(/[\s\-_]+/)
+        .filter(Boolean)
+        .map(escapeRegExp);
+
+    return parts.join("[\\s\\-_]*");
+};
+
+const buildLooseCharacterPattern = (val) => (
+    String(val || "")
+        .replace(/[\s\-_]+/g, "")
+        .split("")
+        .map(escapeRegExp)
+        .join("[\\s\\-_]*")
+);
+
+const buildRegexFieldConditions = (pattern) => (
+    PRODUCT_SEARCH_FIELDS.map((field) => ({
+        [field]: { $regex: pattern, $options: "i" }
+    }))
+);
+
+const buildRegexSearchQuery = (normalizedQuery) => {
+    const phrasePattern = buildFlexiblePattern(normalizedQuery);
+    const tokens = normalizedQuery
+        .split(/[\s\-_]+/)
+        .map((token) => token.trim())
+        .filter((token) => token.length > 1);
+
+    const should = [
+        { $or: buildRegexFieldConditions(phrasePattern) }
+    ];
+
+    const compactQuery = normalizedQuery.replace(/[\s\-_]+/g, "");
+    if (compactQuery.length >= 3) {
+        should.push({
+            $or: buildRegexFieldConditions(buildLooseCharacterPattern(compactQuery))
+        });
+    }
+
+    if (tokens.length > 0) {
+        should.push({
+            $and: tokens.map((token) => ({
+                $or: buildRegexFieldConditions(buildFlexiblePattern(token))
+            }))
+        });
+    }
+
+    if (/^[a-f\d]{24}$/i.test(normalizedQuery)) {
+        should.unshift({ _id: normalizedQuery });
+    }
+
+    return should.length === 1 ? should[0] : { $or: should };
+};
+
+const runRegexProductSearch = async (normalizedQuery, pageNum, limitNum) => {
+    const searchQuery = buildRegexSearchQuery(normalizedQuery);
+
+    const total = await ProductModel.countDocuments(searchQuery);
+    const products = await ProductModel.find(searchQuery)
+        .populate("category")
+        .collation({ locale: "vi", strength: 1 })
+        .sort({ name: 1 })
+        .skip((pageNum - 1) * limitNum)
+        .limit(limitNum);
+
+    return {
+        error: false,
+        success: true,
+        products: products,
+        total: total,
+        page: pageNum,
+        totalPages: Math.ceil(total / limitNum)
+    };
+};
+
 export async function searchProductController(request, response) {
     try {
 
         const { query, page, limit } = request.body;
         const normalizedQuery = String(query || "").trim().replace(/\s+/g, " ");
 
-        if (!query) {
+        if (!normalizedQuery) {
             return response.status(400).json({
                 error: true,
                 success: false,
@@ -1223,7 +1305,7 @@ export async function searchProductController(request, response) {
                             {
                                 phrase: {
                                     query: normalizedQuery,
-                                    path: "name",
+                                    path: PRODUCT_SEARCH_FIELDS,
                                     score: { boost: { value: 10 } }
                                 }
                             },
@@ -1231,7 +1313,7 @@ export async function searchProductController(request, response) {
                             {
                                 text: {
                                     query: normalizedQuery,
-                                    path: "name",
+                                    path: PRODUCT_SEARCH_FIELDS,
                                     fuzzy: {
                                         maxEdits: 1,
                                         prefixLength: 2,
@@ -1302,6 +1384,11 @@ export async function searchProductController(request, response) {
             const total = result.metadata[0]?.total || 0;
             const products = result.products || [];
 
+            if (total === 0) {
+                const regexResult = await runRegexProductSearch(normalizedQuery, pageNum, limitNum);
+                return response.status(200).json(regexResult);
+            }
+
             return response.status(200).json({
                 error: false,
                 success: true,
@@ -1318,47 +1405,8 @@ export async function searchProductController(request, response) {
                 atlasError?.codeName || atlasError?.message
             );
 
-            const escapeRegExp = (val) => String(val).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            const words = normalizedQuery.split(/\s+/).filter(Boolean);
-
-            if (words.length === 0) {
-                return response.status(200).json({
-                    error: false,
-                    success: true,
-                    products: [],
-                    total: 0,
-                    page: pageNum,
-                    totalPages: 0
-                });
-            }
-
-            const searchQuery = {
-                $and: words.map((word) => ({
-                    $or: [
-                        { name: { $regex: escapeRegExp(word), $options: "i" } },
-                        { description: { $regex: escapeRegExp(word), $options: "i" } },
-                        { brand: { $regex: escapeRegExp(word), $options: "i" } },
-                        { catName: { $regex: escapeRegExp(word), $options: "i" } }
-                    ]
-                }))
-            };
-
-            const total = await ProductModel.countDocuments(searchQuery);
-            const products = await ProductModel.find(searchQuery)
-                .populate("category")
-                .collation({ locale: "vi", strength: 1 })
-                .sort({ name: 1 })
-                .skip((pageNum - 1) * limitNum)
-                .limit(limitNum);
-
-            return response.status(200).json({
-                error: false,
-                success: true,
-                products: products,
-                total: total,
-                page: pageNum,
-                totalPages: Math.ceil(total / limitNum)
-            });
+            const regexResult = await runRegexProductSearch(normalizedQuery, pageNum, limitNum);
+            return response.status(200).json(regexResult);
         }
 
     } catch (error) {
