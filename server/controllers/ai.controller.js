@@ -611,17 +611,21 @@ async function chatSearchProducts(message, limit = 10) {
     return Array.from(merged.values()).slice(0, limit);
 }
 
-// ──── Extract product IDs mentioned in AI response ───────────────────────────
-function extractMentionedProductIds(aiText, availableProducts) {
-    const mentioned = new Set();
-    for (const product of availableProducts) {
-        const id = product._id?.toString?.() || String(product._id);
-        // Check if the product ID appears in the AI text (as a link)
-        if (aiText.includes(id)) {
-            mentioned.add(id);
+// ──── Extract product IDs directly from AI-generated links (/product/ID) ─────
+function extractLinkedProductIds(aiText) {
+    const ids = [];
+    const seen = new Set();
+    // Match markdown links like [Name](/product/ID) or plain /product/ID
+    const regex = /\/product\/([a-f0-9]{24})/gi;
+    let match;
+    while ((match = regex.exec(aiText)) !== null) {
+        const id = match[1];
+        if (!seen.has(id)) {
+            seen.add(id);
+            ids.push(id);
         }
     }
-    return mentioned;
+    return ids;
 }
 
 export async function semanticSearchController(request, response) {
@@ -801,7 +805,7 @@ export async function chatWithAI(request, response) {
             chatSearchProducts(message, 10),
             getStoreCatalogContext(),
             ProductModel.find({ $or: [{ isFeatured: true }, { isNew: true }] })
-                .select("name price countInStock catName brand discount")
+                .select("name price countInStock catName brand discount images")
                 .limit(15)
                 .lean(),
         ]);
@@ -832,12 +836,15 @@ export async function chatWithAI(request, response) {
                 .lean();
         }
 
-        // Combine and deduplicate
+        // Combine and deduplicate – add least-detailed first so full-detail overrides
         const candidateMap = new Map();
-        for (const p of orderRelatedProducts) {
+        for (const p of featuredProducts) {
             candidateMap.set(p._id.toString(), p);
         }
         for (const p of relevantProducts) {
+            candidateMap.set(p._id.toString(), p);
+        }
+        for (const p of orderRelatedProducts) {
             candidateMap.set(p._id.toString(), p);
         }
         const candidateProducts = Array.from(candidateMap.values());
@@ -895,10 +902,16 @@ ${productContext}
 QUY TẮC BẮT BUỘC (MẤT ĐIỂM NẾU VI PHẠM):
 1. Trả lời bằng tiếng Việt, ngắn gọn, thân thiện, dễ hiểu.
 2. **QUAN TRỌNG NHẤT**: Khi giới thiệu bất kỳ sản phẩm nào có trong danh sách cửa hàng, BẮT BUỘC dùng link Markdown dạng [Tên sản phẩm](/product/ID).
-   - Tên sản phẩm trong link PHẢI ĐÚNG với tên sản phẩm thực tế.
-   - ID trong link PHẢI ĐÚNG với ID của sản phẩm đó.
+   - Tên sản phẩm trong link PHẦI ĐÚNG với tên sản phẩm thực tế.
+   - ID trong link PHẦI ĐÚNG với ID của sản phẩm đó.
    - VÍ DỤ ĐÚNG: [Áo BTS Map](/product/6789abc)
    - TUYỆT ĐỐI KHÔNG được bịa ID hoặc viết sai đường dẫn.
+   - **BẮT BUỘC - NGOẠC VUÔNG TRONG TÊN SẢN PHẨM**: Tên sản phẩm trong dữ liệu hệ thống có thể chứa dấu ngoặc vuông (ví dụ: 'Sweatshirt [THE POWERPUFF GIRLS x NJ]'). Khi đưa tên này vào link Markdown, bạn **BẮT BUỘC** phải đổi tất cả dấu ngoặc vuông '[' và ']' trong tên thành dấu ngoặc đơn '(' và ')' để tránh làm hỏng hiển thị và cấu trúc link.
+     * Ví dụ đúng: '[NewJeans - Sweatshirt (THE POWERPUFF GIRLS x NJ)](/product/69b133e402f21752bfbe2c0f)'
+     * Ví dụ sai: '[NewJeans - Sweatshirt [THE POWERPUFF GIRLS x NJ]](/product/69b133e402f21752bfbe2c0f)' hoặc '[POWERPUFF GIRLS x NJ](/product/...)]'
+   - **BẮT BUỘC - ĐÁNH SỐ THỨ TỰ (LIST NUMBERING)**: Khi tạo danh sách số (ví dụ: 1., 2., 3.), số thứ tự và dấu chấm **BẮT BUỘC** phải nằm **ngoài** dấu ngoặc vuông của link Markdown.
+     * Ví dụ đúng: '1. [BTS - T-Shirt (Arirang)](/product/xyz)'
+     * Ví dụ sai: '[1. BTS - T-Shirt (Arirang)](/product/xyz)'
 3. CHỈ giới thiệu sản phẩm có thực trong danh sách trên. Không tự bịa sản phẩm, giá cả hay tồn kho.
 4. **HÀNG RÀO BẢO VỆ (GUARDRAIL) & GIỚI THIỆU BẢN THÂN**:
    - Khi nhận được các câu hỏi chung xã giao (ví dụ: "chào bạn", "bạn khỏe không"), hãy trả lời lịch sự, thân thiện và khéo léo gợi ý khách mua sắm.
@@ -966,24 +979,42 @@ QUY TẮC BẮT BUỘC (MẤT ĐIỂM NẾU VI PHẠM):
             }
         }
 
-        // Only send product cards for products the AI actually mentioned (by ID)
-        const mentionedIds = extractMentionedProductIds(aiText, candidateProducts);
+        // Extract product IDs directly from AI-generated /product/ID links
+        // This guarantees cards match exactly the links shown in the text
+        const linkedIds = extractLinkedProductIds(aiText);
         let cards = [];
-        if (mentionedIds.size > 0) {
-            cards = candidateProducts
-                .filter(p => mentionedIds.has(p._id?.toString?.() || String(p._id)))
-                .slice(0, 4)
-                .map(chatProductCard);
-        } else {
-            // Check if the query is a product search/shopping query (not order status, and not a greeting/off-topic where AI declined to answer)
-            const shoppingKeywords = ["sản phẩm", "gợi ý", "mua", "bán", "giá", "áo", "album", "merch", "đồ", "mẫu", "chọn", "thử", "sale", "giảm giá", "bts", "blackpink", "twice", "aespa", "ive", "newjeans"];
-            const isShoppingQuery = shoppingKeywords.some(kw => message.toLowerCase().includes(kw)) || 
-                                     shoppingKeywords.some(kw => aiText.toLowerCase().includes(kw));
-            
-            const isOffTopicOrGreeting = aiText.includes("Xin lỗi bạn") || aiText.includes("chỉ hỗ trợ");
-            
-            if (isShoppingQuery && !orderIntent && !isOffTopicOrGreeting && relevantProducts.length > 0) {
-                cards = relevantProducts.slice(0, 3).map(chatProductCard);
+        if (linkedIds.length > 0) {
+            // First try to find in candidateProducts (already fetched)
+            const candidateById = new Map(candidateProducts.map(p => [p._id.toString(), p]));
+            const foundIds = [];
+            const missingIds = [];
+            for (const id of linkedIds.slice(0, 6)) {
+                if (candidateById.has(id) && (candidateById.get(id).images?.length > 0)) {
+                    foundIds.push(id);
+                } else {
+                    missingIds.push(id);
+                }
+            }
+
+            // Fetch any linked products not in candidates (or missing images) directly from DB
+            let dbFetched = new Map();
+            if (missingIds.length > 0) {
+                try {
+                    const fetched = await ProductModel.find({
+                        _id: { $in: missingIds.map(id => new mongoose.Types.ObjectId(id)) }
+                    }).select(PRODUCT_SELECT).lean();
+                    dbFetched = new Map(fetched.map(p => [p._id.toString(), p]));
+                } catch (err) {
+                    console.warn("[AI Chat] Fetch linked products failed:", err?.message);
+                }
+            }
+
+            // Build cards in the same order as they appear in the AI text
+            for (const id of linkedIds.slice(0, 6)) {
+                const product = dbFetched.get(id) || candidateById.get(id);
+                if (product) {
+                    cards.push(chatProductCard(product));
+                }
             }
         }
         if (cards.length > 0) {
@@ -1536,6 +1567,7 @@ QUY TẮC PHẢN HỒI BẮT BUỘC (MẤT ĐIỂM NẾU VI PHẠM):
      * Cung cấp các đường liên kết di chuyển nhanh đến tất cả các trang quản trị để sếp truy cập ngay tức khắc.
    - Nếu sếp hỏi các câu hỏi không liên quan đến quản lý, thống kê hay vận hành cửa hàng Merch4u, và KHÔNG PHẢI hỏi về bản thân bạn/công nghệ dự án (ví dụ: công thức nấu ăn, viết thơ, lập trình...): Hãy khéo léo từ chối và nhắc nhở sếp rằng nhiệm vụ của bạn là làm trợ lý Co-pilot hỗ trợ quản trị và thống kê kinh doanh cho cửa hàng Merch4u.
 7. Chỉ trả lời dựa trên dữ liệu hệ thống cung cấp ở trên, không tự bịa ra thông số giả.
+8. **BẮT BUỘC - XỬ LÝ LIÊN KẾT SẢN PHẨM**: Khi dẫn link đến sản phẩm, luôn dùng dạng '[Tên sản phẩm](/product/ID)'. Hãy đổi tất cả dấu ngoặc vuông '[' và ']' trong tên sản phẩm thành dấu ngoặc đơn '(' và ')'. Ngoài ra, số thứ tự danh sách (ví dụ: 1., 2.) **phải** nằm **ngoài** dấu ngoặc của link Markdown (Ví dụ: '1. [Tên sản phẩm](/product/ID)').
 `;
 
 
